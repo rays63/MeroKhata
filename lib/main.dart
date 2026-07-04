@@ -3706,7 +3706,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
                       color: const Color(0xFFEAF3F0),
                       borderColor: const Color(0xFFCFE3DA),
                       radius: 30,
-                      padding: const EdgeInsets.all(11),
+                      padding: const EdgeInsets.all(18),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
