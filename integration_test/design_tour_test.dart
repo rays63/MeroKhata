@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:paisa_flow/main.dart';
@@ -230,6 +230,94 @@ Map<String, Object?> _seed() {
     ],
     'logs': [],
     'profile': {'name': 'Aarav Shrestha', 'phone': '9841234567', 'email': ''},
+    'friends': [
+      {'id': 'sita', 'name': 'Sita', 'color': 0xFFE39A2E},
+      {'id': 'bikash', 'name': 'Bikash', 'color': 0xFF8B5CF6},
+      {'id': 'anu', 'name': 'Anu', 'color': 0xFFE5484D},
+      {'id': 'rohan', 'name': 'Rohan', 'color': 0xFF3B7DD8},
+    ],
+    'groups': [
+      {
+        'id': 'pokhara',
+        'name': 'Pokhara Trip',
+        'memberIds': ['sita', 'bikash', 'anu'],
+        'createdAt': at(6, 9),
+        'expenses': [
+          {
+            'id': 'e1',
+            'title': 'Hotel (2 nights)',
+            'amount': 8400,
+            'paidBy': 'me',
+            'shares': {'me': 1, 'sita': 1, 'bikash': 1, 'anu': 1},
+            'createdAt': at(6, 10),
+          },
+          {
+            'id': 'e2',
+            'title': 'Boating at Phewa',
+            'amount': 1600,
+            'paidBy': 'sita',
+            'shares': {'me': 1, 'sita': 1, 'bikash': 1, 'anu': 1},
+            'createdAt': at(5, 10),
+          },
+          {
+            'id': 'e3',
+            'title': 'Lakeside dinner',
+            'amount': 4400,
+            'paidBy': 'me',
+            'shares': {'me': 1, 'sita': 1, 'bikash': 1, 'anu': 1},
+            'createdAt': at(5, 20),
+          },
+        ],
+        'settlements': [
+          {'id': 's1', 'friendId': 'anu', 'amount': 3200, 'at': at(4, 9)},
+        ],
+      },
+      {
+        'id': 'flat',
+        'name': 'Flat 3B',
+        'memberIds': ['rohan', 'anu'],
+        'createdAt': at(20, 9),
+        'expenses': [
+          {
+            'id': 'e4',
+            'title': 'Internet — October',
+            'amount': 1500,
+            'paidBy': 'rohan',
+            'shares': {'me': 1, 'rohan': 1, 'anu': 1},
+            'createdAt': at(3, 9),
+          },
+          {
+            'id': 'e5',
+            'title': 'Gas cylinder',
+            'amount': 1950,
+            'paidBy': 'rohan',
+            'shares': {'me': 1, 'rohan': 1, 'anu': 1},
+            'createdAt': at(2, 9),
+          },
+        ],
+      },
+    ],
+    'bills': [
+      {
+        'id': 'b1',
+        'title': 'Thakali dinner',
+        'amount': 3600,
+        'shares': {'me': 1, 'sita': 1, 'bikash': 1},
+        'createdAt': at(1, 20),
+      },
+      {
+        'id': 'b2',
+        'title': 'Movie night',
+        'amount': 1800,
+        'shares': {'me': 1, 'sita': 1, 'anu': 1, 'rohan': 1},
+        'createdAt': at(6, 21),
+        'settlements': [
+          {'id': 's2', 'friendId': 'sita', 'amount': 450, 'at': at(5, 9)},
+          {'id': 's3', 'friendId': 'anu', 'amount': 450, 'at': at(5, 9)},
+          {'id': 's4', 'friendId': 'rohan', 'amount': 450, 'at': at(5, 9)},
+        ],
+      },
+    ],
     'onboarded': true,
   };
 }
@@ -281,6 +369,14 @@ void main() {
 
     await tap(find.text('Bhatbhateni groceries'));
     await shot('entry_detail');
+    await tester.scrollUntilVisible(
+      find.text('Split this bill with friends'),
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tap(find.text('Split this bill with friends'));
+    await shot('split_from_entry');
+    await tap(find.byTooltip('Close'));
     await back();
 
     await tap(find.text('Cash out').last);
@@ -308,6 +404,30 @@ void main() {
       scrollable: find.byType(Scrollable).first,
     );
     await shot('insights_trends');
+
+    await tap(find.text('Split').last);
+    await shot('split_groups');
+    await tap(find.text('Bills'));
+    await shot('split_bills');
+    await tap(find.text('Groups'));
+    await tap(find.text('Pokhara Trip'));
+    await shot('group');
+    await tap(find.text('Settle').first);
+    await shot('settle_sheet');
+    await tester.tapAt(const Offset(200, 80));
+    await tester.pumpAndSettle();
+    await back();
+    await tap(find.text('Split a bill').first);
+    await tap(find.text('Sita'));
+    await tap(find.text('Bikash'));
+    await tap(find.text('Anu'));
+    await tester.enterText(find.widgetWithText(TextField, '0'), '3600');
+    await tap(find.text('Shares'));
+    await tester.tap(find.bySemanticsLabel('More shares for Sita'));
+    await tester.pumpAndSettle();
+    FocusManager.instance.primaryFocus?.unfocus();
+    await shot('split_bill');
+    await tap(find.byTooltip('Close'));
 
     await tap(find.text('Home').last);
     await tap(find.text('Goals'));

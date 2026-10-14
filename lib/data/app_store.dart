@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 
 import '../core/format.dart';
 import 'models.dart';
+import 'split.dart';
 
 class AppScope extends InheritedNotifier<AppStore> {
   const AppScope({super.key, required AppStore store, required super.child})
@@ -59,6 +60,12 @@ class AppStore extends ChangeNotifier {
   final List<String> categories = [...defaultCategories];
   final List<String> paymentModes = [...defaultPaymentModes];
   UserProfile profile = const UserProfile();
+  final List<Friend> friends = [];
+  final List<SplitGroup> groups = [];
+  final List<SplitBill> bills = [];
+
+  /// Book that split bills and settle-ups were last recorded in.
+  String? lastSplitBookId;
   String defaultCurrency = 'NPR';
   ThemeMode themeMode = ThemeMode.system;
   bool isLoaded = false;
@@ -105,6 +112,10 @@ class AppStore extends ChangeNotifier {
         transactions.clear();
         goals.clear();
         logs.clear();
+        friends.clear();
+        groups.clear();
+        bills.clear();
+        lastSplitBookId = null;
         _seed();
       }
     }
@@ -149,6 +160,21 @@ class AppStore extends ChangeNotifier {
         (data['profile'] as Map? ?? const {}).cast(),
       );
       defaultCurrency = data['defaultCurrency'] as String? ?? 'NPR';
+      List<Map<String, Object?>> list(String key) =>
+          (data[key] as List? ?? const [])
+              .cast<Map>()
+              .map((m) => m.cast<String, Object?>())
+              .toList();
+      friends
+        ..clear()
+        ..addAll(list('friends').map(Friend.fromJson));
+      groups
+        ..clear()
+        ..addAll(list('groups').map(SplitGroup.fromJson));
+      bills
+        ..clear()
+        ..addAll(list('bills').map(SplitBill.fromJson));
+      lastSplitBookId = data['lastSplitBookId'] as String?;
       onboarded = data['onboarded'] as bool? ?? true;
       if (books.isEmpty) _seed();
     }
@@ -189,6 +215,10 @@ class AppStore extends ChangeNotifier {
         'profile': profile.toJson(),
         'defaultCurrency': defaultCurrency,
         'onboarded': onboarded,
+        'friends': friends.map((item) => item.toJson()).toList(),
+        'groups': groups.map((item) => item.toJson()).toList(),
+        'bills': bills.map((item) => item.toJson()).toList(),
+        'lastSplitBookId': lastSplitBookId,
       }),
     );
   }
@@ -504,6 +534,329 @@ class AppStore extends ChangeNotifier {
 
   int linkedEntries(String goalId) =>
       transactions.where((transaction) => transaction.goalId == goalId).length;
+
+  // ---------------------------------------------------------------------------
+  // Split bills
+  // ---------------------------------------------------------------------------
+
+  Friend? friendById(String id) {
+    for (final friend in friends) {
+      if (friend.id == id) return friend;
+    }
+    return null;
+  }
+
+  /// Books a split in [currency] can be recorded in (default: home).
+  List<LedgerBook> splitBooks([String? currency]) => booksByRecent
+      .where((book) => book.currency == (currency ?? defaultCurrency))
+      .toList();
+
+  /// The last-used split book if it qualifies, else the most recent one.
+  String? defaultSplitBookId([String? currency]) {
+    final candidates = splitBooks(currency);
+    for (final book in candidates) {
+      if (book.id == lastSplitBookId) return book.id;
+    }
+    return candidates.firstOrNull?.id;
+  }
+
+  /// Friend id → net amount they owe you across groups and bills in the
+  /// home currency (negative when you owe them). Other currencies are never
+  /// mixed into these totals.
+  Map<String, double> get friendBalances {
+    final totals = <String, double>{};
+    for (final balances in [
+      for (final group in groups)
+        if (group.currency == defaultCurrency) group.balances,
+      for (final bill in bills)
+        if (bill.currency == defaultCurrency) bill.balances,
+    ]) {
+      for (final e in balances.entries) {
+        totals[e.key] = (totals[e.key] ?? 0) + e.value;
+      }
+    }
+    return totals;
+  }
+
+  double get owedToYou =>
+      friendBalances.values.where((v) => v > 0).fold(0, (sum, v) => sum + v);
+
+  double get youOwe =>
+      friendBalances.values.where((v) => v < 0).fold(0, (sum, v) => sum - v);
+
+  Future<Friend> addFriend(String name) async {
+    final trimmed = name.trim();
+    final existing = friends
+        .where((f) => f.name.toLowerCase() == trimmed.toLowerCase())
+        .firstOrNull;
+    if (existing != null) return existing;
+    final friend = Friend(
+      id: newId('friend'),
+      name: trimmed,
+      colorValue: friendColors[friends.length % friendColors.length],
+    );
+    friends.add(friend);
+    await _commit();
+    return friend;
+  }
+
+  Future<String> saveGroup({
+    String? id,
+    required String name,
+    required List<String> memberIds,
+  }) async {
+    final index = id == null ? -1 : groups.indexWhere((g) => g.id == id);
+    final trimmed = name.trim().isEmpty ? 'Untitled group' : name.trim();
+    if (index == -1) {
+      final group = SplitGroup(
+        id: newId('group'),
+        name: trimmed,
+        memberIds: memberIds,
+        createdAt: DateTime.now(),
+        currency: defaultCurrency,
+      );
+      groups.add(group);
+      await _commit();
+      return group.id;
+    }
+    // Members with expenses or a balance can't be dropped.
+    final current = groups[index];
+    final involved = {
+      for (final e in current.expenses) ...[e.paidBy, ...e.shares.keys],
+      for (final s in current.settlements) s.friendId,
+    };
+    groups[index] = current.copyWith(
+      name: trimmed,
+      memberIds: {
+        ...memberIds,
+        ...current.memberIds.where(involved.contains),
+      }.toList(),
+    );
+    await _commit();
+    return current.id;
+  }
+
+  Future<void> deleteGroup(String id) async {
+    groups.removeWhere((g) => g.id == id);
+    await _commit();
+  }
+
+  /// Adds an expense; when you paid and [recordInBookId] is set, the full
+  /// amount is also posted as cash out in that book.
+  Future<void> addGroupExpense({
+    required String groupId,
+    required String title,
+    required double amount,
+    required String paidBy,
+    required Shares shares,
+    String? recordInBookId,
+  }) async {
+    final index = groups.indexWhere((g) => g.id == groupId);
+    if (index == -1) return;
+    final group = groups[index];
+    amount = roundMoney(amount);
+    String? entryId;
+    if (paidBy == me && recordInBookId != null) {
+      entryId = _postSplitEntry(
+        bookId: recordInBookId,
+        type: TransactionType.cashOut,
+        amount: amount,
+        title: '$title (${group.name})',
+        category: _spendCategory,
+        log: 'Created from ${group.name} split',
+      );
+    }
+    groups[index] = group.copyWith(
+      expenses: [
+        GroupExpense(
+          id: newId('expense'),
+          title: title.trim().isEmpty ? 'Expense' : title.trim(),
+          amount: amount,
+          paidBy: paidBy,
+          shares: shares,
+          createdAt: DateTime.now(),
+          transactionId: entryId,
+        ),
+        ...group.expenses,
+      ],
+    );
+    await _afterSplitChange(bookId: paidBy == me ? recordInBookId : null);
+  }
+
+  Future<void> deleteGroupExpense(String groupId, String expenseId) async {
+    final index = groups.indexWhere((g) => g.id == groupId);
+    if (index == -1) return;
+    final group = groups[index];
+    groups[index] = group.copyWith(
+      expenses: group.expenses.where((e) => e.id != expenseId).toList(),
+    );
+    await _commit();
+  }
+
+  /// Clears what [friendId] owes you in a group (or what you owe them) and
+  /// records the payment in [bookId].
+  Future<double> settleGroup({
+    required String groupId,
+    required String friendId,
+    required String bookId,
+  }) async {
+    final index = groups.indexWhere((g) => g.id == groupId);
+    if (index == -1) return 0;
+    final group = groups[index];
+    final amount = group.balances[friendId] ?? 0;
+    if (amount.abs() < .005) return 0;
+    final settlement = _settle(friendId, amount, bookId, group.name);
+    groups[index] = group.copyWith(
+      settlements: [...group.settlements, settlement],
+    );
+    await _afterSplitChange(bookId: bookId);
+    return amount;
+  }
+
+  /// Saves a one-off bill you paid. When [recordInBookId] is set the full
+  /// amount is posted as cash out; [linkedEntryId] links an existing entry
+  /// (from "Split this bill") instead.
+  Future<SplitBill> saveBill({
+    required String title,
+    required double amount,
+    required Shares shares,
+    String? recordInBookId,
+    String? linkedEntryId,
+  }) async {
+    final name = title.trim().isEmpty ? 'Bill' : title.trim();
+    amount = roundMoney(amount);
+    final entryId =
+        linkedEntryId ??
+        (recordInBookId == null
+            ? null
+            : _postSplitEntry(
+                bookId: recordInBookId,
+                type: TransactionType.cashOut,
+                amount: amount,
+                title: '$name (split)',
+                category: _spendCategory,
+                log: 'Created from split bill',
+              ));
+    final bill = SplitBill(
+      id: newId('bill'),
+      title: name,
+      amount: amount,
+      shares: shares,
+      createdAt: DateTime.now(),
+      currency: defaultCurrency,
+      transactionId: entryId,
+    );
+    bills.insert(0, bill);
+    await _afterSplitChange(bookId: recordInBookId);
+    return bill;
+  }
+
+  Future<double> settleBill({
+    required String billId,
+    required String friendId,
+    required String bookId,
+  }) async {
+    final index = bills.indexWhere((b) => b.id == billId);
+    if (index == -1) return 0;
+    final bill = bills[index];
+    final amount = bill.balances[friendId] ?? 0;
+    if (amount.abs() < .005) return 0;
+    final settlement = _settle(friendId, amount, bookId, bill.title);
+    bills[index] = bill.copyWith(
+      settlements: [...bill.settlements, settlement],
+    );
+    await _afterSplitChange(bookId: bookId);
+    return amount;
+  }
+
+  Future<void> deleteBill(String id) async {
+    bills.removeWhere((b) => b.id == id);
+    await _commit();
+  }
+
+  /// Category for split costs: Food if the user has it, else the first one.
+  String get _spendCategory => categories.contains('Food')
+      ? 'Food'
+      : (categories.firstOrNull ?? 'General');
+
+  /// The bill created by splitting [entryId], if any.
+  SplitBill? billForEntry(String entryId) =>
+      bills.where((b) => b.transactionId == entryId).firstOrNull;
+
+  /// Whether [entryId] was posted by a split (expense or settlement), so it
+  /// shouldn't be split again.
+  bool isSplitEntry(String entryId) =>
+      groups.any(
+        (g) =>
+            g.expenses.any((e) => e.transactionId == entryId) ||
+            g.settlements.any((s) => s.transactionId == entryId),
+      ) ||
+      bills.any((b) => b.settlements.any((s) => s.transactionId == entryId));
+
+  Settlement _settle(
+    String friendId,
+    double amount,
+    String bookId,
+    String source,
+  ) {
+    final friend = friendById(friendId)?.name ?? 'friend';
+    if (!categories.contains('Settlement')) categories.add('Settlement');
+    final entryId = _postSplitEntry(
+      bookId: bookId,
+      type: amount > 0 ? TransactionType.cashIn : TransactionType.cashOut,
+      amount: amount.abs(),
+      title: 'Settlement · $friend',
+      category: 'Settlement',
+      log: 'Settled from $source',
+    );
+    return Settlement(
+      id: newId('settle'),
+      friendId: friendId,
+      amount: amount,
+      at: DateTime.now(),
+      transactionId: entryId,
+    );
+  }
+
+  String _postSplitEntry({
+    required String bookId,
+    required TransactionType type,
+    required double amount,
+    required String title,
+    required String category,
+    required String log,
+  }) {
+    final now = DateTime.now();
+    final entry = LedgerTransaction(
+      id: newId('txn'),
+      bookId: bookId,
+      title: title,
+      amount: amount,
+      type: type,
+      occurredAt: now,
+      createdAt: now,
+      updatedAt: now,
+      category: category,
+      paymentMode: 'Cash',
+      notes: '',
+      goalId: null,
+      runningBalance: 0,
+      externalReference: '',
+      statementBalance: null,
+      sequence: 0,
+      importSource: '',
+    );
+    transactions.add(entry);
+    _addLog(entry.id, 'created', log);
+    _touchBook(bookId);
+    return entry.id;
+  }
+
+  Future<void> _afterSplitChange({String? bookId}) async {
+    if (bookId != null) lastSplitBookId = bookId;
+    _recalculateAll();
+    await _commit();
+  }
 
   // ---------------------------------------------------------------------------
   // Import

@@ -211,27 +211,33 @@ class PfButton extends StatelessWidget {
       PfButtonStyle.neutral => (c.card2, c.ink, null),
     };
     final disabled = onPressed == null;
+    final label = Text(
+      this.label,
+      style: pfText(fontSize, weight: w900, color: fg),
+      overflow: TextOverflow.ellipsis,
+    );
+    final lead = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (icon != null) ...[
+          Icon(icon, size: fontSize + 3, color: fg),
+          const SizedBox(width: 8),
+        ],
+        Flexible(child: label),
+      ],
+    );
+    final trailing = trailingIcon == null
+        ? null
+        : Icon(trailingIcon, size: fontSize + 3, color: fg);
+    // Spread: icon + label together on the left, arrow on the right.
     final content = Row(
       mainAxisSize: expand ? MainAxisSize.max : MainAxisSize.min,
       mainAxisAlignment: spread
           ? MainAxisAlignment.spaceBetween
           : MainAxisAlignment.center,
       children: [
-        if (icon != null) ...[
-          Icon(icon, size: fontSize + 3, color: fg),
-          const SizedBox(width: 8),
-        ],
-        Flexible(
-          child: Text(
-            label,
-            style: pfText(fontSize, weight: w900, color: fg),
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-        if (trailingIcon != null) ...[
-          const SizedBox(width: 10),
-          Icon(trailingIcon, size: fontSize + 3, color: fg),
-        ],
+        Flexible(child: lead),
+        if (trailing != null) ...[const SizedBox(width: 10), trailing],
       ],
     );
     return Opacity(

@@ -94,7 +94,12 @@ Future<String?> pickCurrency(
   );
 }
 
-Future<String?> pickBook(BuildContext context, {required String selected}) {
+/// Book picker; [onlyCurrency] limits it to books in that currency.
+Future<String?> pickBook(
+  BuildContext context, {
+  required String selected,
+  String? onlyCurrency,
+}) {
   final store = AppScope.read(context);
   return showOptionSheet<String>(
     context,
@@ -102,11 +107,12 @@ Future<String?> pickBook(BuildContext context, {required String selected}) {
     selected: selected,
     options: () => [
       for (final book in store.booksByRecent)
-        SheetOption(
-          book.id,
-          '${book.name} · ${book.currency}',
-          LucideIcons.bookOpen,
-        ),
+        if (onlyCurrency == null || book.currency == onlyCurrency)
+          SheetOption(
+            book.id,
+            '${book.name} · ${book.currency}',
+            LucideIcons.bookOpen,
+          ),
     ],
   );
 }

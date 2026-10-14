@@ -9,6 +9,7 @@ import '../../data/app_store.dart';
 import '../../data/models.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/pf.dart';
+import '../split/split_bill_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -346,7 +347,9 @@ class _QuickActions extends StatelessWidget {
           label: 'Split a bill',
           background: c.goldSoft,
           foreground: c.gold,
-          onTap: () => ShellScope.go(context, ShellTab.split),
+          onTap: () => Navigator.of(
+            context,
+          ).push(MaterialPageRoute(builder: (_) => const SplitBillScreen())),
         ),
       ],
     );
@@ -453,6 +456,8 @@ class _SplitCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.pf;
+    final store = AppScope.watch(context);
+    final owe = store.youOwe > store.owedToYou;
     return _HomeCard(
       title: 'Split',
       icon: LucideIcons.users,
@@ -460,12 +465,12 @@ class _SplitCard extends StatelessWidget {
       onTap: () => ShellScope.go(context, ShellTab.split),
       children: [
         Text(
-          "You're owed",
+          owe ? 'You owe' : "You're owed",
           style: pfText(12.5, weight: w700, color: c.sub),
         ),
         Text(
-          money(0),
-          style: pfText(17, weight: w900, color: c.cashIn),
+          money(owe ? store.youOwe : store.owedToYou, store.defaultCurrency),
+          style: pfText(17, weight: w900, color: c.amount(!owe)),
         ),
       ],
     );

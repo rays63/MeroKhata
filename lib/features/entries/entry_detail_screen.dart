@@ -8,6 +8,8 @@ import '../../data/app_store.dart';
 import '../../data/models.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/pf.dart';
+import '../split/group_screen.dart';
+import '../split/split_bill_screen.dart';
 
 class EntryDetailScreen extends StatelessWidget {
   const EntryDetailScreen({super.key, required this.entryId});
@@ -137,6 +139,41 @@ class EntryDetailScreen extends StatelessWidget {
                 ],
               ),
             ),
+            // Split a cash-out once; entries a split created (expenses,
+            // settlements) can't be split again.
+            if (!isIn &&
+                currency == store.defaultCurrency &&
+                !store.isSplitEntry(entry.id)) ...[
+              const SizedBox(height: 16),
+              Builder(
+                builder: (context) {
+                  final bill = store.billForEntry(entry.id);
+                  return PfButton(
+                    label: bill == null
+                        ? 'Split this bill with friends'
+                        : 'View split · ${bill.settled ? 'settled' : '${money(bill.toCollect, currency)} to collect'}',
+                    icon: LucideIcons.split,
+                    trailingIcon: LucideIcons.chevronRight,
+                    spread: true,
+                    style: PfButtonStyle.gold,
+                    height: 52,
+                    radius: 18,
+                    fontSize: 15,
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => bill == null
+                            ? SplitBillScreen(
+                                title: entry.title,
+                                amount: entry.amount,
+                                linkedEntryId: entry.id,
+                              )
+                            : BillScreen(billId: bill.id),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ],
             const SizedBox(height: 16),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 4),
