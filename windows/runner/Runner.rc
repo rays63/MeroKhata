@@ -89,13 +89,13 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.cashbookpro" "\0"
-            VALUE "FileDescription", "HissabKitab" "\0"
+            VALUE "CompanyName", "com.paisaflow" "\0"
+            VALUE "FileDescription", "Paisa Flow" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "cashbook_pro" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2026 com.cashbookpro. All rights reserved." "\0"
-            VALUE "OriginalFilename", "cashbook_pro.exe" "\0"
-            VALUE "ProductName", "HissabKitab" "\0"
+            VALUE "InternalName", "paisa_flow" "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2026 com.paisaflow. All rights reserved." "\0"
+            VALUE "OriginalFilename", "paisa_flow.exe" "\0"
+            VALUE "ProductName", "Paisa Flow" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

@@ -1,4 +1,4 @@
-# HissabKitab
+# Paisa Flow
 
 Personal finance and cashbook app built with Flutter.
 

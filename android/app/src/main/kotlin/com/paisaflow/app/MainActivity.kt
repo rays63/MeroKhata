@@ -1,4 +1,4 @@
-package com.cashbookpro.cashbook_pro
+package com.paisaflow.app
 
 import io.flutter.embedding.android.FlutterActivity
 

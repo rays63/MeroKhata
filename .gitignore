@@ -2,6 +2,8 @@
 .DS_Store
 **/.DS_Store
 
+.claude
+
 # IDE
 .idea/
 *.iml
@@ -86,3 +88,6 @@ app.*.symbols
 !**/ios/**/default.mode2v3
 !**/ios/**/default.pbxuser
 !**/ios/**/default.perspectivev3
+
+# Real bank/wallet statements used by local import tests (personal data)
+.claude/test statement/
