@@ -44,3 +44,15 @@ flutter:
           weight: 800
         - asset: assets/fonts/Nunito-Black.ttf
           weight: 900
+    # Devanagari (नेपाली) text; also the fallback for Nunito, which has no
+    # Devanagari glyphs.
+    - family: Mukta
+      fonts:
+        - asset: assets/fonts/Mukta-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Mukta-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Mukta-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/Mukta-ExtraBold.ttf
+          weight: 800

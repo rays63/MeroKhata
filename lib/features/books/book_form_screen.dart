@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/format.dart';
@@ -146,6 +147,11 @@ class _BookFormScreenState extends State<BookFormScreen> {
                               keyboardType: const TextInputType.numberWithOptions(
                                 decimal: true,
                               ),
+                              inputFormatters: [
+                                FilteringTextInputFormatter.allow(
+                                  RegExp(r'[\d.]'),
+                                ),
+                              ],
                               style: pfText(17, color: c.ink),
                               decoration: InputDecoration(
                                 hintText: '0',

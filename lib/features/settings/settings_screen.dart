@@ -11,6 +11,7 @@ import '../../data/app_store.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/pf.dart';
 import '../../widgets/store_sheets.dart';
+import '../onboarding/profile_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -81,6 +82,17 @@ class SettingsScreen extends StatelessWidget {
             PfCard(
               child: Column(
                 children: [
+                  _SettingsRow(
+                    icon: LucideIcons.userRound,
+                    label: 'Your details',
+                    value: store.profile.name.trim().isEmpty
+                        ? 'Add'
+                        : store.profile.name.trim(),
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const ProfileScreen()),
+                    ),
+                  ),
+                  const PfDivider(),
                   _SettingsRow(
                     icon: LucideIcons.tags,
                     label: 'Categories',

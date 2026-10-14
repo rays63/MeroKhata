@@ -167,4 +167,44 @@ void main() {
     expect(signedMoney(-3460), '− Rs 3,460');
     expect(balanceMoney(-500), '− Rs 500');
   });
+
+  test(
+    'setup on a fresh install replaces the starter book in one save',
+    () async {
+      final store = await _load({});
+      expect(store.onboarded, isFalse);
+
+      await store.finishSetup(
+        name: 'Ghar',
+        currency: 'INR',
+        openingBalance: 500,
+      );
+
+      expect(store.books.single.name, 'Ghar');
+      expect(store.books.single.currency, 'INR');
+      expect(store.defaultCurrency, 'INR');
+      final saved =
+          jsonDecode((await SharedPreferences.getInstance()).getString(_key)!)
+              as Map<String, Object?>;
+      expect(saved['onboarded'], isTrue);
+      expect((saved['books'] as List).single, containsPair('name', 'Ghar'));
+    },
+  );
+
+  test('setup keeps books that already have entries', () async {
+    final data = _legacyData()..remove('goals');
+    final store = await _load({
+      _key: jsonEncode({...data, 'onboarded': false}),
+    });
+
+    await store.finishSetup(name: 'Shop', currency: 'NPR');
+
+    expect(store.books.map((b) => b.name), containsAll(['Main Book', 'Shop']));
+    expect(store.transactionById('t1'), isNotNull);
+  });
+
+  test('unreadable data does not restart onboarding', () async {
+    final store = await _load({_key: 'not json'});
+    expect(store.onboarded, isTrue);
+  });
 }

@@ -99,6 +99,8 @@ class AppStore extends ChangeNotifier {
           ),
         );
         loadError = 'Some saved data couldn’t be read. A copy was kept.';
+        // This is an existing user; don't send them through onboarding.
+        onboarded = true;
         books.clear();
         transactions.clear();
         goals.clear();
@@ -211,6 +213,28 @@ class AppStore extends ChangeNotifier {
   Future<void> completeOnboarding() async {
     onboarded = true;
     await _commit();
+  }
+
+  /// Last onboarding step: turns the untouched starter book into the user's
+  /// first book (or adds one if they already have data), then finishes
+  /// onboarding.
+  Future<void> finishSetup({
+    required String name,
+    required String currency,
+    double openingBalance = 0,
+  }) async {
+    if (books.length == 1 && entryCount(books.single.id) == 0) {
+      books.clear();
+    }
+    defaultCurrency = currency;
+    // Set before saving so the book and the flag land in the same write; a
+    // kill in between can't send the user through setup twice.
+    onboarded = true;
+    await saveBook(
+      name: name,
+      currency: currency,
+      openingBalance: openingBalance,
+    );
   }
 
   Future<void> setDefaultCurrency(String code) async {

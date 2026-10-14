@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
@@ -50,7 +51,14 @@ void main() {
   testWidgets('import statements through the UI and catch duplicates', (
     tester,
   ) async {
-    SharedPreferences.setMockInitialValues({});
+    // An existing user (onboarding done) with the starter Personal book.
+    SharedPreferences.setMockInitialValues({
+      'hissabkitab_data_v1': jsonEncode({
+        'books': [],
+        'transactions': [],
+        'onboarded': true,
+      }),
+    });
     final picker = _QueuedFilePicker();
     FilePicker.platform = picker;
 

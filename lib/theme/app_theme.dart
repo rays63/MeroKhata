@@ -16,6 +16,8 @@ class AppTheme {
       // Bundled in pubspec as one family with weights 400–900, so any
       // fontWeight on a TextStyle picks the matching file.
       fontFamily: 'Nunito',
+      // Nunito has no Devanagari glyphs; नेपाली text falls back to Mukta.
+      fontFamilyFallback: const ['Mukta'],
       brightness: brightness,
       colorScheme: ColorScheme.fromSeed(
         seedColor: c.btn,

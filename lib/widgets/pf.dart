@@ -157,7 +157,15 @@ class PfCard extends StatelessWidget {
   }
 }
 
-enum PfButtonStyle { primary, danger, softDanger, soft, outlineDanger, gold, neutral }
+enum PfButtonStyle {
+  primary,
+  danger,
+  softDanger,
+  soft,
+  outlineDanger,
+  gold,
+  neutral,
+}
 
 /// Full-width action button (58 high by default).
 class PfButton extends StatelessWidget {
@@ -171,11 +179,19 @@ class PfButton extends StatelessWidget {
     this.fontSize = 17,
     this.radius = 20,
     this.expand = true,
+    this.trailingIcon,
+    this.spread = false,
   });
 
   final String label;
   final VoidCallback? onPressed;
   final IconData? icon;
+
+  /// Icon after the label (e.g. the arrow on "Next →").
+  final IconData? trailingIcon;
+
+  /// Label at the start and [trailingIcon] at the end ("Continue … →").
+  final bool spread;
   final PfButtonStyle style;
   final double height;
   final double fontSize;
@@ -197,7 +213,9 @@ class PfButton extends StatelessWidget {
     final disabled = onPressed == null;
     final content = Row(
       mainAxisSize: expand ? MainAxisSize.max : MainAxisSize.min,
-      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisAlignment: spread
+          ? MainAxisAlignment.spaceBetween
+          : MainAxisAlignment.center,
       children: [
         if (icon != null) ...[
           Icon(icon, size: fontSize + 3, color: fg),
@@ -210,6 +228,10 @@ class PfButton extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
           ),
         ),
+        if (trailingIcon != null) ...[
+          const SizedBox(width: 10),
+          Icon(trailingIcon, size: fontSize + 3, color: fg),
+        ],
       ],
     );
     return Opacity(
@@ -227,7 +249,9 @@ class PfButton extends StatelessWidget {
           onTap: onPressed,
           child: Container(
             height: height,
-            padding: const EdgeInsets.symmetric(horizontal: 18),
+            padding: EdgeInsets.symmetric(
+              horizontal: spread ? 22 : (trailingIcon == null ? 18 : 26),
+            ),
             alignment: Alignment.center,
             child: content,
           ),
@@ -281,7 +305,10 @@ class PfSmallButton extends StatelessWidget {
                 Icon(icon, size: fontSize + 4, color: fg),
                 const SizedBox(width: 6),
               ],
-              Text(label, style: pfText(fontSize, weight: w900, color: fg)),
+              Text(
+                label,
+                style: pfText(fontSize, weight: w900, color: fg),
+              ),
             ],
           ),
         ),
@@ -437,7 +464,10 @@ class PfChoiceChip extends StatelessWidget {
                   Icon(icon, size: 15, color: fg),
                   const SizedBox(width: 6),
                 ],
-                Text(label, style: pfText(13, weight: w800, color: fg)),
+                Text(
+                  label,
+                  style: pfText(13, weight: w800, color: fg),
+                ),
               ],
             ),
           ),
@@ -556,7 +586,12 @@ class PfDivider extends StatelessWidget {
 
 /// Small grey heading above a group of content ("Today", "Deadline").
 class PfSectionLabel extends StatelessWidget {
-  const PfSectionLabel(this.text, {super.key, this.optional = false, this.trailing});
+  const PfSectionLabel(
+    this.text, {
+    super.key,
+    this.optional = false,
+    this.trailing,
+  });
 
   final String text;
   final bool optional;
@@ -585,7 +620,10 @@ class PfSectionLabel extends StatelessWidget {
             ),
           ),
           if (trailing != null)
-            Text(trailing!, style: pfText(13, weight: w800, color: c.sub)),
+            Text(
+              trailing!,
+              style: pfText(13, weight: w800, color: c.sub),
+            ),
         ],
       ),
     );
@@ -658,7 +696,10 @@ class PfNote extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (title != null)
-                  Text(title!, style: pfText(14.5, weight: w900, color: fg)),
+                  Text(
+                    title!,
+                    style: pfText(14.5, weight: w900, color: fg),
+                  ),
                 Text(
                   text,
                   style: pfText(
@@ -711,9 +752,15 @@ class PfEmptyCard extends StatelessWidget {
             iconSize: 24,
           ),
           const SizedBox(height: 10),
-          Text(title, style: pfText(17, weight: w900, color: c.ink)),
+          Text(
+            title,
+            style: pfText(17, weight: w900, color: c.ink),
+          ),
           const SizedBox(height: 10),
-          Text(body, style: pfText(14, weight: w600, color: c.sub)),
+          Text(
+            body,
+            style: pfText(14, weight: w600, color: c.sub),
+          ),
           if (actionLabel != null) ...[
             const SizedBox(height: 10),
             PfSmallButton(
@@ -737,33 +784,31 @@ void showPfToast(BuildContext context, String message) {
   if (messenger == null) return;
   messenger
     ..hideCurrentSnackBar()
-    ..showSnackBar(
-      SnackBar(
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: PfColors.toast,
-        elevation: 8,
-        duration: const Duration(milliseconds: 2600),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        content: Row(
-          children: [
-            const Icon(
-              LucideIcons.circleCheck,
-              size: 20,
-              color: PfColors.toastIcon,
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                message,
-                style: pfText(14, weight: w800, color: Colors.white),
-              ),
-            ),
-          ],
+    ..showSnackBar(pfToast(message));
+}
+
+/// The toast as a SnackBar, for showing through a messenger captured before
+/// the calling screen goes away.
+SnackBar pfToast(String message) => SnackBar(
+  behavior: SnackBarBehavior.floating,
+  backgroundColor: PfColors.toast,
+  elevation: 8,
+  duration: const Duration(milliseconds: 2600),
+  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+  content: Row(
+    children: [
+      const Icon(LucideIcons.circleCheck, size: 20, color: PfColors.toastIcon),
+      const SizedBox(width: 10),
+      Expanded(
+        child: Text(
+          message,
+          style: pfText(14, weight: w800, color: Colors.white),
         ),
       ),
-    );
-}
+    ],
+  ),
+);
 
 /// Labelled input block inside a form card ("Title", "Book name"...).
 class PfField extends StatelessWidget {
@@ -860,8 +905,7 @@ class PfPickerRow extends StatelessWidget {
                 ],
               ),
             ),
-            if (chevron)
-              Icon(LucideIcons.chevronDown, size: 19, color: c.sub),
+            if (chevron) Icon(LucideIcons.chevronDown, size: 19, color: c.sub),
           ],
         ),
       ),
