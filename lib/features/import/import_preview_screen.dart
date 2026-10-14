@@ -31,13 +31,14 @@ class _ImportPreviewScreenState extends State<ImportPreviewScreen> {
   bool saving = false;
 
   /// Ready and duplicate rows together, in statement (date) order.
-  late final rows = [
-    for (final entry in widget.preview.importable) (entry, false),
-    for (final entry in widget.preview.duplicates) (entry, true),
-  ]..sort((a, b) {
-      final date = a.$1.occurredAt.compareTo(b.$1.occurredAt);
-      return date != 0 ? date : a.$1.sequence.compareTo(b.$1.sequence);
-    });
+  late final rows =
+      [
+        for (final entry in widget.preview.importable) (entry, false),
+        for (final entry in widget.preview.duplicates) (entry, true),
+      ]..sort((a, b) {
+        final date = a.$1.occurredAt.compareTo(b.$1.occurredAt);
+        return date != 0 ? date : a.$1.sequence.compareTo(b.$1.sequence);
+      });
 
   void _backToBook() =>
       BookDetailScreen.returnTo(Navigator.of(context), widget.bookId);
@@ -85,11 +86,23 @@ class _ImportPreviewScreenState extends State<ImportPreviewScreen> {
                   const SizedBox(height: 14),
                   Row(
                     children: [
-                      _Count(value: ready, label: 'Ready to import', color: c.cashIn),
+                      _Count(
+                        value: ready,
+                        label: 'Ready to import',
+                        color: c.cashIn,
+                      ),
                       const SizedBox(width: 8),
-                      _Count(value: dupes, label: 'Duplicates skipped', color: c.gold),
+                      _Count(
+                        value: dupes,
+                        label: 'Duplicates skipped',
+                        color: c.gold,
+                      ),
                       const SizedBox(width: 8),
-                      _Count(value: ignored, label: 'Non-entry lines', color: c.sub),
+                      _Count(
+                        value: ignored,
+                        label: 'Non-entry lines',
+                        color: c.sub,
+                      ),
                     ],
                   ),
                   const SizedBox(height: 14),
@@ -105,11 +118,19 @@ class _ImportPreviewScreenState extends State<ImportPreviewScreen> {
                         children: [
                           Icon(LucideIcons.copyCheck, size: 30, color: c.gold),
                           const SizedBox(height: 10),
-                          Text('Already up to date', style: pfText(18, weight: w900)),
+                          Text(
+                            'Already up to date',
+                            style: pfText(18, weight: w900),
+                          ),
                           const SizedBox(height: 10),
                           Text(
                             'Every entry in this statement is already in ${book?.name ?? 'this book'}. Nothing new to import.',
-                            style: pfText(14, weight: w600, color: c.sub, height: 1.5),
+                            style: pfText(
+                              14,
+                              weight: w600,
+                              color: c.sub,
+                              height: 1.5,
+                            ),
                           ),
                           const SizedBox(height: 14),
                           PfSmallButton(
@@ -184,7 +205,10 @@ class _Count extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('$value', style: pfText(26, weight: w900, color: color)),
+            Text(
+              '$value',
+              style: pfText(26, weight: w900, color: color),
+            ),
             Text(label, style: pfText(12, color: c.sub)),
           ],
         ),
@@ -242,7 +266,10 @@ class _PreviewRow extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  Text(meta, style: pfText(11.5, weight: w700, color: c.sub)),
+                  Text(
+                    meta,
+                    style: pfText(11.5, weight: w700, color: c.sub),
+                  ),
                 ],
               ),
             ),
@@ -255,7 +282,10 @@ class _PreviewRow extends StatelessWidget {
                   style: pfText(14, weight: w900, color: c.amount(isIn)),
                 ),
                 if (duplicate)
-                  Text('DUPLICATE', style: pfText(10.5, weight: w900, color: c.gold)),
+                  Text(
+                    'DUPLICATE',
+                    style: pfText(10.5, weight: w900, color: c.gold),
+                  ),
               ],
             ),
           ],

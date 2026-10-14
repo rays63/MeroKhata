@@ -415,7 +415,10 @@ class _TypeToggle extends StatelessWidget {
                   children: [
                     Icon(icon, size: 16, color: fg),
                     const SizedBox(width: 6),
-                    Text(label, style: pfText(15, weight: w900, color: fg)),
+                    Text(
+                      label,
+                      style: pfText(15, weight: w900, color: fg),
+                    ),
                   ],
                 ),
               ),
@@ -435,11 +438,7 @@ class _TypeToggle extends StatelessWidget {
         children: [
           option(TransactionType.cashIn, LucideIcons.arrowDownLeft, 'Cash in'),
           const SizedBox(width: 6),
-          option(
-            TransactionType.cashOut,
-            LucideIcons.arrowUpRight,
-            'Cash out',
-          ),
+          option(TransactionType.cashOut, LucideIcons.arrowUpRight, 'Cash out'),
         ],
       ),
     );

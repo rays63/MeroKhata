@@ -32,7 +32,9 @@ class _BooksScreenState extends State<BooksScreen> {
     if (store.books.isEmpty) return const _EmptyBooks();
     final query = search.text.trim().toLowerCase();
     final books = store.booksByRecent
-        .where((book) => query.isEmpty || book.name.toLowerCase().contains(query))
+        .where(
+          (book) => query.isEmpty || book.name.toLowerCase().contains(query),
+        )
         .toList();
     return ListView(
       padding: pagePadding,
@@ -289,7 +291,12 @@ class _EmptyBooks extends StatelessWidget {
                   const SizedBox(height: 18),
                   Text(
                     'Start your first book',
-                    style: pfText(26, weight: w900, letterSpacing: -.4, height: 1.15),
+                    style: pfText(
+                      26,
+                      weight: w900,
+                      letterSpacing: -.4,
+                      height: 1.15,
+                    ),
                   ),
                   const SizedBox(height: 18),
                   Text(

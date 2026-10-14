@@ -4,13 +4,13 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../app/nav.dart';
 import '../../core/format.dart';
 import '../../data/app_store.dart';
-import '../../data/export_service.dart';
 import '../../data/models.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/category_icons.dart';
 import '../../widgets/entry_row.dart';
 import '../../widgets/option_sheet.dart';
 import '../../widgets/pf.dart';
+import '../reports/report_screen.dart';
 
 enum DateRange {
   today('Today'),
@@ -99,7 +99,9 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
           SheetOption(value, value, categoryIcon(value)),
       ],
     );
-    if (picked != null) setState(() => category = picked == all ? null : picked);
+    if (picked != null) {
+      setState(() => category = picked == all ? null : picked);
+    }
   }
 
   Future<void> _pickMode(AppStore store) async {
@@ -110,7 +112,11 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
       selected: mode ?? all,
       options: () => [
         const SheetOption(all, 'All modes', LucideIcons.wallet),
-        for (final value in _used(store, (e) => e.paymentMode, store.paymentModes))
+        for (final value in _used(
+          store,
+          (e) => e.paymentMode,
+          store.paymentModes,
+        ))
           SheetOption(value, value, LucideIcons.wallet),
       ],
     );
@@ -132,29 +138,16 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
     return values;
   }
 
-  Future<void> _export(LedgerBook book, List<LedgerTransaction> entries) async {
-    final choice = await showOptionSheet<String>(
-      context,
-      title: 'Export ${entries.length} ${entries.length == 1 ? 'entry' : 'entries'}',
-      selected: null,
-      options: () => const [
-        SheetOption('pdf', 'PDF report', LucideIcons.fileText),
-        SheetOption('csv', 'Excel (CSV)', LucideIcons.fileSpreadsheet),
-      ],
-    );
-    if (choice == null) return;
-    try {
-      if (choice == 'pdf') {
-        await ExportService.exportPdf(book: book, transactions: entries);
-      } else {
-        await ExportService.exportExcelLike(book: book, transactions: entries);
-      }
-    } catch (error) {
-      if (mounted) showPfToast(context, 'Export failed: $error');
-      return;
-    }
-    if (mounted) showPfToast(context, 'Export ready to share');
-  }
+  void _openReport(
+    String bookId,
+    List<LedgerTransaction> entries,
+    String range,
+  ) => Navigator.of(context).push(
+    MaterialPageRoute(
+      builder: (_) =>
+          ReportScreen(bookId: bookId, entries: entries, rangeLabel: range),
+    ),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -218,8 +211,12 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                       PfIconButton(
                         icon: LucideIcons.fileChartColumn,
                         size: 19,
-                        tooltip: 'Export',
-                        onPressed: () => _export(book, filtered),
+                        tooltip: 'Report',
+                        onPressed: () => _openReport(
+                          book.id,
+                          filtered,
+                          effectiveRange.label,
+                        ),
                       ),
                     ],
                   ),
@@ -278,7 +275,8 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                             body:
                                 'Add your first cash in or cash out below, or import a statement.',
                             actionLabel: 'Import statement',
-                            onAction: () => openImport(context, bookId: book.id),
+                            onAction: () =>
+                                openImport(context, bookId: book.id),
                           )
                         : PfEmptyCard(
                             icon: LucideIcons.funnelX,
@@ -296,7 +294,10 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                 itemCount: groups.length,
                 itemBuilder: (context, index) {
                   final (day, entries) = groups[index];
-                  final net = entries.fold(0.0, (sum, e) => sum + e.signedAmount);
+                  final net = entries.fold(
+                    0.0,
+                    (sum, e) => sum + e.signedAmount,
+                  );
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 14),
                     child: Column(
@@ -445,7 +446,10 @@ class _HeroFigure extends StatelessWidget {
           label,
           style: pfText(11, weight: w900, color: labelColor, letterSpacing: .5),
         ),
-        Text(value, style: pfText(16, weight: w900, color: Colors.white)),
+        Text(
+          value,
+          style: pfText(16, weight: w900, color: Colors.white),
+        ),
       ],
     );
   }

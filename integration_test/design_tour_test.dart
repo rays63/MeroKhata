@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:paisa_flow/main.dart';
@@ -270,6 +271,10 @@ void main() {
     await tap(find.text('Personal').first);
     await shot('detail');
 
+    await tap(find.byTooltip('Report'));
+    await shot('report');
+    await back();
+
     await tap(find.text('Category'));
     await shot('filter_category');
     await tap(find.text('All categories'));
@@ -294,6 +299,15 @@ void main() {
     await shot('import_pick');
     await back();
     await back();
+
+    await tap(find.text('Insights').last);
+    await shot('insights');
+    await tester.scrollUntilVisible(
+      find.text('Where it went'),
+      400,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await shot('insights_trends');
 
     await tap(find.text('Home').last);
     await tap(find.text('Goals'));

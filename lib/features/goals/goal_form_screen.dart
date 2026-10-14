@@ -40,7 +40,9 @@ class GoalFormScreen extends StatefulWidget {
 class _GoalFormScreenState extends State<GoalFormScreen> {
   late final name = TextEditingController(text: widget.goal?.name ?? '');
   late final target = TextEditingController(
-    text: widget.goal == null ? '' : widget.goal!.targetAmount.toStringAsFixed(0),
+    text: widget.goal == null
+        ? ''
+        : widget.goal!.targetAmount.toStringAsFixed(0),
   );
   late _Deadline deadline = widget.goal == null
       ? _Deadline.sixMonths
@@ -161,7 +163,10 @@ class _GoalFormScreenState extends State<GoalFormScreen> {
                       crossAxisAlignment: CrossAxisAlignment.baseline,
                       textBaseline: TextBaseline.alphabetic,
                       children: [
-                        Text('Rs', style: pfText(20, weight: w900, color: c.sub)),
+                        Text(
+                          'Rs',
+                          style: pfText(20, weight: w900, color: c.sub),
+                        ),
                         const SizedBox(width: 6),
                         Expanded(
                           child: TextField(
@@ -174,7 +179,11 @@ class _GoalFormScreenState extends State<GoalFormScreen> {
                             style: pfText(28, weight: w900, color: c.ink),
                             decoration: InputDecoration(
                               hintText: '0',
-                              hintStyle: pfText(28, weight: w900, color: c.mute),
+                              hintStyle: pfText(
+                                28,
+                                weight: w900,
+                                color: c.mute,
+                              ),
                             ),
                           ),
                         ),

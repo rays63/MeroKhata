@@ -156,7 +156,9 @@ class EntryDetailScreen extends StatelessWidget {
                   for (var i = 0; i < history.length; i++)
                     _HistoryItem(
                       text: history[i].details,
-                      when: DateFormat('d MMM, h:mm a').format(history[i].timestamp),
+                      when: DateFormat(
+                        'd MMM, h:mm a',
+                      ).format(history[i].timestamp),
                       latest: i == 0,
                     ),
                   if (history.isEmpty)
@@ -207,7 +209,10 @@ class _FieldLine extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: pfText(14, weight: w700, color: c.sub)),
+          Text(
+            label,
+            style: pfText(14, weight: w700, color: c.sub),
+          ),
           const SizedBox(width: 16),
           Expanded(
             child: Text(
@@ -262,7 +267,10 @@ class _HistoryItem extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(text, style: pfText(14)),
-                  Text(when, style: pfText(12, weight: w700, color: c.sub)),
+                  Text(
+                    when,
+                    style: pfText(12, weight: w700, color: c.sub),
+                  ),
                 ],
               ),
             ),

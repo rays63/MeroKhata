@@ -8,6 +8,7 @@ import '../../data/app_store.dart';
 import '../../data/models.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/entry_row.dart';
+import '../../widgets/month_grid.dart';
 import '../../widgets/pf.dart';
 import '../../widgets/store_sheets.dart';
 
@@ -103,7 +104,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
                           ),
                           if (store.books.length > 1) ...[
                             const SizedBox(width: 4),
-                            Icon(LucideIcons.chevronDown, size: 13, color: c.sub),
+                            Icon(
+                              LucideIcons.chevronDown,
+                              size: 13,
+                              color: c.sub,
+                            ),
                           ],
                         ],
                       ),
@@ -116,10 +121,18 @@ class _CalendarScreenState extends State<CalendarScreen> {
             PfCard(
               radius: 26,
               padding: const EdgeInsets.fromLTRB(14, 18, 14, 18),
-              child: _MonthGrid(
+              child: MonthGrid(
                 month: month,
                 selected: selected,
-                byDay: byDay,
+                showOutsideDays: true,
+                activity: (day) {
+                  final list = byDay[DateTime(month.year, month.month, day)];
+                  if (list == null) return (false, false);
+                  return (
+                    list.any((e) => e.type == TransactionType.cashIn),
+                    list.any((e) => e.type == TransactionType.cashOut),
+                  );
+                },
                 onPrev: () => _shiftMonth(-1),
                 onNext: () => _shiftMonth(1),
                 onSelect: (day) => setState(() => selected = day),
@@ -132,7 +145,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 crossAxisAlignment: CrossAxisAlignment.baseline,
                 textBaseline: TextBaseline.alphabetic,
                 children: [
-                  Expanded(child: Text(label, style: pfText(17, weight: w900))),
+                  Expanded(
+                    child: Text(label, style: pfText(17, weight: w900)),
+                  ),
                   Text(
                     '${dayEntries.length} ${dayEntries.length == 1 ? 'entry' : 'entries'}',
                     style: pfText(13, color: c.sub),
@@ -192,159 +207,6 @@ class _CalendarScreenState extends State<CalendarScreen> {
   }
 }
 
-class _MonthGrid extends StatelessWidget {
-  const _MonthGrid({
-    required this.month,
-    required this.selected,
-    required this.byDay,
-    required this.onPrev,
-    required this.onNext,
-    required this.onSelect,
-  });
-
-  final DateTime month;
-  final DateTime selected;
-  final Map<DateTime, List<LedgerTransaction>> byDay;
-  final VoidCallback onPrev;
-  final VoidCallback onNext;
-  final ValueChanged<DateTime> onSelect;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.pf;
-    final today = DateUtils.dateOnly(DateTime.now());
-    final days = DateUtils.getDaysInMonth(month.year, month.month);
-    final lead = DateTime(month.year, month.month).weekday % 7; // Sunday first
-    final previousDays = DateUtils.getDaysInMonth(month.year, month.month - 1);
-    final cells = lead + days;
-    final rows = (cells / 7).ceil();
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(6, 0, 6, 14),
-          child: Row(
-            children: [
-              IconButton(
-                tooltip: 'Previous month',
-                onPressed: onPrev,
-                icon: Icon(LucideIcons.chevronLeft, size: 20, color: c.mute),
-              ),
-              Expanded(
-                child: Text(
-                  DateFormat('MMMM y').format(month),
-                  textAlign: TextAlign.center,
-                  style: pfText(17, weight: w900),
-                ),
-              ),
-              IconButton(
-                tooltip: 'Next month',
-                onPressed: onNext,
-                icon: Icon(LucideIcons.chevronRight, size: 20, color: c.mute),
-              ),
-            ],
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.only(bottom: 6),
-          child: Row(
-            children: [
-              for (final day in const ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'])
-                Expanded(
-                  child: Text(
-                    day,
-                    textAlign: TextAlign.center,
-                    style: pfText(11, weight: w900, color: c.mute),
-                  ),
-                ),
-            ],
-          ),
-        ),
-        for (var row = 0; row < rows; row++)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 4),
-            child: Row(
-              children: [
-                for (var col = 0; col < 7; col++)
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 2),
-                      child: _cell(context, row * 7 + col, lead, days, previousDays, today),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-      ],
-    );
-  }
-
-  Widget _cell(
-    BuildContext context,
-    int index,
-    int lead,
-    int days,
-    int previousDays,
-    DateTime today,
-  ) {
-    final c = context.pf;
-    final dayNumber = index - lead + 1;
-    if (dayNumber < 1 || dayNumber > days) {
-      final text = dayNumber < 1 ? previousDays + dayNumber : dayNumber - days;
-      return SizedBox(
-        height: 46,
-        child: Center(
-          child: Text('$text', style: pfText(14, color: c.mute.withValues(alpha: .6))),
-        ),
-      );
-    }
-    final date = DateTime(month.year, month.month, dayNumber);
-    final isSelected = date == selected;
-    final isToday = date == today;
-    final entries = byDay[date] ?? const [];
-    final hasIn = entries.any((e) => e.type == TransactionType.cashIn);
-    final hasOut = entries.any((e) => e.type == TransactionType.cashOut);
-    final fg = isSelected ? c.onBtn : (date.isAfter(today) ? c.mute : c.ink);
-    Widget dot(bool on, Color color) => Container(
-      width: 5,
-      height: 5,
-      margin: const EdgeInsets.symmetric(horizontal: 1),
-      decoration: BoxDecoration(
-        color: on ? (isSelected ? c.onBtn : color) : Colors.transparent,
-        shape: BoxShape.circle,
-      ),
-    );
-    return Semantics(
-      selected: isSelected,
-      button: true,
-      label:
-          '${DateFormat('d MMMM').format(date)}${entries.isEmpty ? '' : ', ${entries.length} entries'}',
-      excludeSemantics: true,
-      child: Material(
-        color: isSelected ? c.btn : (isToday ? c.soft : Colors.transparent),
-        borderRadius: BorderRadius.circular(14),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(14),
-          onTap: () => onSelect(date),
-          child: SizedBox(
-            height: 46,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text('$dayNumber', style: pfText(14, color: fg)),
-                const SizedBox(height: 3),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [dot(hasIn, c.pri), dot(hasOut, c.cashOut)],
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class _DayTotal extends StatelessWidget {
   const _DayTotal({
     required this.label,
@@ -373,7 +235,10 @@ class _DayTotal extends StatelessWidget {
           FittedBox(
             fit: BoxFit.scaleDown,
             alignment: Alignment.centerLeft,
-            child: Text(value, style: pfText(17, weight: w900, color: foreground)),
+            child: Text(
+              value,
+              style: pfText(17, weight: w900, color: foreground),
+            ),
           ),
         ],
       ),

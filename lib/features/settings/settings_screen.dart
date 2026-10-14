@@ -18,7 +18,8 @@ class SettingsScreen extends StatelessWidget {
 
   Future<void> _exportAll(BuildContext context, AppStore store) async {
     await store.persist();
-    final raw = (await SharedPreferences.getInstance()).getString(
+    final raw =
+        (await SharedPreferences.getInstance()).getString(
           'hissabkitab_data_v1',
         ) ??
         '{}';
@@ -118,7 +119,9 @@ class SettingsScreen extends StatelessWidget {
                         selected: store.defaultCurrency,
                         title: 'Default currency',
                       );
-                      if (picked != null) await store.setDefaultCurrency(picked);
+                      if (picked != null) {
+                        await store.setDefaultCurrency(picked);
+                      }
                     },
                   ),
                   const PfDivider(),
@@ -145,10 +148,7 @@ class SettingsScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Center(
-              child: Text(
-                'Paisa Flow 1.0.0',
-                style: pfText(12, color: c.mute),
-              ),
+              child: Text('Paisa Flow 1.0.0', style: pfText(12, color: c.mute)),
             ),
             const SizedBox(height: 30),
           ],
@@ -188,7 +188,10 @@ class _SettingsRow extends StatelessWidget {
             const SizedBox(width: 14),
             Expanded(child: Text(label, style: pfText(15))),
             if (value != null)
-              Text(value!, style: pfText(13, weight: w700, color: c.sub)),
+              Text(
+                value!,
+                style: pfText(13, weight: w700, color: c.sub),
+              ),
             if (badge != null) PfBadge(label: badge!, fontSize: 11),
             if (onTap != null && chevron) ...[
               const SizedBox(width: 8),

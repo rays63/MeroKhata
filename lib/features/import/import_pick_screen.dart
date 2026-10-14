@@ -26,7 +26,9 @@ class _ImportPickScreenState extends State<ImportPickScreen> {
     setState(() => error = null);
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
-      allowedExtensions: pdf ? const ['pdf'] : const ['xls', 'xlsx', 'csv', 'tsv'],
+      allowedExtensions: pdf
+          ? const ['pdf']
+          : const ['xls', 'xlsx', 'csv', 'tsv'],
       withData: true,
     );
     final file = result?.files.single;
@@ -134,7 +136,10 @@ class _ImportPickScreenState extends State<ImportPickScreen> {
               ),
               child: const Column(
                 children: [
-                  _Tip(LucideIcons.eye, 'You’ll review everything before it’s saved.'),
+                  _Tip(
+                    LucideIcons.eye,
+                    'You’ll review everything before it’s saved.',
+                  ),
                   SizedBox(height: 10),
                   _Tip(
                     LucideIcons.copyCheck,
@@ -204,7 +209,10 @@ class _SourceCard extends StatelessWidget {
                   style: pfText(13.5, weight: w600, color: c.sub, height: 1.45),
                 ),
                 const SizedBox(height: 10),
-                Text(action, style: pfText(13.5, weight: w900, color: c.cashIn)),
+                Text(
+                  action,
+                  style: pfText(13.5, weight: w900, color: c.cashIn),
+                ),
               ],
             ),
           ),

@@ -175,7 +175,11 @@ class _TotalCard extends StatelessWidget {
                     Expanded(
                       child: Text(
                         'Total balance · $home',
-                        style: pfText(13, weight: w800, color: PfColors.heroLabel),
+                        style: pfText(
+                          13,
+                          weight: w800,
+                          color: PfColors.heroLabel,
+                        ),
                       ),
                     ),
                     PfBadge(
@@ -239,7 +243,11 @@ class _TotalCard extends StatelessWidget {
                           ),
                           child: Text(
                             '${book.name} · ${balanceMoney(store.balanceFor(book.id), book.currency)}',
-                            style: pfText(12, weight: w800, color: Colors.white),
+                            style: pfText(
+                              12,
+                              weight: w800,
+                              color: Colors.white,
+                            ),
                           ),
                         ),
                     ],
@@ -407,7 +415,10 @@ class _GoalsCard extends StatelessWidget {
       0.0,
       (sum, goal) => sum + goal.savedAmount.clamp(0, goal.targetAmount),
     );
-    final target = store.goals.fold(0.0, (sum, goal) => sum + goal.targetAmount);
+    final target = store.goals.fold(
+      0.0,
+      (sum, goal) => sum + goal.targetAmount,
+    );
     final count = store.goals.length;
     return _HomeCard(
       title: 'Goals',
@@ -448,8 +459,14 @@ class _SplitCard extends StatelessWidget {
       iconColor: c.gold,
       onTap: () => ShellScope.go(context, ShellTab.split),
       children: [
-        Text("You're owed", style: pfText(12.5, weight: w700, color: c.sub)),
-        Text(money(0), style: pfText(17, weight: w900, color: c.cashIn)),
+        Text(
+          "You're owed",
+          style: pfText(12.5, weight: w700, color: c.sub),
+        ),
+        Text(
+          money(0),
+          style: pfText(17, weight: w900, color: c.cashIn),
+        ),
       ],
     );
   }
@@ -480,7 +497,9 @@ class _HomeCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Expanded(child: Text(title, style: pfText(15, weight: w900))),
+              Expanded(
+                child: Text(title, style: pfText(15, weight: w900)),
+              ),
               Icon(icon, size: 18, color: iconColor),
             ],
           ),
@@ -538,7 +557,10 @@ class _RecentBookTile extends StatelessWidget {
                   color: balance < 0 ? c.cashOut : c.ink,
                 ),
               ),
-              Text(book.currency, style: pfText(11, weight: w800, color: c.sub)),
+              Text(
+                book.currency,
+                style: pfText(11, weight: w800, color: c.sub),
+              ),
             ],
           ),
         ],

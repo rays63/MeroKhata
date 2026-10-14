@@ -337,4 +337,3 @@ class ImportPreview {
   final List<LedgerTransaction> duplicates;
   final List<String> ignored;
 }
-

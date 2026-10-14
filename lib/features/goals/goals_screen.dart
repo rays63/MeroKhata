@@ -29,7 +29,10 @@ class GoalsScreen extends StatelessWidget {
       0.0,
       (sum, goal) => sum + min(goal.savedAmount, goal.targetAmount),
     );
-    final target = store.goals.fold(0.0, (sum, goal) => sum + goal.targetAmount);
+    final target = store.goals.fold(
+      0.0,
+      (sum, goal) => sum + goal.targetAmount,
+    );
     final progress = target <= 0 ? 0.0 : saved / target;
     return Scaffold(
       body: SafeArea(
@@ -82,12 +85,20 @@ class GoalsScreen extends StatelessWidget {
                           alignment: Alignment.centerLeft,
                           child: Text(
                             money(saved),
-                            style: pfText(26, weight: w900, color: Colors.white),
+                            style: pfText(
+                              26,
+                              weight: w900,
+                              color: Colors.white,
+                            ),
                           ),
                         ),
                         Text(
                           'of ${money(target)}',
-                          style: pfText(12.5, weight: w700, color: PfColors.heroLabel),
+                          style: pfText(
+                            12.5,
+                            weight: w700,
+                            color: PfColors.heroLabel,
+                          ),
                         ),
                       ],
                     ),
@@ -100,7 +111,8 @@ class GoalsScreen extends StatelessWidget {
               PfEmptyCard(
                 icon: LucideIcons.target,
                 title: 'No goals yet',
-                body: 'Set a savings target — an emergency fund, a laptop, Dashain gifts.',
+                body:
+                    'Set a savings target — an emergency fund, a laptop, Dashain gifts.',
                 actionLabel: 'New goal',
                 onAction: () => openNewGoal(context),
               ),
@@ -133,9 +145,9 @@ class _GoalCard extends StatelessWidget {
     final reached = goal.reached;
     return PfCard(
       padding: const EdgeInsets.all(18),
-      onTap: () => Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => GoalFormScreen(goal: goal)),
-      ),
+      onTap: () => Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => GoalFormScreen(goal: goal))),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -155,7 +167,9 @@ class _GoalCard extends StatelessWidget {
                 ),
               ),
               PfBadge(
-                label: reached ? 'REACHED' : '${(goal.progress * 100).round()}%',
+                label: reached
+                    ? 'REACHED'
+                    : '${(goal.progress * 100).round()}%',
                 pill: true,
                 fontSize: 11.5,
                 background: reached ? c.soft : c.card2,

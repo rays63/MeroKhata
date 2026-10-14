@@ -144,9 +144,10 @@ class _BookFormScreenState extends State<BookFormScreen> {
                           Expanded(
                             child: TextField(
                               controller: opening,
-                              keyboardType: const TextInputType.numberWithOptions(
-                                decimal: true,
-                              ),
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                    decimal: true,
+                                  ),
                               inputFormatters: [
                                 FilteringTextInputFormatter.allow(
                                   RegExp(r'[\d.]'),
