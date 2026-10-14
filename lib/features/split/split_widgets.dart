@@ -4,12 +4,16 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../core/format.dart';
 import '../../data/app_store.dart';
 import '../../data/split.dart';
+import '../../l10n/l10n.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/pf.dart';
 import '../../widgets/store_sheets.dart';
 
-String personName(AppStore store, String id) =>
-    id == me ? 'You' : (store.friendById(id)?.name ?? 'Friend');
+/// Display name for a split participant: "You" (localised) for the current
+/// user, otherwise the friend's stored name.
+String personName(AppLocalizations l, AppStore store, String id) => id == me
+    ? l.splitYou
+    : (store.friendById(id)?.name ?? l.splitFriendFallback);
 
 Color personColor(AppStore store, String id) => Color(
   id == me ? meColor : (store.friendById(id)?.colorValue ?? friendColors.first),
@@ -67,6 +71,7 @@ class AvatarStack extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final store = AppScope.read(context);
+    final l = context.l10n;
     final c = context.pf;
     final shown = ids.take(3).toList();
     return SizedBox(
@@ -78,7 +83,7 @@ class AvatarStack extends StatelessWidget {
             Positioned(
               left: i * 26,
               child: PersonAvatar(
-                name: personName(store, shown[i]),
+                name: personName(l, store, shown[i]),
                 color: personColor(store, shown[i]),
                 size: 34,
                 border: c.card,
@@ -93,11 +98,12 @@ class AvatarStack extends StatelessWidget {
 /// Asks for a friend's name and adds them. Returns the new friend's id.
 Future<String?> addFriendDialog(BuildContext context) async {
   final c = context.pf;
+  final l = context.l10n;
   final controller = TextEditingController();
   final name = await showDialog<String>(
     context: context,
     builder: (context) => AlertDialog(
-      title: Text('Add a friend', style: pfText(19, weight: w900)),
+      title: Text(l.splitAddFriendTitle, style: pfText(19, weight: w900)),
       content: TextField(
         controller: controller,
         autofocus: true,
@@ -105,18 +111,18 @@ Future<String?> addFriendDialog(BuildContext context) async {
         onSubmitted: (value) => Navigator.pop(context, value),
         style: pfText(17, color: c.ink),
         decoration: InputDecoration(
-          hintText: 'Name, e.g. Sita',
+          hintText: l.splitAddFriendHint,
           hintStyle: pfText(17, color: c.mute),
         ),
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: Text('Cancel', style: pfText(14, color: c.sub)),
+          child: Text(l.cancel, style: pfText(14, color: c.sub)),
         ),
         TextButton(
           onPressed: () => Navigator.pop(context, controller.text),
-          child: Text('Add', style: pfText(14, color: c.cashIn)),
+          child: Text(l.add, style: pfText(14, color: c.cashIn)),
         ),
       ],
     ),
@@ -145,6 +151,7 @@ class PeoplePicker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final store = AppScope.watch(context);
+    final l = context.l10n;
     final c = context.pf;
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
@@ -157,7 +164,7 @@ class PeoplePicker extends StatelessWidget {
             Semantics(
               selected: isSelected(id),
               button: true,
-              label: personName(store, id),
+              label: personName(l, store, id),
               excludeSemantics: true,
               onTap: () => onTap(id),
               child: GestureDetector(
@@ -167,7 +174,7 @@ class PeoplePicker extends StatelessWidget {
                   child: Column(
                     children: [
                       PersonAvatar(
-                        name: personName(store, id),
+                        name: personName(l, store, id),
                         color: personColor(store, id),
                         size: 54,
                         ring: isSelected(id) ? c.pri : null,
@@ -176,7 +183,7 @@ class PeoplePicker extends StatelessWidget {
                       SizedBox(
                         width: 64,
                         child: Text(
-                          personName(store, id),
+                          personName(l, store, id),
                           textAlign: TextAlign.center,
                           style: pfText(12.5),
                           maxLines: 1,
@@ -193,7 +200,7 @@ class PeoplePicker extends StatelessWidget {
           if (onAdd != null)
             Semantics(
               button: true,
-              label: 'Add a friend',
+              label: l.splitAddFriendTitle,
               excludeSemantics: true,
               onTap: onAdd,
               child: GestureDetector(
@@ -210,7 +217,7 @@ class PeoplePicker extends StatelessWidget {
                       child: Icon(LucideIcons.userPlus, size: 22, color: c.sub),
                     ),
                     const SizedBox(height: 6),
-                    Text('Add', style: pfText(12.5, color: c.sub)),
+                    Text(l.add, style: pfText(12.5, color: c.sub)),
                   ],
                 ),
               ),
@@ -250,6 +257,7 @@ class SharesEditor extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final store = AppScope.watch(context);
+    final l = context.l10n;
     final c = context.pf;
     final shares = effective(weights, byShares);
     final parts = splitAmount(amount, shares);
@@ -288,7 +296,7 @@ class SharesEditor extends StatelessWidget {
         PfSegment<bool>(
           value: byShares,
           onChanged: onMethod,
-          items: const [(false, 'Equal', null), (true, 'Shares', null)],
+          items: [(false, l.splitEqual, null), (true, l.splitShares, null)],
         ),
         const SizedBox(height: 16),
         if (shares.isNotEmpty)
@@ -306,14 +314,14 @@ class SharesEditor extends StatelessWidget {
                     child: Row(
                       children: [
                         PersonAvatar(
-                          name: personName(store, id),
+                          name: personName(l, store, id),
                           color: personColor(store, id),
                           size: 36,
                         ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
-                            personName(store, id),
+                            personName(l, store, id),
                             style: pfText(15),
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -321,7 +329,7 @@ class SharesEditor extends StatelessWidget {
                         if (byShares) ...[
                           stepper(
                             LucideIcons.minus,
-                            'Fewer shares for ${personName(store, id)}',
+                            l.splitFewerShares(personName(l, store, id)),
                             weights[id]! > 1
                                 ? () => onWeight(id, weights[id]! - 1)
                                 : null,
@@ -336,7 +344,7 @@ class SharesEditor extends StatelessWidget {
                           ),
                           stepper(
                             LucideIcons.plus,
-                            'More shares for ${personName(store, id)}',
+                            l.splitMoreShares(personName(l, store, id)),
                             () => onWeight(id, weights[id]! + 1),
                           ),
                         ],
@@ -385,9 +393,14 @@ class RecordToggle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final store = AppScope.watch(context);
+    final l = context.l10n;
     final c = context.pf;
     final book = bookId == null ? null : store.bookById(bookId!);
     if (book == null) return const SizedBox.shrink();
+    final textStyle = pfText(13.5, weight: w700, height: 1.4);
+    // Split around the book link so each language keeps its own word order
+    // ("Record Rs 3,600 as cash out in [Book]" / "… खर्चको रूपमा [Book] खातामा …").
+    final after = l.splitRecordAfterBook;
     return Material(
       color: c.card2,
       borderRadius: BorderRadius.circular(18),
@@ -409,8 +422,8 @@ class RecordToggle extends StatelessWidget {
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     Text(
-                      'Record ${money(amount, currency)} as cash out in ',
-                      style: pfText(13.5, weight: w700, height: 1.4),
+                      '${l.splitRecordBeforeBook(money(amount, currency))} ',
+                      style: textStyle,
                     ),
                     _BookLink(
                       name: book.name,
@@ -423,6 +436,7 @@ class RecordToggle extends StatelessWidget {
                         if (picked != null) onBook(picked);
                       },
                     ),
+                    if (after.isNotEmpty) Text(' $after', style: textStyle),
                   ],
                 ),
               ),
@@ -511,6 +525,7 @@ class _SettleSheetState extends State<_SettleSheet> {
   @override
   Widget build(BuildContext context) {
     final store = AppScope.watch(context);
+    final l = context.l10n;
     final c = context.pf;
     final theyPay = widget.amount > 0;
     final book = bookId == null ? null : store.bookById(bookId!);
@@ -533,23 +548,26 @@ class _SettleSheetState extends State<_SettleSheet> {
           ),
           Text(
             theyPay
-                ? 'Settle up with ${widget.friendName}'
-                : 'Pay ${widget.friendName}',
+                ? l.splitSettleUpWith(widget.friendName)
+                : l.splitPayName(widget.friendName),
             style: pfText(19, weight: w900),
           ),
           const SizedBox(height: 6),
           Text(
             theyPay
-                ? '${widget.friendName} pays you ${money(widget.amount, widget.currency)}.'
-                : 'You pay ${widget.friendName} ${money(widget.amount, widget.currency)}.',
+                ? l.splitTheyPayYou(
+                    widget.friendName,
+                    money(widget.amount, widget.currency),
+                  )
+                : l.splitYouPayThem(
+                    widget.friendName,
+                    money(widget.amount.abs(), widget.currency),
+                  ),
             style: pfText(15, weight: w600, color: c.sub),
           ),
           const SizedBox(height: 16),
           if (book == null)
-            const PfNote(
-              icon: LucideIcons.info,
-              text: 'Add a book in this currency to record settlements.',
-            )
+            PfNote(icon: LucideIcons.info, text: l.splitNoBookForCurrency)
           else
             PfCard(
               color: c.card2,
@@ -575,7 +593,9 @@ class _SettleSheetState extends State<_SettleSheet> {
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      'Add as ${theyPay ? 'cash in' : 'cash out'} to ${book.name}',
+                      theyPay
+                          ? l.splitAddAsCashIn(book.name)
+                          : l.splitAddAsCashOut(book.name),
                       style: pfText(14, weight: w700),
                     ),
                   ),
@@ -586,8 +606,8 @@ class _SettleSheetState extends State<_SettleSheet> {
           const SizedBox(height: 16),
           PfButton(
             label: theyPay
-                ? 'Settle ${money(widget.amount, widget.currency)}'
-                : 'Pay ${money(widget.amount.abs(), widget.currency)}',
+                ? l.splitSettleAmount(money(widget.amount, widget.currency))
+                : l.splitPayAmount(money(widget.amount.abs(), widget.currency)),
             onPressed: book == null
                 ? null
                 : () => Navigator.pop(context, book.id),

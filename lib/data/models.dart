@@ -292,6 +292,12 @@ class UserProfile {
   );
 }
 
+/// One line of an entry's edit history.
+///
+/// [details] is an English sentence kept for older data and exports; [code]
+/// and [args] let the UI word it in the current language (e.g. code
+/// `amount`, args `[Rs 3,200, Rs 3,460]`). Logs saved before codes existed
+/// have a null [code] and are shown as recorded.
 class TransactionLog {
   const TransactionLog({
     required this.id,
@@ -299,6 +305,8 @@ class TransactionLog {
     required this.action,
     required this.details,
     required this.timestamp,
+    this.code,
+    this.args = const [],
   });
 
   final String id;
@@ -306,6 +314,8 @@ class TransactionLog {
   final String action;
   final String details;
   final DateTime timestamp;
+  final String? code;
+  final List<String> args;
 
   Map<String, Object?> toJson() => {
     'id': id,
@@ -313,6 +323,8 @@ class TransactionLog {
     'action': action,
     'details': details,
     'timestamp': timestamp.toIso8601String(),
+    'code': code,
+    'args': args,
   };
 
   factory TransactionLog.fromJson(Map<String, Object?> json) => TransactionLog(
@@ -321,6 +333,8 @@ class TransactionLog {
     action: json['action'] as String,
     details: json['details'] as String,
     timestamp: DateTime.parse(json['timestamp'] as String),
+    code: json['code'] as String?,
+    args: (json['args'] as List? ?? const []).map((e) => e.toString()).toList(),
   );
 }
 

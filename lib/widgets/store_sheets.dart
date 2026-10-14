@@ -5,6 +5,7 @@ import '../core/format.dart';
 import '../data/app_store.dart';
 import 'category_icons.dart';
 import 'option_sheet.dart';
+import '../l10n/l10n.dart';
 
 /// Category picker with "Edit list"; renames apply to existing entries.
 ///
@@ -19,7 +20,7 @@ Future<String?> pickCategory(
   final store = AppScope.read(context);
   return _pickEditable(
     context,
-    title: 'Category',
+    title: context.l10n.category,
     selected: selected,
     manageOnly: manageOnly,
     items: () => store.categories,
@@ -37,7 +38,7 @@ Future<String?> pickPaymentMode(
   final store = AppScope.read(context);
   return _pickEditable(
     context,
-    title: 'Payment mode',
+    title: context.l10n.paymentMode,
     selected: selected,
     manageOnly: manageOnly,
     items: () => store.paymentModes,
@@ -81,11 +82,11 @@ Future<String?> _pickEditable(
 Future<String?> pickCurrency(
   BuildContext context, {
   required String selected,
-  String title = 'Book currency',
+  String? title,
 }) {
   return showOptionSheet<String>(
     context,
-    title: title,
+    title: title ?? context.l10n.bookCurrency,
     selected: selected,
     options: () => [
       for (final currency in Currency.all)
@@ -103,7 +104,7 @@ Future<String?> pickBook(
   final store = AppScope.read(context);
   return showOptionSheet<String>(
     context,
-    title: 'Book',
+    title: context.l10n.book,
     selected: selected,
     options: () => [
       for (final book in store.booksByRecent)

@@ -7,6 +7,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../core/format.dart';
 import '../../data/app_store.dart';
 import '../../data/models.dart';
+import '../../l10n/l10n.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/pf.dart';
 import 'setup_screen.dart';
@@ -42,13 +43,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   String? _validate() {
-    if (name.text.trim().isEmpty) return 'Please tell us your name';
+    final l = context.l10n;
+    if (name.text.trim().isEmpty) return l.profileNameRequired;
     if (!_phonePattern.hasMatch(phone.text)) {
-      return 'Enter a 10-digit mobile number starting with 9';
+      return l.profilePhoneRule;
     }
     final mail = email.text.trim();
     if (mail.isNotEmpty && !_emailPattern.hasMatch(mail)) {
-      return 'That email looks incomplete — fix it or leave it blank';
+      return l.profileEmailInvalid;
     }
     return null;
   }
@@ -76,7 +78,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       );
       saving = false;
     } else {
-      showPfToast(context, 'Details saved');
+      showPfToast(context, context.l10n.profileSaved);
       navigator.pop();
     }
   }
@@ -86,6 +88,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final c = context.pf;
+    final l = context.l10n;
     final phoneOk = _phonePattern.hasMatch(phone.text);
     final emailOk = _emailPattern.hasMatch(email.text.trim());
     return Scaffold(
@@ -104,14 +107,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     if (widget.onboarding)
                       const StepHeader(step: 1)
                     else
-                      const PfHeader(title: 'Your details'),
+                      PfHeader(title: l.profileTitle),
                     const SizedBox(height: 22),
                     if (widget.onboarding) ...[
-                      const StepTitle(
+                      StepTitle(
                         step: 1,
-                        title: 'Tell us about you',
-                        body:
-                            'Used to personalise the app and put your name on exported reports.',
+                        title: l.profileStepTitle,
+                        body: l.profileStepBody,
                       ),
                       const SizedBox(height: 22),
                     ],
@@ -137,7 +139,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         const SizedBox(width: 14),
                         Expanded(
                           child: Text(
-                            'Your initials become your avatar. You can add a photo later in Settings.',
+                            l.profileAvatarHint,
                             style: pfText(
                               13,
                               weight: w700,
@@ -154,7 +156,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         children: [
                           _ProfileField(
                             icon: LucideIcons.userRound,
-                            label: 'Full name',
+                            label: l.profileFullName,
                             child: TextField(
                               controller: name,
                               autofocus:
@@ -164,7 +166,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               onChanged: _changed,
                               style: pfText(17, color: c.ink),
                               decoration: InputDecoration(
-                                hintText: 'e.g. Aarav Shrestha',
+                                hintText: l.profileNameHint,
                                 hintStyle: pfText(17, color: c.mute),
                               ),
                             ),
@@ -172,7 +174,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           const PfDivider(),
                           _ProfileField(
                             icon: LucideIcons.phone,
-                            label: 'Mobile number',
+                            label: l.profileMobile,
                             ok: phoneOk,
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.baseline,
@@ -209,7 +211,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           const PfDivider(),
                           _ProfileField(
                             icon: LucideIcons.mail,
-                            label: 'Email',
+                            label: l.profileEmail,
                             optional: true,
                             ok: emailOk,
                             child: TextField(
@@ -239,7 +241,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(
-                            'Saved only on this phone. We never upload or share your details.',
+                            l.profilePrivacy,
                             style: pfText(
                               13,
                               weight: w700,
@@ -253,7 +255,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     const Spacer(),
                     const SizedBox(height: 22),
                     PfButton(
-                      label: widget.onboarding ? 'Continue' : 'Save',
+                      label: widget.onboarding ? l.continueLabel : l.save,
                       trailingIcon: widget.onboarding
                           ? LucideIcons.arrowRight
                           : null,
@@ -306,7 +308,7 @@ class _ProfileField extends StatelessWidget {
           if (ok) ...[
             const SizedBox(width: 10),
             Semantics(
-              label: 'Valid',
+              label: context.l10n.profileValid,
               child: Icon(LucideIcons.circleCheck, size: 19, color: c.pri),
             ),
           ],
@@ -329,7 +331,7 @@ class StepHeader extends StatelessWidget {
       children: [
         PfIconButton(
           icon: LucideIcons.arrowLeft,
-          tooltip: 'Back',
+          tooltip: context.l10n.back,
           onPressed: () => Navigator.maybePop(context),
         ),
         const SizedBox(width: 12),
@@ -370,7 +372,7 @@ class StepTitle extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'STEP $step OF 2',
+          context.l10n.setupStepOf(step, 2),
           style: pfText(13, color: c.pri, letterSpacing: .4),
         ),
         const SizedBox(height: 6),

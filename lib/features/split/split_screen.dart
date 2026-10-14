@@ -4,6 +4,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../core/format.dart';
 import '../../data/app_store.dart';
 import '../../data/split.dart';
+import '../../l10n/l10n.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/pf.dart';
 import 'group_form_screen.dart';
@@ -28,17 +29,18 @@ class _SplitScreenState extends State<SplitScreen> {
   @override
   Widget build(BuildContext context) {
     final store = AppScope.watch(context);
+    final l = context.l10n;
     final c = context.pf;
     return ListView(
       padding: pagePadding,
       children: [
-        Text('Split', style: pfText(30, weight: w900, letterSpacing: -.6)),
+        Text(l.split, style: pfText(30, weight: w900, letterSpacing: -.6)),
         const SizedBox(height: 16),
         Row(
           children: [
             Expanded(
               child: _Total(
-                label: "You're owed",
+                label: l.youreOwed,
                 amount: store.owedToYou,
                 cur: store.defaultCurrency,
                 background: c.soft,
@@ -48,7 +50,7 @@ class _SplitScreenState extends State<SplitScreen> {
             const SizedBox(width: 10),
             Expanded(
               child: _Total(
-                label: 'You owe',
+                label: l.youOwe,
                 amount: store.youOwe,
                 cur: store.defaultCurrency,
                 background: c.outSoft,
@@ -59,7 +61,7 @@ class _SplitScreenState extends State<SplitScreen> {
         ),
         const SizedBox(height: 16),
         PfButton(
-          label: 'Split a bill',
+          label: l.splitABill,
           icon: LucideIcons.split,
           trailingIcon: LucideIcons.arrowRight,
           spread: true,
@@ -71,22 +73,21 @@ class _SplitScreenState extends State<SplitScreen> {
         PfSegment<bool>(
           value: showBills,
           onChanged: (value) => setState(() => showBills = value),
-          items: const [(false, 'Groups', null), (true, 'Bills', null)],
+          items: [(false, l.splitGroups, null), (true, l.splitBills, null)],
         ),
         const SizedBox(height: 16),
-        if (!showBills) ..._groups(store, c) else ..._bills(store, c),
+        if (!showBills) ..._groups(store, l) else ..._bills(store, l),
         const SizedBox(height: 24),
       ],
     );
   }
 
-  List<Widget> _groups(AppStore store, PfColors c) => [
+  List<Widget> _groups(AppStore store, AppLocalizations l) => [
     if (store.groups.isEmpty)
-      const PfEmptyCard(
+      PfEmptyCard(
         icon: LucideIcons.users,
-        title: 'No groups yet',
-        body:
-            'Make a group for a trip or a shared flat and keep running balances with everyone in it.',
+        title: l.splitNoGroupsTitle,
+        body: l.splitNoGroupsBody,
       ),
     for (final group in store.groups) ...[
       _GroupTile(
@@ -96,7 +97,7 @@ class _SplitScreenState extends State<SplitScreen> {
       const SizedBox(height: 10),
     ],
     PfButton(
-      label: 'New group',
+      label: l.splitNewGroup,
       icon: LucideIcons.plus,
       style: PfButtonStyle.soft,
       height: 52,
@@ -106,12 +107,12 @@ class _SplitScreenState extends State<SplitScreen> {
     ),
   ];
 
-  List<Widget> _bills(AppStore store, PfColors c) => [
+  List<Widget> _bills(AppStore store, AppLocalizations l) => [
     if (store.bills.isEmpty)
-      const PfEmptyCard(
+      PfEmptyCard(
         icon: LucideIcons.receipt,
-        title: 'No bills yet',
-        body: 'Split a dinner, a cab or a movie night in a few taps.',
+        title: l.splitNoBillsTitle,
+        body: l.splitNoBillsBody,
       )
     else
       PfCard(
@@ -180,16 +181,17 @@ class _GroupTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     final c = context.pf;
     final net = group.net;
     final cur = group.currency;
     final people = group.memberIds.length + 1;
     final expenses = group.expenses.length;
     final (status, color) = net > .004
-        ? ('owed ${money(net, cur)}', c.cashIn)
+        ? (l.splitGroupOwed(money(net, cur)), c.cashIn)
         : net < -.004
-        ? ('you owe ${money(-net, cur)}', c.cashOut)
-        : ('settled up', c.sub);
+        ? (l.splitYouOweAmount(money(-net, cur)), c.cashOut)
+        : (l.splitSettledUp, c.sub);
     return PfCard(
       radius: 22,
       padding: const EdgeInsets.all(16),
@@ -209,16 +211,20 @@ class _GroupTile extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
                 Text(
-                  '$people people · $expenses ${expenses == 1 ? 'expense' : 'expenses'}',
+                  '${l.splitPeopleCount(people)} · ${l.splitExpenseCount(expenses)}',
                   style: pfText(12.5, weight: w700, color: c.sub),
                 ),
               ],
             ),
           ),
           const SizedBox(width: 8),
-          Text(
-            status,
-            style: pfText(13, weight: w900, color: color),
+          // Flexible so longer translations wrap instead of squeezing the name.
+          Flexible(
+            child: Text(
+              status,
+              textAlign: TextAlign.end,
+              style: pfText(13, weight: w900, color: color),
+            ),
           ),
         ],
       ),
@@ -234,6 +240,7 @@ class _BillRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     final c = context.pf;
     final cur = bill.currency;
     return InkWell(
@@ -261,7 +268,7 @@ class _BillRow extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                   Text(
-                    '${dayLabel(bill.createdAt)} · ${bill.people} people',
+                    '${l.dayLabel(bill.createdAt)} · ${l.splitPeopleCount(bill.people)}',
                     style: pfText(12, weight: w700, color: c.sub),
                   ),
                 ],
@@ -273,8 +280,8 @@ class _BillRow extends StatelessWidget {
                 Text(money(bill.amount, cur), style: pfText(15, weight: w900)),
                 Text(
                   bill.settled
-                      ? 'Settled'
-                      : '${money(bill.toCollect, cur)} to collect',
+                      ? l.splitBillSettled
+                      : l.splitToCollectAmount(money(bill.toCollect, cur)),
                   style: pfText(11.5, color: c.cashIn),
                 ),
               ],

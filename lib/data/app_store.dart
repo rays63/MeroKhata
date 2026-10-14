@@ -32,6 +32,10 @@ class AppStore extends ChangeNotifier {
   // Keys predate the Paisa Flow rename; changing them would orphan saved data.
   static const _storageKey = 'hissabkitab_data_v1';
   static const _themeKey = 'hissabkitab_theme_mode';
+  static const _languageKey = 'paisaflow_language';
+
+  /// UI languages: English and Nepali.
+  static const languages = ['en', 'ne'];
 
   static const defaultCategories = [
     'Salary',
@@ -68,6 +72,7 @@ class AppStore extends ChangeNotifier {
   String? lastSplitBookId;
   String defaultCurrency = 'NPR';
   ThemeMode themeMode = ThemeMode.system;
+  String language = 'en';
   bool isLoaded = false;
 
   /// Set when saved data couldn't be parsed on launch.
@@ -83,6 +88,8 @@ class AppStore extends ChangeNotifier {
       (item) => item.name == preferences.getString(_themeKey),
       orElse: () => ThemeMode.system,
     );
+    final savedLanguage = preferences.getString(_languageKey);
+    language = languages.contains(savedLanguage) ? savedLanguage! : 'en';
     final raw = preferences.getString(_storageKey);
     if (raw == null) {
       _seed();
@@ -235,6 +242,14 @@ class AppStore extends ChangeNotifier {
     await preferences.setString(_themeKey, mode.name);
   }
 
+  Future<void> setLanguage(String code) async {
+    if (!languages.contains(code)) return;
+    language = code;
+    notifyListeners();
+    final preferences = await SharedPreferences.getInstance();
+    await preferences.setString(_languageKey, code);
+  }
+
   Future<void> saveProfile(UserProfile value) async {
     profile = value;
     await _commit();
@@ -362,7 +377,7 @@ class AppStore extends ChangeNotifier {
           importSource: '',
         );
         transactions.add(opening);
-        _addLog(opening.id, 'created', 'Entry created');
+        _addLog(opening.id, 'created', 'Entry created', code: 'created');
         _recalculateRunningBalance(book.id);
       }
       await _commit();
@@ -441,13 +456,17 @@ class AppStore extends ChangeNotifier {
     final index = transactions.indexWhere((item) => item.id == transaction.id);
     if (index == -1) {
       transactions.add(transaction);
-      _addLog(transaction.id, 'created', 'Entry created');
+      _addLog(transaction.id, 'created', 'Entry created', code: 'created');
     } else {
       final before = transactions[index];
       transactions[index] = transaction.copyWith(updatedAt: DateTime.now());
       final currency = bookById(transaction.bookId)?.currency ?? 'NPR';
-      for (final change in _describeChanges(before, transaction, currency)) {
-        _addLog(transaction.id, 'updated', change);
+      for (final (details, code, args) in _describeChanges(
+        before,
+        transaction,
+        currency,
+      )) {
+        _addLog(transaction.id, 'updated', details, code: code, args: args);
       }
     }
     _touchBook(transaction.bookId);
@@ -455,28 +474,50 @@ class AppStore extends ChangeNotifier {
     await _commit();
   }
 
-  /// Human-readable edit history lines, e.g. "Amount Rs 3,200 → Rs 3,460".
-  static List<String> _describeChanges(
+  /// Edit history lines: English text plus a code and values the UI
+  /// words in the current language (e.g. `amount`, [Rs 3,200, Rs 3,460]).
+  static List<(String, String, List<String>)> _describeChanges(
     LedgerTransaction a,
     LedgerTransaction b,
     String currency,
   ) {
     String amount(double value) => money(value, currency);
+    final when = DateFormat('d MMM y, h:mm a').format(b.occurredAt);
+    final toIn = b.type == TransactionType.cashIn;
     return [
       if (a.amount != b.amount)
-        'Amount ${amount(a.amount)} → ${amount(b.amount)}',
-      if (a.title != b.title) 'Title changed to “${b.title}”',
-      if (a.category != b.category) 'Category ${a.category} → ${b.category}',
+        (
+          'Amount ${amount(a.amount)} → ${amount(b.amount)}',
+          'amount',
+          [amount(a.amount), amount(b.amount)],
+        ),
+      if (a.title != b.title)
+        ('Title changed to “${b.title}”', 'title', [b.title]),
+      if (a.category != b.category)
+        (
+          'Category ${a.category} → ${b.category}',
+          'category',
+          [a.category, b.category],
+        ),
       if (a.paymentMode != b.paymentMode)
-        'Payment mode ${a.paymentMode} → ${b.paymentMode}',
+        (
+          'Payment mode ${a.paymentMode} → ${b.paymentMode}',
+          'mode',
+          [a.paymentMode, b.paymentMode],
+        ),
       if (a.type != b.type)
-        'Type changed to ${b.type == TransactionType.cashIn ? 'cash in' : 'cash out'}',
+        (
+          'Type changed to ${toIn ? 'cash in' : 'cash out'}',
+          toIn ? 'typeIn' : 'typeOut',
+          const <String>[],
+        ),
       if (!sameDay(a.occurredAt, b.occurredAt) ||
           a.occurredAt.hour != b.occurredAt.hour ||
           a.occurredAt.minute != b.occurredAt.minute)
-        'Date changed to ${DateFormat('d MMM y, h:mm a').format(b.occurredAt)}',
-      if (a.notes != b.notes) 'Notes updated',
-      if ((a.goalId ?? '') != (b.goalId ?? '')) 'Goal link updated',
+        ('Date changed to $when', 'date', [when]),
+      if (a.notes != b.notes) ('Notes updated', 'notes', const <String>[]),
+      if ((a.goalId ?? '') != (b.goalId ?? ''))
+        ('Goal link updated', 'goal', const <String>[]),
     ];
   }
 
@@ -484,7 +525,7 @@ class AppStore extends ChangeNotifier {
     final transaction = transactionById(id);
     if (transaction == null) return;
     transactions.removeWhere((item) => item.id == id);
-    _addLog(id, 'deleted', 'Entry deleted');
+    _addLog(id, 'deleted', 'Entry deleted', code: 'deleted');
     _touchBook(transaction.bookId);
     _recalculateAll();
     await _commit();
@@ -664,6 +705,8 @@ class AppStore extends ChangeNotifier {
         title: '$title (${group.name})',
         category: _spendCategory,
         log: 'Created from ${group.name} split',
+        logCode: 'splitGroup',
+        logArgs: [group.name],
       );
     }
     groups[index] = group.copyWith(
@@ -736,6 +779,7 @@ class AppStore extends ChangeNotifier {
                 title: '$name (split)',
                 category: _spendCategory,
                 log: 'Created from split bill',
+                logCode: 'splitBill',
               ));
     final bill = SplitBill(
       id: newId('bill'),
@@ -808,6 +852,8 @@ class AppStore extends ChangeNotifier {
       title: 'Settlement · $friend',
       category: 'Settlement',
       log: 'Settled from $source',
+      logCode: 'settled',
+      logArgs: [source],
     );
     return Settlement(
       id: newId('settle'),
@@ -825,6 +871,8 @@ class AppStore extends ChangeNotifier {
     required String title,
     required String category,
     required String log,
+    required String logCode,
+    List<String> logArgs = const [],
   }) {
     final now = DateTime.now();
     final entry = LedgerTransaction(
@@ -847,7 +895,7 @@ class AppStore extends ChangeNotifier {
       importSource: '',
     );
     transactions.add(entry);
-    _addLog(entry.id, 'created', log);
+    _addLog(entry.id, 'created', log, code: logCode, args: logArgs);
     _touchBook(bookId);
     return entry.id;
   }
@@ -898,7 +946,13 @@ class AppStore extends ChangeNotifier {
   Future<void> commitImport(ImportPreview preview) async {
     transactions.addAll(preview.importable);
     for (final transaction in preview.importable) {
-      _addLog(transaction.id, 'imported', 'Imported from ${preview.source}');
+      _addLog(
+        transaction.id,
+        'imported',
+        'Imported from ${preview.source}',
+        code: 'imported',
+        args: [preview.source],
+      );
       _touchBook(transaction.bookId);
     }
     _recalculateAll();
@@ -926,7 +980,13 @@ class AppStore extends ChangeNotifier {
     }
   }
 
-  void _addLog(String transactionId, String action, String details) {
+  void _addLog(
+    String transactionId,
+    String action,
+    String details, {
+    String? code,
+    List<String> args = const [],
+  }) {
     logs.add(
       TransactionLog(
         id: newId('log'),
@@ -934,6 +994,8 @@ class AppStore extends ChangeNotifier {
         action: action,
         details: details,
         timestamp: DateTime.now(),
+        code: code,
+        args: args,
       ),
     );
   }

@@ -4,19 +4,25 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../data/app_store.dart';
 import '../../data/models.dart';
+import '../../l10n/l10n.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/pf.dart';
 import 'goals_screen.dart';
 
 enum _Deadline {
-  keep('Keep current'),
-  threeMonths('3 months'),
-  sixMonths('6 months'),
-  year('1 year'),
-  none('No deadline');
+  keep,
+  threeMonths,
+  sixMonths,
+  year,
+  none;
 
-  const _Deadline(this.label);
-  final String label;
+  String label(AppLocalizations l) => switch (this) {
+    _Deadline.keep => l.goalDeadlineKeep,
+    _Deadline.threeMonths => l.goalDeadlineMonths(3),
+    _Deadline.sixMonths => l.goalDeadlineMonths(6),
+    _Deadline.year => l.goalDeadlineOneYear,
+    _Deadline.none => l.goalNoDeadline,
+  };
 
   DateTime? resolve(DateTime now, DateTime? current) => switch (this) {
     _Deadline.keep => current,
@@ -60,13 +66,14 @@ class _GoalFormScreenState extends State<GoalFormScreen> {
   }
 
   Future<void> _save() async {
+    final l = context.l10n;
     if (name.text.trim().isEmpty) {
-      setState(() => error = 'Give your goal a name');
+      setState(() => error = l.goalNameRequired);
       return;
     }
     final amount = double.tryParse(target.text.replaceAll(',', ''));
     if (amount == null || amount <= 0) {
-      setState(() => error = 'Target must be greater than zero');
+      setState(() => error = l.goalTargetInvalid);
       return;
     }
     if (saving) return;
@@ -83,37 +90,41 @@ class _GoalFormScreenState extends State<GoalFormScreen> {
     if (!mounted) return;
     showPfToast(
       context,
-      editing ? 'Goal updated' : 'Goal “${name.text.trim()}” created',
+      editing ? l.goalUpdated : l.goalCreated(name.text.trim()),
     );
     Navigator.pop(context);
   }
 
   Future<void> _delete() async {
     final c = context.pf;
+    final l = context.l10n;
     final goal = widget.goal!;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Delete “${goal.name}”?', style: pfText(19, weight: w900)),
+        title: Text(
+          l.goalDeleteTitle(goal.name),
+          style: pfText(19, weight: w900),
+        ),
         content: Text(
-          'Linked entries stay in their books; they just stop counting toward this goal.',
+          l.goalDeleteBody,
           style: pfText(14, weight: w600, color: c.sub),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text('Cancel', style: pfText(14, color: c.sub)),
+            child: Text(l.cancel, style: pfText(14, color: c.sub)),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text('Delete', style: pfText(14, color: c.cashOut)),
+            child: Text(l.delete, style: pfText(14, color: c.cashOut)),
           ),
         ],
       ),
     );
     if (confirmed != true || !mounted) return;
     final store = AppScope.read(context);
-    showPfToast(context, 'Goal deleted');
+    showPfToast(context, l.goalDeleted);
     Navigator.pop(context);
     await store.deleteGoal(goal.id);
   }
@@ -121,6 +132,7 @@ class _GoalFormScreenState extends State<GoalFormScreen> {
   @override
   Widget build(BuildContext context) {
     final c = context.pf;
+    final l = context.l10n;
     final options = [
       if (editing && widget.goal!.deadline != null) _Deadline.keep,
       _Deadline.threeMonths,
@@ -129,21 +141,21 @@ class _GoalFormScreenState extends State<GoalFormScreen> {
       _Deadline.none,
     ];
     String label(_Deadline value) => value == _Deadline.keep
-        ? deadlineLabel(widget.goal!.deadline)
-        : value.label;
+        ? deadlineLabel(l, widget.goal!.deadline)
+        : value.label(l);
     return Scaffold(
       body: SafeArea(
         child: ListView(
           padding: pagePadding,
           children: [
-            PfHeader(title: editing ? 'Edit goal' : 'New goal', close: true),
+            PfHeader(title: editing ? l.goalEdit : l.goalNew, close: true),
             const SizedBox(height: 18),
             PfCard(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   PfField(
-                    label: 'Goal name',
+                    label: l.goalName,
                     child: TextField(
                       controller: name,
                       autofocus: !editing,
@@ -151,14 +163,14 @@ class _GoalFormScreenState extends State<GoalFormScreen> {
                       onChanged: (_) => setState(() => error = null),
                       style: pfText(17, color: c.ink),
                       decoration: InputDecoration(
-                        hintText: 'e.g. New scooter',
+                        hintText: l.goalNameHint,
                         hintStyle: pfText(17, color: c.mute),
                       ),
                     ),
                   ),
                   const PfDivider(),
                   PfField(
-                    label: 'Target amount',
+                    label: l.goalTargetAmount,
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.baseline,
                       textBaseline: TextBaseline.alphabetic,
@@ -194,7 +206,7 @@ class _GoalFormScreenState extends State<GoalFormScreen> {
               ),
             ),
             const SizedBox(height: 18),
-            const PfSectionLabel('Deadline', optional: true),
+            PfSectionLabel(l.goalDeadline, optional: true),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
@@ -214,13 +226,13 @@ class _GoalFormScreenState extends State<GoalFormScreen> {
             ],
             const SizedBox(height: 18),
             PfButton(
-              label: editing ? 'Save changes' : 'Create goal',
+              label: editing ? l.saveChanges : l.goalCreate,
               onPressed: saving ? null : _save,
             ),
             if (editing) ...[
               const SizedBox(height: 12),
               PfButton(
-                label: 'Delete goal',
+                label: l.goalDelete,
                 icon: LucideIcons.trash2,
                 style: PfButtonStyle.outlineDanger,
                 height: 50,

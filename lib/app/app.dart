@@ -2,10 +2,12 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 import '../data/app_store.dart';
 import '../features/onboarding/onboarding_screen.dart';
 import '../features/onboarding/splash_screen.dart';
+import '../l10n/l10n.dart';
 import '../theme/app_theme.dart';
 import 'shell.dart';
 
@@ -58,8 +60,16 @@ class _PaisaFlowBootstrapState extends State<PaisaFlowBootstrap> {
           title: 'Paisa Flow',
           debugShowCheckedModeBanner: false,
           themeMode: store.themeMode,
-          theme: AppTheme.light,
-          darkTheme: AppTheme.dark,
+          theme: AppTheme.lightFor(store.language),
+          darkTheme: AppTheme.darkFor(store.language),
+          locale: Locale(store.language),
+          supportedLocales: AppLocalizations.supportedLocales,
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
           // Status bar icons follow the theme on screens without an app bar;
           // the green splash overrides this with light icons.
           builder: (context, child) => AnnotatedRegion<SystemUiOverlayStyle>(

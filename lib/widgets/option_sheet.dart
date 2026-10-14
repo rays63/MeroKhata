@@ -3,6 +3,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../theme/tokens.dart';
 import 'pf.dart';
+import '../l10n/l10n.dart';
 
 /// One choice in an [showOptionSheet].
 class SheetOption<T> {
@@ -86,14 +87,14 @@ class _OptionSheetState<T> extends State<_OptionSheet<T>> {
     newOption.clear();
     if (!mounted) return;
     setState(() {});
-    showPfToast(context, '“$value” added');
+    showPfToast(context, context.l10n.optionAdded(value));
   }
 
   @override
   Widget build(BuildContext context) {
     final c = context.pf;
     final title = manage
-        ? 'Edit ${widget.title.toLowerCase()} list'
+        ? context.l10n.editListTitle(widget.title.toLowerCase())
         : widget.title;
     return ConstrainedBox(
       constraints: BoxConstraints(
@@ -129,7 +130,9 @@ class _OptionSheetState<T> extends State<_OptionSheet<T>> {
                     ),
                     if (widget.editable != null)
                       PfSmallButton(
-                        label: manage ? 'Done' : 'Edit list',
+                        label: manage
+                            ? context.l10n.done
+                            : context.l10n.editList,
                         icon: manage ? LucideIcons.check : LucideIcons.pencil,
                         onPressed: () => setState(() => manage = !manage),
                         height: 36,
@@ -192,7 +195,7 @@ class _OptionSheetState<T> extends State<_OptionSheet<T>> {
                 onSubmitted: (_) => _add(),
                 style: pfText(15, weight: w800, color: c.ink),
                 decoration: InputDecoration(
-                  hintText: 'Add new…',
+                  hintText: context.l10n.addNew,
                   hintStyle: pfText(15, weight: w800, color: c.mute),
                 ),
               ),
@@ -200,7 +203,7 @@ class _OptionSheetState<T> extends State<_OptionSheet<T>> {
           ),
           const SizedBox(width: 8),
           PfSmallButton(
-            label: 'Add',
+            label: context.l10n.add,
             onPressed: _add,
             height: 48,
             radius: 14,

@@ -10,14 +10,34 @@ class AppTheme {
   static final ThemeData light = _build(PfColors.light, Brightness.light);
   static final ThemeData dark = _build(PfColors.dark, Brightness.dark);
 
-  static ThemeData _build(PfColors c, Brightness brightness) {
+  /// नेपाली UI: Mukta for everything (it covers Latin too), as in the design.
+  static final ThemeData lightNe = _build(
+    PfColors.light,
+    Brightness.light,
+    nepali: true,
+  );
+  static final ThemeData darkNe = _build(
+    PfColors.dark,
+    Brightness.dark,
+    nepali: true,
+  );
+
+  static ThemeData lightFor(String language) =>
+      language == 'ne' ? lightNe : light;
+  static ThemeData darkFor(String language) => language == 'ne' ? darkNe : dark;
+
+  static ThemeData _build(
+    PfColors c,
+    Brightness brightness, {
+    bool nepali = false,
+  }) {
     final base = ThemeData(
       useMaterial3: true,
       // Bundled in pubspec as one family with weights 400–900, so any
       // fontWeight on a TextStyle picks the matching file.
-      fontFamily: 'Nunito',
+      fontFamily: nepali ? 'Mukta' : 'Nunito',
       // Nunito has no Devanagari glyphs; नेपाली text falls back to Mukta.
-      fontFamilyFallback: const ['Mukta'],
+      fontFamilyFallback: nepali ? const ['Nunito'] : const ['Mukta'],
       brightness: brightness,
       colorScheme: ColorScheme.fromSeed(
         seedColor: c.btn,

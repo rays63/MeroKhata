@@ -8,6 +8,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../data/app_store.dart';
+import '../../l10n/l10n.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/pf.dart';
 import '../../widgets/store_sheets.dart';
@@ -17,6 +18,7 @@ class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
   Future<void> _exportAll(BuildContext context, AppStore store) async {
+    final l = context.l10n;
     await store.persist();
     final raw =
         (await SharedPreferences.getInstance()).getString(
@@ -27,15 +29,15 @@ class SettingsScreen extends StatelessWidget {
         'paisaflow_backup_${DateFormat('yyyy-MM-dd').format(DateTime.now())}.json';
     try {
       final saved = await FilePicker.platform.saveFile(
-        dialogTitle: 'Export all data',
+        dialogTitle: l.settingsExportAll,
         fileName: name,
         bytes: Uint8List.fromList(utf8.encode(raw)),
       );
       if (saved != null && context.mounted) {
-        showPfToast(context, '$name ready to share');
+        showPfToast(context, l.readyToShare(name));
       }
     } catch (error) {
-      if (context.mounted) showPfToast(context, 'Export failed: $error');
+      if (context.mounted) showPfToast(context, l.exportFailed('$error'));
     }
   }
 
@@ -43,14 +45,15 @@ class SettingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final store = AppScope.watch(context);
     final c = context.pf;
+    final l = context.l10n;
     return Scaffold(
       body: SafeArea(
         child: ListView(
           padding: pagePadding,
           children: [
-            const PfHeader(title: 'Settings'),
+            PfHeader(title: l.settings),
             const SizedBox(height: 16),
-            const PfSectionLabel('Appearance'),
+            PfSectionLabel(l.settingsAppearance),
             const SizedBox(height: 8),
             PfSegment<ThemeMode>(
               value: store.themeMode,
@@ -58,25 +61,25 @@ class SettingsScreen extends StatelessWidget {
               height: 44,
               radius: 18,
               fontSize: 14,
-              items: const [
-                (ThemeMode.system, 'System', LucideIcons.smartphone),
-                (ThemeMode.light, 'Light', LucideIcons.sun),
-                (ThemeMode.dark, 'Dark', LucideIcons.moon),
+              items: [
+                (
+                  ThemeMode.system,
+                  l.settingsThemeSystem,
+                  LucideIcons.smartphone,
+                ),
+                (ThemeMode.light, l.settingsThemeLight, LucideIcons.sun),
+                (ThemeMode.dark, l.settingsThemeDark, LucideIcons.moon),
               ],
             ),
             const SizedBox(height: 16),
-            const PfSectionLabel('Language'),
+            PfSectionLabel(l.settingsLanguage),
             const SizedBox(height: 8),
             PfSegment<String>(
-              value: 'en',
+              value: store.language,
               height: 44,
               radius: 18,
               fontSize: 15,
-              onChanged: (value) {
-                if (value == 'ne') {
-                  showPfToast(context, 'नेपाली is coming in the next update');
-                }
-              },
+              onChanged: store.setLanguage,
               items: const [('en', 'English', null), ('ne', 'नेपाली', null)],
             ),
             const SizedBox(height: 16),
@@ -85,9 +88,9 @@ class SettingsScreen extends StatelessWidget {
                 children: [
                   _SettingsRow(
                     icon: LucideIcons.userRound,
-                    label: 'Your details',
+                    label: l.profileTitle,
                     value: store.profile.name.trim().isEmpty
-                        ? 'Add'
+                        ? l.add
                         : store.profile.name.trim(),
                     onTap: () => Navigator.of(context).push(
                       MaterialPageRoute(builder: (_) => const ProfileScreen()),
@@ -96,28 +99,28 @@ class SettingsScreen extends StatelessWidget {
                   const PfDivider(),
                   _SettingsRow(
                     icon: LucideIcons.tags,
-                    label: 'Categories',
-                    value: '${store.categories.length} items',
+                    label: l.settingsCategories,
+                    value: l.settingsItemCount(store.categories.length),
                     onTap: () => pickCategory(context, manageOnly: true),
                   ),
                   const PfDivider(),
                   _SettingsRow(
                     icon: LucideIcons.wallet,
-                    label: 'Payment modes',
-                    value: '${store.paymentModes.length} items',
+                    label: l.settingsPaymentModes,
+                    value: l.settingsItemCount(store.paymentModes.length),
                     onTap: () => pickPaymentMode(context, manageOnly: true),
                   ),
                   const PfDivider(),
                   _SettingsRow(
                     icon: LucideIcons.coins,
-                    label: 'Default currency for new books',
+                    label: l.settingsDefaultCurrency,
                     value: store.defaultCurrency,
                     chevron: false,
                     onTap: () async {
                       final picked = await pickCurrency(
                         context,
                         selected: store.defaultCurrency,
-                        title: 'Default currency',
+                        title: l.settingsDefaultCurrencyTitle,
                       );
                       if (picked != null) {
                         await store.setDefaultCurrency(picked);
@@ -127,28 +130,31 @@ class SettingsScreen extends StatelessWidget {
                   const PfDivider(),
                   _SettingsRow(
                     icon: LucideIcons.hardDriveDownload,
-                    label: 'Export all data',
+                    label: l.settingsExportAll,
                     onTap: () => _exportAll(context, store),
                   ),
                   const PfDivider(),
-                  const _SettingsRow(
+                  _SettingsRow(
                     icon: LucideIcons.scanFace,
-                    label: 'App lock',
-                    badge: 'SOON',
+                    label: l.settingsAppLock,
+                    badge: l.settingsSoon,
                   ),
                 ],
               ),
             ),
             const SizedBox(height: 16),
-            const PfNote(
+            PfNote(
               icon: LucideIcons.shieldCheck,
               green: true,
-              title: 'Stored only on this phone',
-              text: 'No account, no cloud. Export regularly to keep a backup.',
+              title: l.settingsStoredTitle,
+              text: l.settingsStoredBody,
             ),
             const SizedBox(height: 16),
             Center(
-              child: Text('Paisa Flow 1.0.0', style: pfText(12, color: c.mute)),
+              child: Text(
+                '${l.appName} 1.0.0',
+                style: pfText(12, color: c.mute),
+              ),
             ),
             const SizedBox(height: 30),
           ],

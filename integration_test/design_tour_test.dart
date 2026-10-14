@@ -10,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// screen, printing `SHOT:<name>` so a host script can screenshot the
 /// simulator. Run with `--dart-define=THEME=dark` for the dark variants.
 const _theme = String.fromEnvironment('THEME', defaultValue: 'light');
+const _lang = String.fromEnvironment('LANG', defaultValue: 'en');
 
 Map<String, Object?> _seed() {
   final now = DateTime.now();
@@ -325,6 +326,58 @@ Map<String, Object?> _seed() {
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
+  testWidgets('नेपाली tour ($_theme)', (tester) async {
+    SharedPreferences.setMockInitialValues({
+      'hissabkitab_data_v1': jsonEncode(_seed()),
+      'hissabkitab_theme_mode': _theme,
+      'paisaflow_language': 'ne',
+    });
+
+    Future<void> shot(String name) async {
+      await tester.pumpAndSettle();
+      // ignore: avoid_print
+      print('SHOT:ne_${_theme}_$name');
+      await tester.runAsync(() => Future.delayed(const Duration(seconds: 2)));
+    }
+
+    Future<void> tap(Finder finder) async {
+      await tester.tap(finder);
+      await tester.pumpAndSettle();
+    }
+
+    await tester.pumpWidget(const PaisaFlowBootstrap());
+    await tester.pumpAndSettle();
+    await shot('home');
+
+    await tap(find.text('खाताहरू').last);
+    await shot('books');
+    await tap(find.text('Personal').first);
+    await shot('detail');
+    await tap(find.text('खर्च').last);
+    await shot('add_out');
+    await tap(find.byTooltip('बन्द गर्नुहोस्'));
+    await tap(find.byTooltip('फर्कनुहोस्'));
+
+    await tap(find.text('विश्लेषण').last);
+    await shot('insights');
+    await tester.scrollUntilVisible(
+      find.text('Rent'),
+      400,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await shot('insights_trends');
+
+    await tap(find.text('बाँडफाँड').last);
+    await shot('split');
+    await tap(find.text('Pokhara Trip'));
+    await shot('group');
+    await tap(find.byTooltip('फर्कनुहोस्'));
+
+    await tap(find.text('गृह').last);
+    await tap(find.text('AS'));
+    await shot('settings');
+  }, skip: _lang != 'ne');
+
   testWidgets('design tour ($_theme)', (tester) async {
     SharedPreferences.setMockInitialValues({
       'hissabkitab_data_v1': jsonEncode(_seed()),
@@ -443,5 +496,5 @@ void main() {
 
     await tap(find.text('AS'));
     await shot('settings');
-  });
+  }, skip: _lang == 'ne');
 }

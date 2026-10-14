@@ -6,6 +6,7 @@ import '../../app/nav.dart';
 import '../../core/format.dart';
 import '../../data/app_store.dart';
 import '../../data/models.dart';
+import '../../l10n/l10n.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/pf.dart';
 import '../split/group_screen.dart';
@@ -18,29 +19,30 @@ class EntryDetailScreen extends StatelessWidget {
 
   Future<void> _delete(BuildContext context, AppStore store) async {
     final c = context.pf;
+    final l = context.l10n;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Delete this entry?', style: pfText(19, weight: w900)),
+        title: Text(l.entryDeleteTitle, style: pfText(19, weight: w900)),
         content: Text(
-          'The book balance will be recalculated. This can’t be undone.',
+          l.entryDeleteBody,
           style: pfText(14, weight: w600, color: c.sub),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text('Cancel', style: pfText(14, color: c.sub)),
+            child: Text(l.cancel, style: pfText(14, color: c.sub)),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text('Delete', style: pfText(14, color: c.cashOut)),
+            child: Text(l.delete, style: pfText(14, color: c.cashOut)),
           ),
         ],
       ),
     );
     if (confirmed != true || !context.mounted) return;
     final navigator = Navigator.of(context);
-    showPfToast(context, 'Entry deleted · balance recalculated');
+    showPfToast(context, l.entryDeletedToast);
     navigator.pop();
     await store.deleteTransaction(entryId);
   }
@@ -51,6 +53,7 @@ class EntryDetailScreen extends StatelessWidget {
     final entry = store.transactionById(entryId);
     if (entry == null) return const Scaffold(body: SizedBox.shrink());
     final c = context.pf;
+    final l = context.l10n;
     final book = store.bookById(entry.bookId);
     final currency = book?.currency ?? 'NPR';
     final isIn = entry.type == TransactionType.cashIn;
@@ -59,18 +62,19 @@ class EntryDetailScreen extends StatelessWidget {
         ? null
         : store.goals.where((g) => g.id == entry.goalId).firstOrNull;
     final fields = <(String, String)>[
-      ('Category', entry.category),
-      if (entry.paymentMode.isNotEmpty) ('Payment mode', entry.paymentMode),
+      (l.category, entry.category),
+      if (entry.paymentMode.isNotEmpty) (l.paymentMode, entry.paymentMode),
       (
-        'Date & time',
+        l.entryDateTime,
         '${DateFormat('d MMM y').format(entry.occurredAt)} · ${timeLabel(entry.occurredAt)}',
       ),
-      ('Book', book?.name ?? ''),
+      (l.book, book?.name ?? ''),
       if (entry.externalReference.isNotEmpty)
-        ('Reference', entry.externalReference),
-      if (entry.importSource.isNotEmpty) ('Imported from', entry.importSource),
-      if (goal != null) ('Goal', goal.name),
-      if (entry.notes.isNotEmpty) ('Notes', entry.notes),
+        (l.entryReference, entry.externalReference),
+      if (entry.importSource.isNotEmpty)
+        (l.entryImportedFromLabel, entry.importSource),
+      if (goal != null) (l.entryGoal, goal.name),
+      if (entry.notes.isNotEmpty) (l.entryNotes, entry.notes),
     ];
     final history = store.logsFor(entry.id);
 
@@ -80,12 +84,12 @@ class EntryDetailScreen extends StatelessWidget {
           padding: pagePadding,
           children: [
             PfHeader(
-              title: 'Entry',
+              title: l.entryTitle,
               actions: [
                 PfIconButton(
                   icon: LucideIcons.pencil,
                   size: 18,
-                  tooltip: 'Edit entry',
+                  tooltip: l.entryEditTitle,
                   onPressed: () => openEditEntry(context, entry),
                 ),
               ],
@@ -97,7 +101,7 @@ class EntryDetailScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   PfBadge(
-                    label: isIn ? 'CASH IN' : 'CASH OUT',
+                    label: isIn ? l.entryBadgeCashIn : l.entryBadgeCashOut,
                     pill: true,
                     fontSize: 12,
                     background: c.amountSoft(isIn),
@@ -132,7 +136,7 @@ class EntryDetailScreen extends StatelessWidget {
                     const PfDivider(),
                   ],
                   _FieldLine(
-                    label: 'Running balance',
+                    label: l.entryRunningBalance,
                     value: balanceMoney(entry.runningBalance, currency),
                     strong: true,
                   ),
@@ -150,8 +154,12 @@ class EntryDetailScreen extends StatelessWidget {
                   final bill = store.billForEntry(entry.id);
                   return PfButton(
                     label: bill == null
-                        ? 'Split this bill with friends'
-                        : 'View split · ${bill.settled ? 'settled' : '${money(bill.toCollect, currency)} to collect'}',
+                        ? l.entrySplitWithFriends
+                        : bill.settled
+                        ? l.entryViewSplitSettled
+                        : l.entryViewSplitToCollect(
+                            money(bill.toCollect, currency),
+                          ),
                     icon: LucideIcons.split,
                     trailingIcon: LucideIcons.chevronRight,
                     spread: true,
@@ -181,7 +189,12 @@ class EntryDetailScreen extends StatelessWidget {
                 children: [
                   Icon(LucideIcons.history, size: 16, color: c.sub),
                   const SizedBox(width: 8),
-                  Text('Edit history', style: pfText(16, weight: w900)),
+                  Flexible(
+                    child: Text(
+                      l.entryEditHistory,
+                      style: pfText(16, weight: w900),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -192,7 +205,7 @@ class EntryDetailScreen extends StatelessWidget {
                 children: [
                   for (var i = 0; i < history.length; i++)
                     _HistoryItem(
-                      text: history[i].details,
+                      text: _historyText(l, history[i]),
                       when: DateFormat(
                         'd MMM, h:mm a',
                       ).format(history[i].timestamp),
@@ -201,8 +214,8 @@ class EntryDetailScreen extends StatelessWidget {
                   if (history.isEmpty)
                     _HistoryItem(
                       text: entry.importSource.isEmpty
-                          ? 'Entry created'
-                          : 'Imported from ${entry.importSource}',
+                          ? l.entryCreated
+                          : l.entryImportedFrom(entry.importSource),
                       when: DateFormat('d MMM, h:mm a').format(entry.createdAt),
                       latest: true,
                     ),
@@ -211,7 +224,7 @@ class EntryDetailScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             PfButton(
-              label: 'Delete entry',
+              label: l.entryDelete,
               icon: LucideIcons.trash2,
               style: PfButtonStyle.outlineDanger,
               height: 50,
@@ -316,4 +329,28 @@ class _HistoryItem extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Words a history line in the current language; older logs without a code
+/// are shown as they were recorded.
+String _historyText(AppLocalizations l, TransactionLog log) {
+  String arg(int i) => i < log.args.length ? log.args[i] : '';
+  return switch (log.code) {
+    'created' => l.entryCreated,
+    'imported' => l.entryImportedFrom(arg(0)),
+    'amount' => l.historyAmount(arg(0), arg(1)),
+    'title' => l.historyTitle(arg(0)),
+    'category' => l.historyCategory(arg(0), arg(1)),
+    'mode' => l.historyMode(arg(0), arg(1)),
+    'typeIn' => l.historyTypeIn,
+    'typeOut' => l.historyTypeOut,
+    'date' => l.historyDate(arg(0)),
+    'notes' => l.historyNotes,
+    'goal' => l.historyGoal,
+    'deleted' => l.historyDeleted,
+    'splitGroup' => l.historySplitGroup(arg(0)),
+    'splitBill' => l.historySplitBill,
+    'settled' => l.historySettled(arg(0)),
+    _ => log.details,
+  };
 }

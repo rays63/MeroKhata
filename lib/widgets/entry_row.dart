@@ -5,6 +5,7 @@ import '../data/models.dart';
 import '../theme/tokens.dart';
 import 'category_icons.dart';
 import 'pf.dart';
+import '../l10n/l10n.dart';
 
 /// One ledger line: category tile, title, "Category · Mode", signed amount
 /// and (optionally) the running balance underneath.
@@ -37,8 +38,11 @@ class EntryRow extends StatelessWidget {
         ].where((part) => part.trim().isNotEmpty).join(' · ');
     return Semantics(
       button: true,
-      label:
-          '${entry.title}, ${isIn ? 'cash in' : 'cash out'} ${money(entry.amount, currency)}',
+      label: context.l10n.entrySemantics(
+        entry.title,
+        isIn ? context.l10n.cashIn : context.l10n.cashOut,
+        money(entry.amount, currency),
+      ),
       excludeSemantics: true,
       child: InkWell(
         onTap: onTap,
@@ -82,7 +86,9 @@ class EntryRow extends StatelessWidget {
                   ),
                   if (showBalance)
                     Text(
-                      'Bal ${balanceMoney(entry.runningBalance, currency)}',
+                      context.l10n.balanceShort(
+                        balanceMoney(entry.runningBalance, currency),
+                      ),
                       style: pfText(11, weight: w800, color: c.mute),
                     ),
                 ],

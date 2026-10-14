@@ -148,7 +148,15 @@ void main() {
       entry.copyWith(amount: 60, paymentMode: 'Cash', title: 'Chiya'),
     );
 
-    final history = store.logsFor('t1').map((log) => log.details).toList();
+    final logs = store.logsFor('t1');
+    // Codes and values let the UI word each line in either language.
+    final amountLog = logs.firstWhere((log) => log.code == 'amount');
+    expect(amountLog.args, ['Rs 50', 'Rs 60']);
+    expect(logs.map((log) => log.code), containsAll(['title', 'mode']));
+    final reloaded = AppStore();
+    await reloaded.load();
+    expect(reloaded.logsFor('t1').map((log) => log.code), contains('amount'));
+    final history = logs.map((log) => log.details).toList();
     expect(
       history,
       containsAll([

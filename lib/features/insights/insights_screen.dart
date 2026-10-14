@@ -6,11 +6,20 @@ import '../../app/nav.dart';
 import '../../core/format.dart';
 import '../../data/app_store.dart';
 import '../../data/insights.dart';
+import '../../data/report.dart' show uncategorised;
 import '../../data/models.dart';
+import '../../l10n/l10n.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/category_icons.dart';
 import '../../widgets/month_grid.dart';
 import '../../widgets/pf.dart';
+
+String _rangeLabel(AppLocalizations l, TrendRange range) => switch (range) {
+  TrendRange.week => l.insightsRange7d,
+  TrendRange.month => l.insightsRange30d,
+  TrendRange.quarter => l.insightsRange3m,
+  TrendRange.year => l.insightsRange1y,
+};
 
 /// Month view (net flow, calendar, day activity) plus trends and spending
 /// breakdowns, for all books in the home currency or a single book.
@@ -46,6 +55,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
   Widget build(BuildContext context) {
     final store = AppScope.watch(context);
     final c = context.pf;
+    final l = context.l10n;
     final home = store.defaultCurrency;
     final homeBooks = store.booksByRecent
         .where((book) => book.currency == home)
@@ -70,7 +80,10 @@ class _InsightsScreenState extends State<InsightsScreen> {
     return ListView(
       padding: pagePadding,
       children: [
-        Text('Insights', style: pfText(30, weight: w900, letterSpacing: -.6)),
+        Text(
+          l.insightsTitle,
+          style: pfText(30, weight: w900, letterSpacing: -.6),
+        ),
         const SizedBox(height: 16),
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
@@ -78,7 +91,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
           child: Row(
             children: [
               _ScopeChip(
-                label: 'All $home books',
+                label: l.insightsAllBooks(home),
                 selected: book == null,
                 onTap: () => setState(() => bookId = null),
               ),
@@ -104,7 +117,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
             child: Row(
               children: [
                 IconButton(
-                  tooltip: 'Previous month',
+                  tooltip: l.insightsPrevMonth,
                   onPressed: () => _shiftMonth(-1),
                   icon: Icon(LucideIcons.chevronLeft, size: 22, color: c.ink),
                 ),
@@ -118,7 +131,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
                 TextButton(
                   onPressed: _today,
                   child: Text(
-                    'Today',
+                    l.today,
                     style: pfText(
                       14,
                       weight: w900,
@@ -128,7 +141,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
                   ),
                 ),
                 IconButton(
-                  tooltip: 'Next month',
+                  tooltip: l.insightsNextMonth,
                   onPressed: () => _shiftMonth(1),
                   icon: Icon(LucideIcons.chevronRight, size: 22, color: c.ink),
                 ),
@@ -170,12 +183,12 @@ class _InsightsScreenState extends State<InsightsScreen> {
             children: [
               Expanded(
                 child: Text(
-                  'Activity · ${DateFormat('MMMM d').format(selected)}',
+                  l.insightsActivityOn(DateFormat('MMMM d').format(selected)),
                   style: pfText(16, weight: w900),
                 ),
               ),
               Text(
-                '${dayEntries.length} ${dayEntries.length == 1 ? 'transaction' : 'transactions'}',
+                l.insightsTransactionCount(dayEntries.length),
                 style: pfText(13, weight: w700, color: c.sub),
               ),
             ],
@@ -187,7 +200,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
             radius: 22,
             padding: const EdgeInsets.all(18),
             child: Text(
-              'No activity on this day.',
+              l.insightsNoActivity,
               style: pfText(14, weight: w700, color: c.sub),
             ),
           ),
@@ -202,21 +215,23 @@ class _InsightsScreenState extends State<InsightsScreen> {
         const SizedBox(height: 16),
         Padding(
           padding: const EdgeInsets.fromLTRB(4, 6, 4, 0),
-          child: Text('Trends', style: pfText(18, weight: w900)),
+          child: Text(l.insightsTrends, style: pfText(18, weight: w900)),
         ),
         const SizedBox(height: 16),
         PfSegment<TrendRange>(
           value: range,
           height: 36,
           onChanged: (value) => setState(() => range = value),
-          items: [for (final r in TrendRange.values) (r, r.label, null)],
+          items: [
+            for (final r in TrendRange.values) (r, _rangeLabel(l, r), null),
+          ],
         ),
         const SizedBox(height: 16),
         Row(
           children: [
             Expanded(
               child: _Figure(
-                label: 'Income',
+                label: l.insightsIncome,
                 value: money(trend.income, currency),
                 color: c.cashIn,
               ),
@@ -225,8 +240,8 @@ class _InsightsScreenState extends State<InsightsScreen> {
             Expanded(
               child: _Figure(
                 label: trend.savedRate == null
-                    ? 'Spending'
-                    : 'Spending · ${(trend.savedRate! * 100).round()}% saved',
+                    ? l.insightsSpending
+                    : l.insightsSpendingSaved((trend.savedRate! * 100).round()),
                 value: money(trend.spending, currency),
                 color: c.cashOut,
               ),
@@ -297,6 +312,7 @@ class _NetFlowCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.pf;
+    final l = context.l10n;
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
       decoration: BoxDecoration(
@@ -321,7 +337,7 @@ class _NetFlowCard extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            'Net flow · $monthName',
+            l.insightsNetFlow(monthName),
             style: pfText(13, weight: w700, color: PfColors.heroLabel),
           ),
           const SizedBox(height: 12),
@@ -479,6 +495,7 @@ class _TrendChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.pf;
+    final l = context.l10n;
     final peak = trend.peak;
     double fraction(double value) =>
         peak <= 0 ? .02 : (value / peak).clamp(.02, 1);
@@ -504,11 +521,14 @@ class _TrendChart extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: Text('Cash flow trend', style: pfText(16, weight: w900)),
+                child: Text(
+                  l.insightsCashFlowTrend,
+                  style: pfText(16, weight: w900),
+                ),
               ),
-              legend(c.pri, 'In'),
+              legend(c.pri, l.insightsLegendIn),
               const SizedBox(width: 10),
-              legend(c.cashOut, 'Out'),
+              legend(c.cashOut, l.insightsLegendOut),
             ],
           ),
           const SizedBox(height: 16),
@@ -521,8 +541,11 @@ class _TrendChart extends StatelessWidget {
                   if (bucket != trend.buckets.first) const SizedBox(width: 8),
                   Expanded(
                     child: Semantics(
-                      label:
-                          '${bucket.label}: in ${money(bucket.inflow, currency)}, out ${money(bucket.outflow, currency)}',
+                      label: l.insightsBarSemantics(
+                        _bucketLabel(l, bucket),
+                        money(bucket.inflow, currency),
+                        money(bucket.outflow, currency),
+                      ),
                       excludeSemantics: true,
                       child: Column(
                         children: [
@@ -551,7 +574,10 @@ class _TrendChart extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 6),
-                          Text(bucket.label, style: pfText(11, color: c.sub)),
+                          Text(
+                            _bucketLabel(l, bucket),
+                            style: pfText(11, color: c.sub),
+                          ),
                         ],
                       ),
                     ),
@@ -598,16 +624,17 @@ class _WhereItWent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.pf;
+    final l = context.l10n;
     return PfCard(
       padding: const EdgeInsets.all(18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('Where it went', style: pfText(16, weight: w900)),
+          Text(l.insightsWhereItWent, style: pfText(16, weight: w900)),
           if (trend.categories.isEmpty) ...[
             const SizedBox(height: 14),
             Text(
-              'No spending in this period.',
+              l.insightsNoSpending,
               style: pfText(14, weight: w700, color: c.sub),
             ),
           ],
@@ -623,7 +650,7 @@ class _WhereItWent extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    trend.categories[i].name,
+                    displayGroupName(l, trend.categories[i].name),
                     style: pfText(14),
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -669,16 +696,17 @@ class _ByMode extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.pf;
+    final l = context.l10n;
     return PfCard(
       padding: const EdgeInsets.all(18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('By payment mode', style: pfText(16, weight: w900)),
+          Text(l.insightsByMode, style: pfText(16, weight: w900)),
           const SizedBox(height: 12),
           if (trend.modes.isEmpty)
             Text(
-              'No spending in this period.',
+              l.insightsNoSpending,
               style: pfText(14, weight: w700, color: c.sub),
             )
           else
@@ -702,7 +730,7 @@ class _ByMode extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            mode.name,
+                            displayGroupName(l, mode.name),
                             style: pfText(12, color: c.sub),
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -725,3 +753,20 @@ class _ByMode extends StatelessWidget {
     );
   }
 }
+
+/// Chart axis label in the current language.
+String _bucketLabel(AppLocalizations l, TrendBucket bucket) =>
+    switch (bucket.kind) {
+      BucketKind.day => l.weekdaysTwo.split(',')[bucket.ordinal % 7],
+      BucketKind.week => l.insightsWeekBucket(bucket.ordinal),
+      // Month names follow the app's date format (English), like dates.
+      BucketKind.month => bucket.label,
+      BucketKind.quarter => l.insightsQuarterBucket(bucket.ordinal),
+    };
+
+/// Placeholder group names from the data layer, translated for display.
+String displayGroupName(AppLocalizations l, String name) => switch (name) {
+  uncategorised => l.uncategorised,
+  'Not set' => l.notSet,
+  _ => name,
+};

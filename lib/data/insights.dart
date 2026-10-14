@@ -15,10 +15,18 @@ enum TrendRange {
   final String label;
 }
 
-class TrendBucket {
-  TrendBucket(this.label, this.start, this.end);
+enum BucketKind { day, week, month, quarter }
 
+class TrendBucket {
+  TrendBucket(this.label, this.start, this.end, this.kind, this.ordinal);
+
+  /// English label (tests, exports). The UI words it from [kind]/[ordinal].
   final String label;
+  final BucketKind kind;
+
+  /// Weekday (1–7, Monday first), week number (1–5), month (1–12) or
+  /// quarter (1–4).
+  final int ordinal;
 
   /// Inclusive start, exclusive end.
   final DateTime start;
@@ -129,13 +137,21 @@ class Insights {
               DateFormat('E').format(day(-i)).substring(0, 2),
               day(-i),
               day(-i + 1),
+              BucketKind.day,
+              day(-i).weekday,
             ),
         ];
       case TrendRange.month:
         // Five 6-day buckets: the last 30 days, ending tomorrow at 00:00.
         return [
           for (var i = 0; i < 5; i++)
-            TrendBucket('W${i + 1}', day(-29 + i * 6), day(-29 + (i + 1) * 6)),
+            TrendBucket(
+              'W${i + 1}',
+              day(-29 + i * 6),
+              day(-29 + (i + 1) * 6),
+              BucketKind.week,
+              i + 1,
+            ),
         ];
       case TrendRange.quarter:
         return [
@@ -144,6 +160,8 @@ class Insights {
               DateFormat('MMM').format(DateTime(now.year, now.month - i)),
               DateTime(now.year, now.month - i),
               DateTime(now.year, now.month - i + 1),
+              BucketKind.month,
+              DateTime(now.year, now.month - i).month,
             ),
         ];
       case TrendRange.year:
@@ -159,6 +177,8 @@ class Insights {
                 'Q${(start.month - 1) ~/ 3 + 1}',
                 start,
                 DateTime(start.year, start.month + 3),
+                BucketKind.quarter,
+                (start.month - 1) ~/ 3 + 1,
               );
             }(),
         ];

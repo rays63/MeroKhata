@@ -1,0 +1,1137 @@
+{
+  "@@locale": "en",
+  "appName": "Paisa Flow",
+  "tabHome": "Home",
+  "tabBooks": "Books",
+  "tabInsights": "Insights",
+  "tabSplit": "Split",
+  "newEntry": "New entry",
+  "cashIn": "Cash in",
+  "cashOut": "Cash out",
+  "all": "All",
+  "back": "Back",
+  "close": "Close",
+  "cancel": "Cancel",
+  "delete": "Delete",
+  "save": "Save",
+  "saveChanges": "Save changes",
+  "add": "Add",
+  "done": "Done",
+  "editList": "Edit list",
+  "next": "Next",
+  "getStarted": "Get started",
+  "continueLabel": "Continue",
+  "optional": "optional",
+  "today": "Today",
+  "yesterday": "Yesterday",
+  "greetingMorning": "Good morning,",
+  "greetingAfternoon": "Good afternoon,",
+  "greetingEvening": "Good evening,",
+  "updatedToday": "Updated today",
+  "updatedYesterday": "Updated yesterday",
+  "updatedDaysAgo": "Updated {days} days ago",
+  "@updatedDaysAgo": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "updatedLastWeek": "Updated last week",
+  "updatedOn": "Updated {date}",
+  "@updatedOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "entryCount": "{count, plural, =1{1 entry} other{{count} entries}}",
+  "@entryCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "bookCount": "{count, plural, =1{1 book} other{{count} books}}",
+  "@bookCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "goalCount": "{count, plural, =1{1 goal} other{{count} goals}}",
+  "@goalCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "homeTotalBalance": "Total balance · {currency}",
+  "@homeTotalBalance": {
+    "placeholders": {
+      "currency": {
+        "type": "String"
+      }
+    }
+  },
+  "homeCashInMonth": "Cash in · {month}",
+  "@homeCashInMonth": {
+    "placeholders": {
+      "month": {
+        "type": "String"
+      }
+    }
+  },
+  "homeCashOutMonth": "Cash out · {month}",
+  "@homeCashOutMonth": {
+    "placeholders": {
+      "month": {
+        "type": "String"
+      }
+    }
+  },
+  "import": "Import",
+  "splitABill": "Split a bill",
+  "goals": "Goals",
+  "setSavingsTarget": "Set a savings target",
+  "goalsSaved": "{amount} saved · {goals}",
+  "@goalsSaved": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "goals": {
+        "type": "String"
+      }
+    }
+  },
+  "split": "Split",
+  "youreOwed": "You're owed",
+  "youOwe": "You owe",
+  "recentlyUpdated": "Recently updated",
+  "seeAll": "See all",
+  "calendar": "Calendar",
+  "settings": "Settings",
+  "category": "Category",
+  "paymentMode": "Payment mode",
+  "bookCurrency": "Book currency",
+  "book": "Book",
+  "editListTitle": "Edit {title} list",
+  "@editListTitle": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "addNew": "Add new…",
+  "optionAdded": "“{name}” added",
+  "@optionAdded": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "previousMonth": "Previous month",
+  "nextMonth": "Next month",
+  "weekdaysShort": "S,M,T,W,T,F,S",
+  "weekdaysLong": "SUN,MON,TUE,WED,THU,FRI,SAT",
+  "daySemantics": "{date}{activity}",
+  "@daySemantics": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      },
+      "activity": {
+        "type": "String"
+      }
+    }
+  },
+  "hasCashIn": ", cash in",
+  "hasCashOut": ", cash out",
+  "entrySemantics": "{title}, {type} {amount}",
+  "@entrySemantics": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      },
+      "type": {
+        "type": "String"
+      },
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "balanceShort": "Bal {amount}",
+  "@balanceShort": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "exportFailed": "Export failed: {error}",
+  "@exportFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "readyToShare": "{name} ready to share",
+  "@readyToShare": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "loadError": "Some saved data couldn’t be read. A copy was kept.",
+  "splitYou": "You",
+  "splitFriendFallback": "Friend",
+  "splitAddFriendTitle": "Add a friend",
+  "splitAddFriendHint": "Name, e.g. Sita",
+  "splitEqual": "Equal",
+  "splitShares": "Shares",
+  "splitFewerShares": "Fewer shares for {name}",
+  "@splitFewerShares": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "splitMoreShares": "More shares for {name}",
+  "@splitMoreShares": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "splitRecordBeforeBook": "Record {amount} as cash out in",
+  "@splitRecordBeforeBook": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "splitRecordAfterBook": "",
+  "splitSettleUpWith": "Settle up with {name}",
+  "@splitSettleUpWith": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "splitPayName": "Pay {name}",
+  "@splitPayName": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "splitTheyPayYou": "{name} pays you {amount}.",
+  "@splitTheyPayYou": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "splitYouPayThem": "You pay {name} {amount}.",
+  "@splitYouPayThem": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "splitNoBookForCurrency": "Add a book in this currency to record settlements.",
+  "splitAddAsCashIn": "Add as cash in to {book}",
+  "@splitAddAsCashIn": {
+    "placeholders": {
+      "book": {
+        "type": "String"
+      }
+    }
+  },
+  "splitAddAsCashOut": "Add as cash out to {book}",
+  "@splitAddAsCashOut": {
+    "placeholders": {
+      "book": {
+        "type": "String"
+      }
+    }
+  },
+  "splitSettleAmount": "Settle {amount}",
+  "@splitSettleAmount": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "splitPayAmount": "Pay {amount}",
+  "@splitPayAmount": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "splitGroups": "Groups",
+  "splitBills": "Bills",
+  "splitNoGroupsTitle": "No groups yet",
+  "splitNoGroupsBody": "Make a group for a trip or a shared flat and keep running balances with everyone in it.",
+  "splitNewGroup": "New group",
+  "splitNoBillsTitle": "No bills yet",
+  "splitNoBillsBody": "Split a dinner, a cab or a movie night in a few taps.",
+  "splitPeopleCount": "{count, plural, =1{1 person} other{{count} people}}",
+  "@splitPeopleCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "splitExpenseCount": "{count, plural, =1{1 expense} other{{count} expenses}}",
+  "@splitExpenseCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "splitGroupOwed": "owed {amount}",
+  "@splitGroupOwed": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "splitYouOweAmount": "you owe {amount}",
+  "@splitYouOweAmount": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "splitOwesYou": "owes you {amount}",
+  "@splitOwesYou": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "splitSettledUp": "settled up",
+  "splitBillSettled": "Settled",
+  "splitToCollectAmount": "{amount} to collect",
+  "@splitToCollectAmount": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "splitBillSavedToast": "{count, plural, =1{Split saved · 1 person owes you {amount}} other{Split saved · {count} people owe you {amount}}}",
+  "@splitBillSavedToast": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "splitEnterTotal": "Enter the total",
+  "splitPickFriend": "Pick at least one friend",
+  "splitSaveCta": "{count, plural, =1{Save · 1 owes you {amount}} other{Save · {count} owe you {amount}}}",
+  "@splitSaveCta": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "splitWhatFor": "What's it for?",
+  "splitBillHint": "e.g. Thakali dinner",
+  "splitTotalPaidByYou": "Total · paid by you",
+  "splitBetween": "Split between",
+  "splitLinkedNote": "Linked to the entry you split, so nothing new is recorded in your book.",
+  "splitDeleteTitle": "Delete “{name}”?",
+  "@splitDeleteTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "splitEntriesStay": "Entries already recorded in your books stay.",
+  "splitAllSettled": "All settled",
+  "splitSettle": "Settle",
+  "splitYourBook": "your book",
+  "splitReceivedToast": "{amount} from {name} recorded in {book}",
+  "@splitReceivedToast": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "name": {
+        "type": "String"
+      },
+      "book": {
+        "type": "String"
+      }
+    }
+  },
+  "splitPaidToast": "{amount} to {name} recorded in {book}",
+  "@splitPaidToast": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "name": {
+        "type": "String"
+      },
+      "book": {
+        "type": "String"
+      }
+    }
+  },
+  "groupNameRequired": "Give the group a name",
+  "groupFriendRequired": "Add at least one friend",
+  "groupUpdated": "Group updated",
+  "groupCreated": "Group “{name}” created",
+  "@groupCreated": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "groupDeleteOpenBody": "Some balances aren’t settled yet. Entries already recorded in your books stay.",
+  "groupDeleted": "Group deleted",
+  "groupEdit": "Edit group",
+  "groupNameLabel": "Group name",
+  "groupNameHint": "e.g. Pokhara Trip, Flat 3B",
+  "groupMembers": "Members",
+  "groupMemberLocked": "{name} is part of an expense in this group",
+  "@groupMemberLocked": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "groupTapAddHint": "Tap Add to add the friends you share costs with.",
+  "groupCreate": "Create group",
+  "groupDelete": "Delete group",
+  "groupTitle": "Group",
+  "groupTotalSpent": "Total spent {amount}",
+  "@groupTotalSpent": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "groupBalances": "Balances",
+  "groupExpenses": "Expenses",
+  "groupNoExpenses": "No expenses yet. Add the first one below.",
+  "expensePaidByName": "Paid by {name}",
+  "@expensePaidByName": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "expenseDelete": "Delete expense",
+  "expenseDeleteBody": "Balances will be recalculated without it.",
+  "expenseDeleteSettledBody": "You’ve already settled up with {names}. Deleting this changes those balances, so someone may end up owing the other.",
+  "@expenseDeleteSettledBody": {
+    "placeholders": {
+      "names": {
+        "type": "String"
+      }
+    }
+  },
+  "expenseDeleted": "Expense deleted",
+  "expenseDeletedEntryStays": "Expense deleted · its book entry stays",
+  "expenseAmountRequired": "Enter an amount greater than zero",
+  "expensePickSharers": "Pick who shares this expense",
+  "expenseNeedOther": "Add someone besides the payer to split with",
+  "expenseAddedToast": "Expense added · balances updated",
+  "expenseAdd": "Add expense",
+  "expenseHint": "e.g. Hotel (2 nights)",
+  "expenseAmount": "Amount",
+  "expensePaidBy": "Paid by",
+  "billTitle": "Bill",
+  "billPaidByYou": "paid by you",
+  "billDelete": "Delete bill",
+  "billDeleted": "Bill deleted",
+  "billToCollect": "To collect",
+  "billTotalLine": "Bill total {total} · your share {share}",
+  "@billTotalLine": {
+    "placeholders": {
+      "total": {
+        "type": "String"
+      },
+      "share": {
+        "type": "String"
+      }
+    }
+  },
+  "bookListTitle": "Books",
+  "bookNew": "New book",
+  "bookSearchHint": "Search books",
+  "bookSearchNoMatch": "No books match “{query}”",
+  "@bookSearchNoMatch": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "bookDeleteTitle": "Delete “{name}”?",
+  "@bookDeleteTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "bookDeleteEmpty": "This book has no entries.",
+  "bookDeleteWithEntries": "{count, plural, =1{Its 1 entry will be deleted too. This can’t be undone.} other{Its {count} entries will be deleted too. This can’t be undone.}}",
+  "@bookDeleteWithEntries": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "bookDeleted": "“{name}” deleted",
+  "@bookDeleted": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "bookActions": "Book actions",
+  "bookRename": "Rename",
+  "bookEmptyTitle": "Start your first book",
+  "bookEmptyBody": "One book per purpose — daily spending, your shop, a trip abroad. It takes under a minute.",
+  "bookEmptyImport": "or import a statement",
+  "bookCurrencyLocked": "Currency is fixed once a book has entries",
+  "bookUntitled": "Untitled book",
+  "bookRenamed": "Book renamed",
+  "bookCreated": "“{name}” created in {currency}",
+  "@bookCreated": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "currency": {
+        "type": "String"
+      }
+    }
+  },
+  "bookRenameTitle": "Rename book",
+  "bookNameLabel": "Book name",
+  "bookNameHint": "e.g. Kirana Pasal",
+  "bookCurrencyLabel": "Currency",
+  "bookOpeningBalance": "Opening balance",
+  "bookCurrencyNote": "A book's currency is fixed once it has entries. Use a separate book for each currency.",
+  "bookCreate": "Create book",
+  "ledgerRangeWeek": "Last 7 days",
+  "ledgerRangeMonth": "This month",
+  "ledgerRangeAll": "All time",
+  "ledgerDateRange": "Date range",
+  "ledgerFilterCategory": "Filter by category",
+  "ledgerAllCategories": "All categories",
+  "ledgerFilterMode": "Filter by payment mode",
+  "ledgerAllModes": "All modes",
+  "ledgerImportStatement": "Import statement",
+  "ledgerReport": "Report",
+  "ledgerEmptyTitle": "No entries yet",
+  "ledgerEmptyBody": "Add your first cash in or cash out below, or import a statement.",
+  "ledgerNoMatchTitle": "No entries match",
+  "ledgerNoMatchBody": "Try a wider date range or clear filters.",
+  "ledgerClearFilters": "Clear filters",
+  "ledgerNetBalance": "Net balance",
+  "ledgerInflow": "INFLOW",
+  "ledgerOutflow": "OUTFLOW",
+  "entryErrorAmount": "Enter an amount greater than zero",
+  "entryErrorTitle": "Add a title so you can find this later",
+  "entrySaved": "Entry saved",
+  "entryChangesSaved": "Changes saved",
+  "entryBalanceUpdated": "balance updated",
+  "entryGoalUpdated": "goal progress updated",
+  "entryEditTitle": "Edit entry",
+  "entryNewCashIn": "New cash in",
+  "entryNewCashOut": "New cash out",
+  "entryTitleLabel": "Title",
+  "entryTitleHint": "What was it for?",
+  "entryDateTime": "Date & time",
+  "entryNotes": "Notes",
+  "entryAddToGoal": "Add to a goal",
+  "entrySave": "Save entry",
+  "entryWhenToday": "Today, {date}",
+  "@entryWhenToday": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "entryDeleteTitle": "Delete this entry?",
+  "entryDeleteBody": "The book balance will be recalculated. This can’t be undone.",
+  "entryDeletedToast": "Entry deleted · balance recalculated",
+  "entryReference": "Reference",
+  "entryImportedFromLabel": "Imported from",
+  "entryGoal": "Goal",
+  "entryTitle": "Entry",
+  "entryBadgeCashIn": "CASH IN",
+  "entryBadgeCashOut": "CASH OUT",
+  "entryRunningBalance": "Running balance",
+  "entrySplitWithFriends": "Split this bill with friends",
+  "entryViewSplitSettled": "View split · settled",
+  "entryViewSplitToCollect": "View split · {amount} to collect",
+  "@entryViewSplitToCollect": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "entryEditHistory": "Edit history",
+  "entryCreated": "Entry created",
+  "entryImportedFrom": "Imported from {source}",
+  "@entryImportedFrom": {
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "entryDelete": "Delete entry",
+  "importNoEntriesPdf": "No entries found in {file}. Scanned, image-only PDFs aren’t supported yet.",
+  "@importNoEntriesPdf": {
+    "placeholders": {
+      "file": {
+        "type": "String"
+      }
+    }
+  },
+  "importNoEntriesXls": "No entries found in {file}. Check it has date, debit and credit columns.",
+  "@importNoEntriesXls": {
+    "placeholders": {
+      "file": {
+        "type": "String"
+      }
+    }
+  },
+  "importReadError": "Couldn’t read {file}: {error}",
+  "@importReadError": {
+    "placeholders": {
+      "file": {
+        "type": "String"
+      },
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "importInto": "into {book}",
+  "@importInto": {
+    "placeholders": {
+      "book": {
+        "type": "String"
+      }
+    }
+  },
+  "importPdfTitle": "PDF bank statement",
+  "importPdfBody": "Text-based PDFs with date, description, withdraw, deposit and balance columns.",
+  "importPdfAction": "Choose PDF →",
+  "importXlsTitle": "XLS wallet statement",
+  "importXlsBody": "Legacy .xls exports from wallets. Keeps original descriptions and reference codes.",
+  "importXlsAction": "Choose XLS →",
+  "importTipReview": "You’ll review everything before it’s saved.",
+  "importTipDuplicates": "Re-importing the same statement won’t create duplicates.",
+  "importTipScanned": "Scanned, image-only PDFs aren’t supported yet.",
+  "importImportedToast": "{count, plural, =1{Imported 1 entry} other{Imported {count} entries}}",
+  "@importImportedToast": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "importDuplicatesSkippedToast": "{count, plural, =1{1 duplicate skipped} other{{count} duplicates skipped}}",
+  "@importDuplicatesSkippedToast": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "importReviewTitle": "Review import",
+  "importParsedLines": "{file} · parsed {count, plural, =1{1 line} other{{count} lines}}",
+  "@importParsedLines": {
+    "placeholders": {
+      "file": {
+        "type": "String"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "importReady": "Ready to import",
+  "importDuplicatesSkipped": "Duplicates skipped",
+  "importIgnoredLines": "Non-entry lines",
+  "importUpToDateTitle": "Already up to date",
+  "importUpToDateBody": "Every entry in this statement is already in {book}. Nothing new to import.",
+  "@importUpToDateBody": {
+    "placeholders": {
+      "book": {
+        "type": "String"
+      }
+    }
+  },
+  "importThisBook": "this book",
+  "importBackToBook": "Back to book",
+  "importButton": "{count, plural, =1{Import 1 entry} other{Import {count} entries}}",
+  "@importButton": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "importRef": "Ref {reference}",
+  "@importRef": {
+    "placeholders": {
+      "reference": {
+        "type": "String"
+      }
+    }
+  },
+  "importDuplicateBadge": "DUPLICATE",
+  "calNoEntries": "No entries on this day.",
+  "splashOffline": "Offline-first · your data stays on this phone",
+  "onboardBooksTitle": "All your books, one pocket",
+  "onboardBooksBody": "Keep personal spending, your shop and that trip abroad apart — each book in its own currency.",
+  "onboardImportTitle": "Import statements, skip the typing",
+  "onboardImportBody": "Drop in a PDF or XLS statement. Review it first — duplicates are caught automatically.",
+  "onboardGoalsTitle": "Goals and splits that add up",
+  "onboardGoalsBody": "Tag income to a savings goal, split bills with friends, and always know who owes what.",
+  "onboardSkip": "Skip",
+  "onboardPageOf": "Page {page} of {total}",
+  "@onboardPageOf": {
+    "placeholders": {
+      "page": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "onboardArtParsed": "Parsed · {count} lines",
+  "@onboardArtParsed": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "onboardArtReady": "Ready",
+  "onboardArtDuplicates": "Duplicates",
+  "onboardArtSkipped": "Skipped",
+  "onboardArtImportEntries": "{count, plural, =1{Import 1 entry} other{Import {count} entries}}",
+  "@onboardArtImportEntries": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "onboardArtGoalProgress": "{saved} of {target}",
+  "@onboardArtGoalProgress": {
+    "placeholders": {
+      "saved": {
+        "type": "String"
+      },
+      "target": {
+        "type": "String"
+      }
+    }
+  },
+  "profileTitle": "Your details",
+  "profileStepTitle": "Tell us about you",
+  "profileStepBody": "Used to personalise the app and put your name on exported reports.",
+  "profileAvatarHint": "Your initials become your avatar. You can add a photo later in Settings.",
+  "profileFullName": "Full name",
+  "profileNameHint": "e.g. Aarav Shrestha",
+  "profileMobile": "Mobile number",
+  "profileEmail": "Email",
+  "profilePrivacy": "Saved only on this phone. We never upload or share your details.",
+  "profileValid": "Valid",
+  "profileNameRequired": "Please tell us your name",
+  "profileEmailInvalid": "That email looks incomplete — fix it or leave it blank",
+  "profileSaved": "Details saved",
+  "setupStepOf": "STEP {step} OF {total}",
+  "@setupStepOf": {
+    "placeholders": {
+      "step": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "setupTitle": "Let's set up your first book",
+  "setupBody": "Books keep money separate — personal, shop, a trip. Each book keeps its own currency.",
+  "setupLanguage": "Language",
+  "setupBookName": "Book name",
+  "setupBookNameHint": "e.g. Personal",
+  "setupCurrency": "Currency",
+  "setupOpeningBalance": "Opening balance",
+  "setupSaveFailed": "Couldn’t save your book: {error}",
+  "@setupSaveFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "setupWelcome": "Welcome to Paisa Flow",
+  "settingsAppearance": "Appearance",
+  "settingsThemeSystem": "System",
+  "settingsThemeLight": "Light",
+  "settingsThemeDark": "Dark",
+  "settingsLanguage": "Language",
+  "settingsCategories": "Categories",
+  "settingsPaymentModes": "Payment modes",
+  "settingsItemCount": "{count, plural, =1{1 item} other{{count} items}}",
+  "@settingsItemCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsDefaultCurrency": "Default currency for new books",
+  "settingsDefaultCurrencyTitle": "Default currency",
+  "settingsExportAll": "Export all data",
+  "settingsAppLock": "App lock",
+  "settingsSoon": "SOON",
+  "settingsStoredTitle": "Stored only on this phone",
+  "settingsStoredBody": "No account, no cloud. Export regularly to keep a backup.",
+  "goalNoDeadline": "No deadline",
+  "goalDeadlineBy": "By {date}",
+  "@goalDeadlineBy": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "goalNew": "New goal",
+  "goalEdit": "Edit goal",
+  "goalSavedAcross": "Saved across all books",
+  "goalOfTarget": "of {amount}",
+  "@goalOfTarget": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "goalEmptyTitle": "No goals yet",
+  "goalEmptyBody": "Set a savings target — an emergency fund, a laptop, Dashain gifts.",
+  "goalTagHint": "Tag any cash-in entry with a goal and progress updates automatically.",
+  "goalReachedBadge": "REACHED",
+  "goalReached": "Goal reached",
+  "goalToGo": "{amount} to go",
+  "@goalToGo": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "goalNoLinked": "No linked entries",
+  "goalLinkedCount": "{count, plural, =1{1 linked entry} other{{count} linked entries}}",
+  "@goalLinkedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "goalDeadlineKeep": "Keep current",
+  "goalDeadlineMonths": "{count, plural, =1{1 month} other{{count} months}}",
+  "@goalDeadlineMonths": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "goalNameRequired": "Give your goal a name",
+  "goalTargetInvalid": "Target must be greater than zero",
+  "goalUpdated": "Goal updated",
+  "goalCreated": "Goal “{name}” created",
+  "@goalCreated": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "goalDeleteTitle": "Delete “{name}”?",
+  "@goalDeleteTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "goalDeleteBody": "Linked entries stay in their books; they just stop counting toward this goal.",
+  "goalDeleted": "Goal deleted",
+  "goalName": "Goal name",
+  "goalNameHint": "e.g. New scooter",
+  "goalTargetAmount": "Target amount",
+  "goalDeadline": "Deadline",
+  "goalCreate": "Create goal",
+  "goalDelete": "Delete goal",
+  "reportTitle": "Report",
+  "reportTypeAll": "All entries",
+  "reportTypeDaily": "Day-wise",
+  "reportTypeCategory": "Category-wise",
+  "reportColumnEntry": "ENTRY",
+  "reportColumnDay": "DAY",
+  "reportColumnCategory": "CATEGORY",
+  "reportColumnMode": "MODE",
+  "reportColumnAmount": "AMOUNT",
+  "reportFieldDate": "Date",
+  "reportFieldTitle": "Title",
+  "reportFieldNotes": "Notes",
+  "reportFieldBalance": "Balance",
+  "reportFieldReference": "Reference",
+  "reportFieldsToExport": "Fields to export · {selected} of {total}",
+  "@reportFieldsToExport": {
+    "placeholders": {
+      "selected": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "reportExportPdf": "Export PDF",
+  "reportExportExcel": "Export Excel",
+  "reportEmpty": "No entries in this range.",
+  "reportMoreInExport": "+ {count} more in the export",
+  "@reportMoreInExport": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "reportNet": "Net",
+  "insightsTitle": "Insights",
+  "insightsAllBooks": "All {currency} books",
+  "@insightsAllBooks": {
+    "placeholders": {
+      "currency": {
+        "type": "String"
+      }
+    }
+  },
+  "insightsPrevMonth": "Previous month",
+  "insightsNextMonth": "Next month",
+  "insightsActivityOn": "Activity · {date}",
+  "@insightsActivityOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "insightsTransactionCount": "{count, plural, =1{1 transaction} other{{count} transactions}}",
+  "@insightsTransactionCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "insightsNoActivity": "No activity on this day.",
+  "insightsTrends": "Trends",
+  "insightsIncome": "Income",
+  "insightsSpending": "Spending",
+  "insightsSpendingSaved": "Spending · {percent}% saved",
+  "@insightsSpendingSaved": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "insightsNetFlow": "Net flow · {month}",
+  "@insightsNetFlow": {
+    "placeholders": {
+      "month": {
+        "type": "String"
+      }
+    }
+  },
+  "insightsCashFlowTrend": "Cash flow trend",
+  "insightsLegendIn": "In",
+  "insightsLegendOut": "Out",
+  "insightsBarSemantics": "{period}: in {inflow}, out {outflow}",
+  "@insightsBarSemantics": {
+    "placeholders": {
+      "period": {
+        "type": "String"
+      },
+      "inflow": {
+        "type": "String"
+      },
+      "outflow": {
+        "type": "String"
+      }
+    }
+  },
+  "insightsWhereItWent": "Where it went",
+  "insightsNoSpending": "No spending in this period.",
+  "insightsByMode": "By payment mode",
+  "splashSubtitle": "Every paisa, accounted for.",
+  "profilePhoneRule": "Enter a 10-digit mobile number starting with 9",
+  "goalDeadlineOneYear": "1 year",
+  "reportFieldsHint": "Fields apply to the All entries report; summaries list totals.",
+  "insightsRange7d": "7D",
+  "insightsRange30d": "30D",
+  "insightsRange3m": "3M",
+  "insightsRange1y": "1Y",
+  "historyAmount": "Amount {from} → {to}",
+  "@historyAmount": {
+    "placeholders": {
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      }
+    }
+  },
+  "historyTitle": "Title changed to “{title}”",
+  "@historyTitle": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "historyCategory": "Category {from} → {to}",
+  "@historyCategory": {
+    "placeholders": {
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      }
+    }
+  },
+  "historyMode": "Payment mode {from} → {to}",
+  "@historyMode": {
+    "placeholders": {
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      }
+    }
+  },
+  "historyTypeIn": "Type changed to cash in",
+  "historyTypeOut": "Type changed to cash out",
+  "historyDate": "Date changed to {date}",
+  "@historyDate": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "historyNotes": "Notes updated",
+  "historyGoal": "Goal link updated",
+  "historyDeleted": "Entry deleted",
+  "historySplitGroup": "Created from {group} split",
+  "@historySplitGroup": {
+    "placeholders": {
+      "group": {
+        "type": "String"
+      }
+    }
+  },
+  "historySplitBill": "Created from split bill",
+  "historySettled": "Settled from {source}",
+  "@historySettled": {
+    "placeholders": {
+      "source": {
+        "type": "String"
+      }
+    }
+  },
+  "uncategorised": "Uncategorised",
+  "notSet": "Not set",
+  "insightsWeekBucket": "W{n}",
+  "@insightsWeekBucket": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "insightsQuarterBucket": "Q{n}",
+  "@insightsQuarterBucket": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "weekdaysTwo": "Su,Mo,Tu,We,Th,Fr,Sa"
+}

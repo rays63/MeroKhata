@@ -72,42 +72,13 @@ String signedMoney(num value, [String currency = 'NPR']) =>
 String balanceMoney(num value, [String currency = 'NPR']) =>
     value < 0 ? '− ${money(value, currency)}' : money(value, currency);
 
-/// "Today", "Yesterday", or "Sun, 12 Oct".
-String dayLabel(DateTime date, {DateTime? now}) {
-  final today = _day(now ?? DateTime.now());
-  final day = _day(date);
-  final diff = today.difference(day).inDays;
-  if (diff == 0) return 'Today';
-  if (diff == 1) return 'Yesterday';
-  return DateFormat('EEE, d MMM').format(date);
-}
-
-/// "Updated today" style relative label for a book.
-String updatedLabel(DateTime date, {DateTime? now}) {
-  final diff = _day(now ?? DateTime.now()).difference(_day(date)).inDays;
-  if (diff <= 0) return 'Updated today';
-  if (diff == 1) return 'Updated yesterday';
-  if (diff < 7) return 'Updated $diff days ago';
-  if (diff < 14) return 'Updated last week';
-  return 'Updated ${DateFormat('d MMM').format(date)}';
-}
-
 String timeLabel(DateTime date) => DateFormat('h:mm a').format(date);
-
-String greeting({DateTime? now}) {
-  final hour = (now ?? DateTime.now()).hour;
-  if (hour < 12) return 'Good morning,';
-  if (hour < 17) return 'Good afternoon,';
-  return 'Good evening,';
-}
 
 String initials(String name) {
   final parts = name.trim().split(RegExp(r'\s+')).where((p) => p.isNotEmpty);
   if (parts.isEmpty) return 'PF';
   return parts.take(2).map((p) => p[0].toUpperCase()).join();
 }
-
-DateTime _day(DateTime date) => DateTime(date.year, date.month, date.day);
 
 bool sameDay(DateTime a, DateTime b) =>
     a.year == b.year && a.month == b.month && a.day == b.day;

@@ -4,6 +4,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../theme/tokens.dart';
 import 'pf.dart';
+import '../l10n/l10n.dart';
 
 /// Sunday-first month grid with a green (cash in) and red (cash out) dot
 /// under days that had activity. Used by Calendar and Insights.
@@ -45,9 +46,8 @@ class MonthGrid extends StatelessWidget {
     final lead = DateTime(month.year, month.month).weekday % 7;
     final previousDays = DateUtils.getDaysInMonth(month.year, month.month - 1);
     final rows = ((lead + days) / 7).ceil();
-    final weekdays = shortWeekdays
-        ? const ['S', 'M', 'T', 'W', 'T', 'F', 'S']
-        : const ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+    final l = context.l10n;
+    final weekdays = l.weekdays(short: shortWeekdays);
 
     Widget cell(int index) {
       final dayNumber = index - lead + 1;
@@ -85,11 +85,10 @@ class MonthGrid extends StatelessWidget {
       return Semantics(
         selected: isSelected,
         button: true,
-        label: [
+        label: l.daySemantics(
           DateFormat('d MMMM').format(date),
-          if (hasIn) 'cash in',
-          if (hasOut) 'cash out',
-        ].join(', '),
+          '${hasIn ? l.hasCashIn : ''}${hasOut ? l.hasCashOut : ''}',
+        ),
         excludeSemantics: true,
         child: Material(
           color: isSelected
@@ -129,7 +128,7 @@ class MonthGrid extends StatelessWidget {
               child: Row(
                 children: [
                   IconButton(
-                    tooltip: 'Previous month',
+                    tooltip: l.previousMonth,
                     onPressed: onPrev,
                     icon: Icon(
                       LucideIcons.chevronLeft,
@@ -145,7 +144,7 @@ class MonthGrid extends StatelessWidget {
                     ),
                   ),
                   IconButton(
-                    tooltip: 'Next month',
+                    tooltip: l.nextMonth,
                     onPressed: onNext,
                     icon: Icon(
                       LucideIcons.chevronRight,

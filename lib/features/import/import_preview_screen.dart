@@ -5,6 +5,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../core/format.dart';
 import '../../data/app_store.dart';
 import '../../data/models.dart';
+import '../../l10n/l10n.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/pf.dart';
 import '../books/book_detail_screen.dart';
@@ -49,11 +50,14 @@ class _ImportPreviewScreenState extends State<ImportPreviewScreen> {
     final preview = widget.preview;
     await AppScope.read(context).commitImport(preview);
     if (!mounted) return;
+    final l = context.l10n;
     final dupes = preview.duplicates.length;
     showPfToast(
       context,
-      'Imported ${preview.importable.length} ${preview.importable.length == 1 ? 'entry' : 'entries'}'
-      '${dupes == 0 ? '' : ' · $dupes ${dupes == 1 ? 'duplicate' : 'duplicates'} skipped'}',
+      [
+        l.importImportedToast(preview.importable.length),
+        if (dupes > 0) l.importDuplicatesSkippedToast(dupes),
+      ].join(' · '),
     );
     _backToBook();
   }
@@ -62,6 +66,7 @@ class _ImportPreviewScreenState extends State<ImportPreviewScreen> {
   Widget build(BuildContext context) {
     final store = AppScope.watch(context);
     final c = context.pf;
+    final l = context.l10n;
     final preview = widget.preview;
     final book = store.bookById(widget.bookId);
     final currency = book?.currency ?? 'NPR';
@@ -80,27 +85,27 @@ class _ImportPreviewScreenState extends State<ImportPreviewScreen> {
               sliver: SliverList.list(
                 children: [
                   PfHeader(
-                    title: 'Review import',
-                    subtitle: '${widget.fileName} · parsed $lines lines',
+                    title: l.importReviewTitle,
+                    subtitle: l.importParsedLines(widget.fileName, lines),
                   ),
                   const SizedBox(height: 14),
                   Row(
                     children: [
                       _Count(
                         value: ready,
-                        label: 'Ready to import',
+                        label: l.importReady,
                         color: c.cashIn,
                       ),
                       const SizedBox(width: 8),
                       _Count(
                         value: dupes,
-                        label: 'Duplicates skipped',
+                        label: l.importDuplicatesSkipped,
                         color: c.gold,
                       ),
                       const SizedBox(width: 8),
                       _Count(
                         value: ignored,
-                        label: 'Non-entry lines',
+                        label: l.importIgnoredLines,
                         color: c.sub,
                       ),
                     ],
@@ -119,12 +124,14 @@ class _ImportPreviewScreenState extends State<ImportPreviewScreen> {
                           Icon(LucideIcons.copyCheck, size: 30, color: c.gold),
                           const SizedBox(height: 10),
                           Text(
-                            'Already up to date',
+                            l.importUpToDateTitle,
                             style: pfText(18, weight: w900),
                           ),
                           const SizedBox(height: 10),
                           Text(
-                            'Every entry in this statement is already in ${book?.name ?? 'this book'}. Nothing new to import.',
+                            l.importUpToDateBody(
+                              book?.name ?? l.importThisBook,
+                            ),
                             style: pfText(
                               14,
                               weight: w600,
@@ -134,7 +141,7 @@ class _ImportPreviewScreenState extends State<ImportPreviewScreen> {
                           ),
                           const SizedBox(height: 14),
                           PfSmallButton(
-                            label: 'Back to book',
+                            label: l.importBackToBook,
                             onPressed: _backToBook,
                             radius: 14,
                           ),
@@ -176,7 +183,7 @@ class _ImportPreviewScreenState extends State<ImportPreviewScreen> {
           : SafeArea(
               minimum: const EdgeInsets.fromLTRB(20, 10, 20, 14),
               child: PfButton(
-                label: 'Import $ready ${ready == 1 ? 'entry' : 'entries'}',
+                label: l.importButton(ready),
                 icon: LucideIcons.download,
                 onPressed: saving ? null : _import,
               ),
@@ -209,7 +216,12 @@ class _Count extends StatelessWidget {
               '$value',
               style: pfText(26, weight: w900, color: color),
             ),
-            Text(label, style: pfText(12, color: c.sub)),
+            Text(
+              label,
+              style: pfText(12, color: c.sub),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
           ],
         ),
       ),
@@ -231,10 +243,12 @@ class _PreviewRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.pf;
+    final l = context.l10n;
     final isIn = entry.type == TransactionType.cashIn;
     final meta = [
       DateFormat('d MMM').format(entry.occurredAt),
-      if (entry.externalReference.isNotEmpty) 'Ref ${entry.externalReference}',
+      if (entry.externalReference.isNotEmpty)
+        l.importRef(entry.externalReference),
     ].join(' · ');
     return Opacity(
       opacity: duplicate ? .5 : 1,
@@ -268,6 +282,8 @@ class _PreviewRow extends StatelessWidget {
                   ),
                   Text(
                     meta,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: pfText(11.5, weight: w700, color: c.sub),
                   ),
                 ],
@@ -283,7 +299,7 @@ class _PreviewRow extends StatelessWidget {
                 ),
                 if (duplicate)
                   Text(
-                    'DUPLICATE',
+                    l.importDuplicateBadge,
                     style: pfText(10.5, weight: w900, color: c.gold),
                   ),
               ],

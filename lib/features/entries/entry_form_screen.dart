@@ -6,6 +6,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../core/format.dart';
 import '../../data/app_store.dart';
 import '../../data/models.dart';
+import '../../l10n/l10n.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/category_icons.dart';
 import '../../widgets/pf.dart';
@@ -106,13 +107,14 @@ class _EntryFormScreenState extends State<EntryFormScreen> {
   }
 
   Future<void> _save() async {
+    final l = context.l10n;
     final value = double.tryParse(amount.text.replaceAll(',', '').trim());
     if (value == null || value <= 0) {
-      setState(() => error = 'Enter an amount greater than zero');
+      setState(() => error = l.entryErrorAmount);
       return;
     }
     if (title.text.trim().isEmpty) {
-      setState(() => error = 'Add a title so you can find this later');
+      setState(() => error = l.entryErrorTitle);
       return;
     }
     if (saving) return;
@@ -141,10 +143,13 @@ class _EntryFormScreenState extends State<EntryFormScreen> {
     );
     await store.saveTransaction(entry);
     if (!mounted) return;
-    final goalNote = isIn && goalId != null ? ' · goal progress updated' : '';
     showPfToast(
       context,
-      '${editing ? 'Changes saved' : 'Entry saved'} · balance updated$goalNote',
+      [
+        editing ? l.entryChangesSaved : l.entrySaved,
+        l.entryBalanceUpdated,
+        if (isIn && goalId != null) l.entryGoalUpdated,
+      ].join(' · '),
     );
     Navigator.pop(context);
   }
@@ -153,11 +158,12 @@ class _EntryFormScreenState extends State<EntryFormScreen> {
   Widget build(BuildContext context) {
     final store = AppScope.watch(context);
     final c = context.pf;
+    final l = context.l10n;
     final book = store.bookById(bookId);
     final currency = Currency.of(book?.currency ?? 'NPR');
     final heading = editing
-        ? 'Edit entry'
-        : (isIn ? 'New cash in' : 'New cash out');
+        ? l.entryEditTitle
+        : (isIn ? l.entryNewCashIn : l.entryNewCashOut);
     final amountColor = c.amount(isIn);
     return Scaffold(
       body: SafeArea(
@@ -168,7 +174,7 @@ class _EntryFormScreenState extends State<EntryFormScreen> {
               children: [
                 PfIconButton(
                   icon: LucideIcons.x,
-                  tooltip: 'Close',
+                  tooltip: l.close,
                   onPressed: () => Navigator.maybePop(context),
                 ),
                 const SizedBox(width: 12),
@@ -176,7 +182,12 @@ class _EntryFormScreenState extends State<EntryFormScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(heading, style: pfText(20, weight: w900)),
+                      Text(
+                        heading,
+                        style: pfText(20, weight: w900),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                       InkWell(
                         onTap: editing
                             ? null
@@ -263,7 +274,7 @@ class _EntryFormScreenState extends State<EntryFormScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   PfField(
-                    label: 'Title',
+                    label: l.entryTitleLabel,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 18,
                       vertical: 13,
@@ -276,7 +287,7 @@ class _EntryFormScreenState extends State<EntryFormScreen> {
                       },
                       style: pfText(16, color: c.ink),
                       decoration: InputDecoration(
-                        hintText: 'What was it for?',
+                        hintText: l.entryTitleHint,
                         hintStyle: pfText(16, color: c.mute),
                       ),
                     ),
@@ -284,7 +295,7 @@ class _EntryFormScreenState extends State<EntryFormScreen> {
                   const PfDivider(),
                   PfPickerRow(
                     icon: categoryIcon(category),
-                    label: 'Category',
+                    label: l.category,
                     value: category,
                     onTap: () async {
                       final picked = await pickCategory(
@@ -297,7 +308,7 @@ class _EntryFormScreenState extends State<EntryFormScreen> {
                   const PfDivider(),
                   PfPickerRow(
                     icon: LucideIcons.wallet,
-                    label: 'Payment mode',
+                    label: l.paymentMode,
                     value: mode,
                     onTap: () async {
                       final picked = await pickPaymentMode(
@@ -310,14 +321,14 @@ class _EntryFormScreenState extends State<EntryFormScreen> {
                   const PfDivider(),
                   PfPickerRow(
                     icon: LucideIcons.clock,
-                    label: 'Date & time',
-                    value: _whenLabel(when),
+                    label: l.entryDateTime,
+                    value: _whenLabel(l, when),
                     chevron: false,
                     onTap: _pickWhen,
                   ),
                   const PfDivider(),
                   PfField(
-                    label: 'Notes',
+                    label: l.entryNotes,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 18,
                       vertical: 13,
@@ -327,7 +338,7 @@ class _EntryFormScreenState extends State<EntryFormScreen> {
                       textCapitalization: TextCapitalization.sentences,
                       style: pfText(15, weight: w700, color: c.ink),
                       decoration: InputDecoration(
-                        hintText: 'Optional',
+                        hintText: l.optional,
                         hintStyle: pfText(15, weight: w700, color: c.mute),
                       ),
                     ),
@@ -339,7 +350,7 @@ class _EntryFormScreenState extends State<EntryFormScreen> {
             // amounts without conversion.
             if (isIn && store.goals.isNotEmpty && currency.code == 'NPR') ...[
               const SizedBox(height: 16),
-              const PfSectionLabel('Add to a goal', optional: true),
+              PfSectionLabel(l.entryAddToGoal, optional: true),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
@@ -363,7 +374,7 @@ class _EntryFormScreenState extends State<EntryFormScreen> {
             ],
             const SizedBox(height: 16),
             PfButton(
-              label: 'Save entry',
+              label: l.entrySave,
               icon: LucideIcons.check,
               onPressed: saving ? null : _save,
             ),
@@ -374,10 +385,10 @@ class _EntryFormScreenState extends State<EntryFormScreen> {
     );
   }
 
-  static String _whenLabel(DateTime value) {
+  static String _whenLabel(AppLocalizations l, DateTime value) {
     final now = DateTime.now();
     final day = sameDay(value, now)
-        ? 'Today, ${DateFormat('d MMM').format(value)}'
+        ? l.entryWhenToday(DateFormat('d MMM').format(value))
         : DateFormat(
             value.year == now.year ? 'EEE, d MMM' : 'd MMM y',
           ).format(value);
@@ -394,6 +405,7 @@ class _TypeToggle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.pf;
+    final l = context.l10n;
     Widget option(TransactionType type, IconData icon, String label) {
       final selected = value == type;
       final isIn = type == TransactionType.cashIn;
@@ -415,9 +427,13 @@ class _TypeToggle extends StatelessWidget {
                   children: [
                     Icon(icon, size: 16, color: fg),
                     const SizedBox(width: 6),
-                    Text(
-                      label,
-                      style: pfText(15, weight: w900, color: fg),
+                    Flexible(
+                      child: Text(
+                        label,
+                        style: pfText(15, weight: w900, color: fg),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                   ],
                 ),
@@ -436,9 +452,9 @@ class _TypeToggle extends StatelessWidget {
       ),
       child: Row(
         children: [
-          option(TransactionType.cashIn, LucideIcons.arrowDownLeft, 'Cash in'),
+          option(TransactionType.cashIn, LucideIcons.arrowDownLeft, l.cashIn),
           const SizedBox(width: 6),
-          option(TransactionType.cashOut, LucideIcons.arrowUpRight, 'Cash out'),
+          option(TransactionType.cashOut, LucideIcons.arrowUpRight, l.cashOut),
         ],
       ),
     );

@@ -225,6 +225,14 @@ void main() {
     test('year trend has four quarters ending this quarter', () {
       final trend = insights.trend(TrendRange.year);
       expect(trend.buckets.map((b) => b.label), ['Q1', 'Q2', 'Q3', 'Q4']);
+      expect(
+        trend.buckets.map((b) => b.kind),
+        everyElement(BucketKind.quarter),
+      );
+      expect(trend.buckets.map((b) => b.ordinal), [1, 2, 3, 4]);
+      final week = insights.trend(TrendRange.week).buckets;
+      expect(week.last.kind, BucketKind.day);
+      expect(week.last.ordinal, DateTime.wednesday);
       expect(trend.buckets.last.start, DateTime(2026, 10));
     });
   });

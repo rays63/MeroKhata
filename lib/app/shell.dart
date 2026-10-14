@@ -9,6 +9,7 @@ import '../features/split/split_screen.dart';
 import '../theme/tokens.dart';
 import '../widgets/pf.dart';
 import 'nav.dart';
+import '../l10n/l10n.dart';
 
 enum ShellTab { home, books, insights, split }
 
@@ -102,11 +103,12 @@ class _TabBar extends StatelessWidget {
     // Labels stay legible at large text sizes without overflowing the bar.
     return MediaQuery.withClampedTextScaling(
       maxScaleFactor: 1.3,
-      child: _bar(c, bottom, item),
+      child: _bar(context, c, bottom, item),
     );
   }
 
   Widget _bar(
+    BuildContext context,
     PfColors c,
     double bottom,
     Widget Function(ShellTab, IconData, String) item,
@@ -121,11 +123,15 @@ class _TabBar extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          item(ShellTab.home, LucideIcons.house, 'Home'),
-          item(ShellTab.books, LucideIcons.bookOpen, 'Books'),
+          item(ShellTab.home, LucideIcons.house, context.l10n.tabHome),
+          item(ShellTab.books, LucideIcons.bookOpen, context.l10n.tabBooks),
           const Spacer(),
-          item(ShellTab.insights, LucideIcons.chartPie, 'Insights'),
-          item(ShellTab.split, LucideIcons.split, 'Split'),
+          item(
+            ShellTab.insights,
+            LucideIcons.chartPie,
+            context.l10n.tabInsights,
+          ),
+          item(ShellTab.split, LucideIcons.split, context.l10n.tabSplit),
         ],
       ),
     );
@@ -204,7 +210,7 @@ class _AddButton extends StatelessWidget {
     final c = context.pf;
     return Semantics(
       button: true,
-      label: 'New entry',
+      label: context.l10n.newEntry,
       excludeSemantics: true,
       child: Container(
         width: 58,

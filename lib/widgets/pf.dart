@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../theme/tokens.dart';
+import '../l10n/l10n.dart';
 
 /// Shared building blocks for the Paisa Flow design. Measurements come from
 /// the design file (px == logical pixels).
@@ -94,7 +95,7 @@ class PfHeader extends StatelessWidget {
       children: [
         PfIconButton(
           icon: close ? LucideIcons.x : LucideIcons.arrowLeft,
-          tooltip: close ? 'Close' : 'Back',
+          tooltip: close ? context.l10n.close : context.l10n.back,
           onPressed: onBack ?? () => Navigator.maybePop(context),
         ),
         const SizedBox(width: 12),
@@ -617,7 +618,7 @@ class PfSectionLabel extends StatelessWidget {
                 children: [
                   if (optional)
                     TextSpan(
-                      text: ' · optional',
+                      text: ' · ${context.l10n.optional}',
                       style: pfText(13, weight: w800, color: c.mute),
                     ),
                 ],
@@ -845,7 +846,7 @@ class PfField extends StatelessWidget {
               children: [
                 if (optional)
                   TextSpan(
-                    text: ' · optional',
+                    text: ' · ${context.l10n.optional}',
                     style: pfText(12, color: c.mute),
                   ),
               ],

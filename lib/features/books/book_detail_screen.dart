@@ -5,6 +5,7 @@ import '../../app/nav.dart';
 import '../../core/format.dart';
 import '../../data/app_store.dart';
 import '../../data/models.dart';
+import '../../l10n/l10n.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/category_icons.dart';
 import '../../widgets/entry_row.dart';
@@ -19,7 +20,16 @@ enum DateRange {
   all('All time');
 
   const DateRange(this.label);
+
+  /// English label for data and exports; use [localizedLabel] in the UI.
   final String label;
+
+  String localizedLabel(AppLocalizations l) => switch (this) {
+    DateRange.today => l.today,
+    DateRange.week => l.ledgerRangeWeek,
+    DateRange.month => l.ledgerRangeMonth,
+    DateRange.all => l.ledgerRangeAll,
+  };
 
   bool contains(DateTime date, DateTime now) {
     final today = DateTime(now.year, now.month, now.day);
@@ -75,13 +85,14 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
   });
 
   Future<void> _pickRange(DateRange current) async {
+    final l = context.l10n;
     final picked = await showOptionSheet<DateRange>(
       context,
-      title: 'Date range',
+      title: l.ledgerDateRange,
       selected: current,
       options: () => [
         for (final value in DateRange.values)
-          SheetOption(value, value.label, LucideIcons.calendar),
+          SheetOption(value, value.localizedLabel(l), LucideIcons.calendar),
       ],
     );
     if (picked != null) setState(() => range = picked);
@@ -89,12 +100,13 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
 
   Future<void> _pickCategory(AppStore store) async {
     const all = '\u0000all';
+    final l = context.l10n;
     final picked = await showOptionSheet<String>(
       context,
-      title: 'Filter by category',
+      title: l.ledgerFilterCategory,
       selected: category ?? all,
       options: () => [
-        const SheetOption(all, 'All categories', LucideIcons.layers),
+        SheetOption(all, l.ledgerAllCategories, LucideIcons.layers),
         for (final value in _used(store, (e) => e.category, store.categories))
           SheetOption(value, value, categoryIcon(value)),
       ],
@@ -106,12 +118,13 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
 
   Future<void> _pickMode(AppStore store) async {
     const all = '\u0000all';
+    final l = context.l10n;
     final picked = await showOptionSheet<String>(
       context,
-      title: 'Filter by payment mode',
+      title: l.ledgerFilterMode,
       selected: mode ?? all,
       options: () => [
-        const SheetOption(all, 'All modes', LucideIcons.wallet),
+        SheetOption(all, l.ledgerAllModes, LucideIcons.wallet),
         for (final value in _used(
           store,
           (e) => e.paymentMode,
@@ -141,11 +154,16 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
   void _openReport(
     String bookId,
     List<LedgerTransaction> entries,
-    String range,
+    DateRange range,
   ) => Navigator.of(context).push(
     MaterialPageRoute(
-      builder: (_) =>
-          ReportScreen(bookId: bookId, entries: entries, rangeLabel: range),
+      builder: (_) => ReportScreen(
+        bookId: bookId,
+        entries: entries,
+        // English for the exported file; translated for the screen.
+        rangeLabel: range.label,
+        rangeDisplayLabel: range.localizedLabel(context.l10n),
+      ),
     ),
   );
 
@@ -155,6 +173,7 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
     final book = store.bookById(widget.bookId);
     if (book == null) return const Scaffold(body: SizedBox.shrink());
     final c = context.pf;
+    final l = context.l10n;
     final now = DateTime.now();
     final all = store.transactionsForBook(book.id);
     final effectiveRange =
@@ -205,18 +224,15 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                       PfIconButton(
                         icon: LucideIcons.fileUp,
                         size: 19,
-                        tooltip: 'Import statement',
+                        tooltip: l.ledgerImportStatement,
                         onPressed: () => openImport(context, bookId: book.id),
                       ),
                       PfIconButton(
                         icon: LucideIcons.fileChartColumn,
                         size: 19,
-                        tooltip: 'Report',
-                        onPressed: () => _openReport(
-                          book.id,
-                          filtered,
-                          effectiveRange.label,
-                        ),
+                        tooltip: l.ledgerReport,
+                        onPressed: () =>
+                            _openReport(book.id, filtered, effectiveRange),
                       ),
                     ],
                   ),
@@ -235,21 +251,21 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                       children: [
                         _FilterChip(
                           icon: LucideIcons.calendar,
-                          label: effectiveRange.label,
+                          label: effectiveRange.localizedLabel(l),
                           active: true,
                           onTap: () => _pickRange(effectiveRange),
                         ),
                         const SizedBox(width: 8),
                         _FilterChip(
                           icon: LucideIcons.tag,
-                          label: category ?? 'Category',
+                          label: category ?? l.category,
                           active: category != null,
                           onTap: () => _pickCategory(store),
                         ),
                         const SizedBox(width: 8),
                         _FilterChip(
                           icon: LucideIcons.wallet,
-                          label: mode ?? 'Payment mode',
+                          label: mode ?? l.paymentMode,
                           active: mode != null,
                           onTap: () => _pickMode(store),
                         ),
@@ -260,10 +276,10 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                   PfSegment<TransactionType?>(
                     value: type,
                     onChanged: (value) => setState(() => type = value),
-                    items: const [
-                      (null, 'All', null),
-                      (TransactionType.cashIn, 'Cash in', null),
-                      (TransactionType.cashOut, 'Cash out', null),
+                    items: [
+                      (null, l.all, null),
+                      (TransactionType.cashIn, l.cashIn, null),
+                      (TransactionType.cashOut, l.cashOut, null),
                     ],
                   ),
                   const SizedBox(height: 14),
@@ -271,18 +287,17 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                     all.isEmpty
                         ? PfEmptyCard(
                             icon: LucideIcons.notebookPen,
-                            title: 'No entries yet',
-                            body:
-                                'Add your first cash in or cash out below, or import a statement.',
-                            actionLabel: 'Import statement',
+                            title: l.ledgerEmptyTitle,
+                            body: l.ledgerEmptyBody,
+                            actionLabel: l.ledgerImportStatement,
                             onAction: () =>
                                 openImport(context, bookId: book.id),
                           )
                         : PfEmptyCard(
                             icon: LucideIcons.funnelX,
-                            title: 'No entries match',
-                            body: 'Try a wider date range or clear filters.',
-                            actionLabel: 'Clear filters',
+                            title: l.ledgerNoMatchTitle,
+                            body: l.ledgerNoMatchBody,
+                            actionLabel: l.ledgerClearFilters,
                             onAction: _clearFilters,
                           ),
                 ],
@@ -304,7 +319,7 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         PfSectionLabel(
-                          dayLabel(day),
+                          l.dayLabel(day),
                           trailing: signedMoney(net, book.currency),
                         ),
                         const SizedBox(height: 8),
@@ -361,6 +376,7 @@ class _BalanceHero extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.pf;
+    final l = context.l10n;
     return Container(
       decoration: BoxDecoration(
         color: c.hero,
@@ -384,7 +400,7 @@ class _BalanceHero extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Net balance',
+                  l.ledgerNetBalance,
                   style: pfText(13, color: PfColors.heroLabel),
                 ),
                 FittedBox(
@@ -406,12 +422,12 @@ class _BalanceHero extends StatelessWidget {
                   runSpacing: 8,
                   children: [
                     _HeroFigure(
-                      label: 'INFLOW',
+                      label: l.ledgerInflow,
                       labelColor: PfColors.heroInLabel,
                       value: '+ ${money(inflow, currency)}',
                     ),
                     _HeroFigure(
-                      label: 'OUTFLOW',
+                      label: l.ledgerOutflow,
                       labelColor: PfColors.heroOutLabel,
                       value: '− ${money(outflow, currency)}',
                     ),
@@ -485,7 +501,15 @@ class _FilterChip extends StatelessWidget {
             children: [
               Icon(icon, size: 14, color: fg),
               const SizedBox(width: 6),
-              Text(label, style: pfText(13, color: fg)),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 180),
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: pfText(13, color: fg),
+                ),
+              ),
               const SizedBox(width: 6),
               Icon(LucideIcons.chevronDown, size: 14, color: fg),
             ],
@@ -505,6 +529,7 @@ class _CashButtons extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bottom = MediaQuery.paddingOf(context).bottom;
+    final l = context.l10n;
     return Container(
       padding: EdgeInsets.fromLTRB(20, 14, 20, bottom + 14),
       decoration: BoxDecoration(
@@ -522,7 +547,7 @@ class _CashButtons extends StatelessWidget {
         children: [
           Expanded(
             child: PfButton(
-              label: 'Cash in',
+              label: l.cashIn,
               icon: LucideIcons.plus,
               height: 54,
               radius: 18,
@@ -537,7 +562,7 @@ class _CashButtons extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: PfButton(
-              label: 'Cash out',
+              label: l.cashOut,
               icon: LucideIcons.minus,
               style: PfButtonStyle.danger,
               height: 54,

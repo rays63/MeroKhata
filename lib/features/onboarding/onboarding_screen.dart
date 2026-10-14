@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../l10n/l10n.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/brand.dart';
 import '../../widgets/pf.dart';
@@ -16,23 +17,13 @@ class _Page {
   final Widget art;
 }
 
-const _pages = [
-  _Page(
-    'All your books, one pocket',
-    'Keep personal spending, your shop and that trip abroad apart — each book in its own currency.',
-    _BooksArt(),
-  ),
-  _Page(
-    'Import statements, skip the typing',
-    'Drop in a PDF or XLS statement. Review it first — duplicates are caught automatically.',
-    _ImportArt(),
-  ),
-  _Page(
-    'Goals and splits that add up',
-    'Tag income to a savings goal, split bills with friends, and always know who owes what.',
-    _GoalsArt(),
-  ),
+List<_Page> _pagesFor(AppLocalizations l) => [
+  _Page(l.onboardBooksTitle, l.onboardBooksBody, const _BooksArt()),
+  _Page(l.onboardImportTitle, l.onboardImportBody, const _ImportArt()),
+  _Page(l.onboardGoalsTitle, l.onboardGoalsBody, const _GoalsArt()),
 ];
+
+const _pageCount = 3;
 
 /// Three intro cards, built from real UI rather than stock art.
 class OnboardingScreen extends StatefulWidget {
@@ -57,7 +48,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   );
 
   void _next() {
-    if (index < _pages.length - 1) {
+    if (index < _pageCount - 1) {
       pages.nextPage(
         duration: const Duration(milliseconds: 320),
         curve: Curves.easeOutCubic,
@@ -70,7 +61,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     final c = context.pf;
-    final last = index == _pages.length - 1;
+    final l = context.l10n;
+    final pageList = _pagesFor(l);
+    final last = index == _pageCount - 1;
     return Scaffold(
       body: SafeArea(
         child: Padding(
@@ -95,7 +88,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       minimumSize: const Size(48, 48),
                     ),
                     child: Text(
-                      'Skip',
+                      l.onboardSkip,
                       style: pfText(15, weight: w800, color: c.sub),
                     ),
                   ),
@@ -105,21 +98,21 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               Expanded(
                 child: PageView.builder(
                   controller: pages,
-                  itemCount: _pages.length,
+                  itemCount: pageList.length,
                   onPageChanged: (value) => setState(() => index = value),
-                  itemBuilder: (context, i) => _PageBody(page: _pages[i]),
+                  itemBuilder: (context, i) => _PageBody(page: pageList[i]),
                 ),
               ),
               const SizedBox(height: 26),
               Row(
                 children: [
                   Semantics(
-                    label: 'Page ${index + 1} of ${_pages.length}',
+                    label: l.onboardPageOf(index + 1, _pageCount),
                     liveRegion: true,
                     excludeSemantics: true,
                     child: Row(
                       children: [
-                        for (var i = 0; i < _pages.length; i++) ...[
+                        for (var i = 0; i < _pageCount; i++) ...[
                           AnimatedContainer(
                             duration: const Duration(milliseconds: 220),
                             width: i == index ? 26 : 8,
@@ -136,7 +129,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   ),
                   const Spacer(),
                   PfButton(
-                    label: last ? 'Get started' : 'Next',
+                    label: last ? l.getStarted : l.next,
                     onPressed: _next,
                     expand: false,
                     height: 56,
@@ -347,6 +340,7 @@ class _ImportArt extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.pf;
+    final l = context.l10n;
     Widget count(String value, String label, Color color) => Expanded(
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
@@ -391,7 +385,7 @@ class _ImportArt extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                       Text(
-                        'Parsed · 13 lines',
+                        l.onboardArtParsed(13),
                         style: pfText(12, weight: w700, color: c.sub),
                       ),
                     ],
@@ -403,11 +397,11 @@ class _ImportArt extends StatelessWidget {
           const SizedBox(height: 12),
           Row(
             children: [
-              count('6', 'Ready', c.cashIn),
+              count('6', l.onboardArtReady, c.cashIn),
               const SizedBox(width: 8),
-              count('2', 'Duplicates', c.gold),
+              count('2', l.onboardArtDuplicates, c.gold),
               const SizedBox(width: 8),
-              count('5', 'Skipped', c.sub),
+              count('5', l.onboardArtSkipped, c.sub),
             ],
           ),
           const SizedBox(height: 12),
@@ -421,7 +415,7 @@ class _ImportArt extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    'Import 6 entries',
+                    l.onboardArtImportEntries(6),
                     style: pfText(14, color: c.onBtn),
                   ),
                 ),
@@ -441,6 +435,7 @@ class _GoalsArt extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.pf;
+    final l = context.l10n;
     Widget person(String initial, Color color, {bool overlap = false}) =>
         Transform.translate(
           offset: Offset(overlap ? -10 : 0, 0),
@@ -497,7 +492,7 @@ class _GoalsArt extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                       Text(
-                        'Rs 92,500 of 1,50,000',
+                        l.onboardArtGoalProgress('Rs 92,500', '1,50,000'),
                         style: pfText(12, weight: w700, color: c.sub),
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -524,7 +519,7 @@ class _GoalsArt extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                       Text(
-                        "You're owed Rs 4,200",
+                        '${l.youreOwed} Rs 4,200',
                         style: pfText(12, color: c.cashIn),
                         overflow: TextOverflow.ellipsis,
                       ),

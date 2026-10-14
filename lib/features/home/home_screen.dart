@@ -9,6 +9,7 @@ import '../../data/app_store.dart';
 import '../../data/models.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/pf.dart';
+import '../../l10n/l10n.dart';
 import '../split/split_bill_screen.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -29,11 +30,11 @@ class HomeScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    greeting(),
+                    context.l10n.greeting(),
                     style: pfText(14, weight: w700, color: c.sub),
                   ),
                   Text(
-                    name.isEmpty ? 'Paisa Flow' : name,
+                    name.isEmpty ? context.l10n.appName : name,
                     style: pfText(24, weight: w900, letterSpacing: -.4),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -43,13 +44,13 @@ class HomeScreen extends StatelessWidget {
             ),
             PfIconButton(
               icon: LucideIcons.calendarDays,
-              tooltip: 'Calendar',
+              tooltip: context.l10n.calendar,
               onPressed: () => openCalendar(context),
             ),
             const SizedBox(width: 10),
             Semantics(
               button: true,
-              label: 'Settings',
+              label: context.l10n.settings,
               excludeSemantics: true,
               child: Material(
                 color: PfColors.avatar,
@@ -74,7 +75,7 @@ class HomeScreen extends StatelessWidget {
         ),
         if (store.loadError != null) ...[
           const SizedBox(height: 18),
-          PfErrorBanner(store.loadError!),
+          PfErrorBanner(context.l10n.loadError),
         ],
         const SizedBox(height: 18),
         _TotalCard(store: store),
@@ -95,12 +96,15 @@ class HomeScreen extends StatelessWidget {
           textBaseline: TextBaseline.alphabetic,
           children: [
             Expanded(
-              child: Text('Recently updated', style: pfText(18, weight: w900)),
+              child: Text(
+                context.l10n.recentlyUpdated,
+                style: pfText(18, weight: w900),
+              ),
             ),
             TextButton(
               onPressed: () => ShellScope.go(context, ShellTab.books),
               child: Text(
-                'See all',
+                context.l10n.seeAll,
                 style: pfText(14, weight: w800, color: c.cashIn),
               ),
             ),
@@ -175,7 +179,7 @@ class _TotalCard extends StatelessWidget {
                   children: [
                     Expanded(
                       child: Text(
-                        'Total balance · $home',
+                        context.l10n.homeTotalBalance(home),
                         style: pfText(
                           13,
                           weight: w800,
@@ -184,7 +188,7 @@ class _TotalCard extends StatelessWidget {
                       ),
                     ),
                     PfBadge(
-                      label: '$count ${count == 1 ? 'book' : 'books'}',
+                      label: context.l10n.bookCount(count),
                       pill: true,
                       fontSize: 11,
                       background: Colors.white.withValues(alpha: .16),
@@ -212,7 +216,7 @@ class _TotalCard extends StatelessWidget {
                     Expanded(
                       child: _HeroStat(
                         icon: LucideIcons.arrowDownLeft,
-                        label: 'Cash in · $month',
+                        label: context.l10n.homeCashInMonth(month),
                         value: '+ ${money(monthIn, home)}',
                       ),
                     ),
@@ -220,7 +224,7 @@ class _TotalCard extends StatelessWidget {
                     Expanded(
                       child: _HeroStat(
                         icon: LucideIcons.arrowUpRight,
-                        label: 'Cash out · $month',
+                        label: context.l10n.homeCashOutMonth(month),
                         value: '− ${money(monthOut, home)}',
                       ),
                     ),
@@ -323,28 +327,28 @@ class _QuickActions extends StatelessWidget {
       children: [
         _QuickAction(
           icon: LucideIcons.arrowDownLeft,
-          label: 'Cash in',
+          label: context.l10n.cashIn,
           background: c.soft,
           foreground: c.cashIn,
           onTap: () => openNewEntry(context, type: TransactionType.cashIn),
         ),
         _QuickAction(
           icon: LucideIcons.arrowUpRight,
-          label: 'Cash out',
+          label: context.l10n.cashOut,
           background: c.outSoft,
           foreground: c.cashOut,
           onTap: () => openNewEntry(context, type: TransactionType.cashOut),
         ),
         _QuickAction(
           icon: LucideIcons.fileUp,
-          label: 'Import',
+          label: context.l10n.import,
           background: c.blueSoft,
           foreground: c.blue,
           onTap: () => openImport(context),
         ),
         _QuickAction(
           icon: LucideIcons.split,
-          label: 'Split a bill',
+          label: context.l10n.splitABill,
           background: c.goldSoft,
           foreground: c.gold,
           onTap: () => Navigator.of(
@@ -424,15 +428,18 @@ class _GoalsCard extends StatelessWidget {
     );
     final count = store.goals.length;
     return _HomeCard(
-      title: 'Goals',
+      title: context.l10n.goals,
       icon: LucideIcons.target,
       iconColor: c.pri,
       onTap: () => openGoals(context),
       children: [
         Text(
           count == 0
-              ? 'Set a savings target'
-              : '${money(saved)} saved · $count ${count == 1 ? 'goal' : 'goals'}',
+              ? context.l10n.setSavingsTarget
+              : context.l10n.goalsSaved(
+                  money(saved),
+                  context.l10n.goalCount(count),
+                ),
           style: pfText(12.5, weight: w700, color: c.sub),
         ),
         const SizedBox(height: 8),
@@ -459,13 +466,13 @@ class _SplitCard extends StatelessWidget {
     final store = AppScope.watch(context);
     final owe = store.youOwe > store.owedToYou;
     return _HomeCard(
-      title: 'Split',
+      title: context.l10n.split,
       icon: LucideIcons.users,
       iconColor: c.gold,
       onTap: () => ShellScope.go(context, ShellTab.split),
       children: [
         Text(
-          owe ? 'You owe' : "You're owed",
+          owe ? context.l10n.youOwe : context.l10n.youreOwed,
           style: pfText(12.5, weight: w700, color: c.sub),
         ),
         Text(
@@ -545,7 +552,7 @@ class _RecentBookTile extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
                 Text(
-                  updatedLabel(book.updatedAt),
+                  context.l10n.updatedLabel(book.updatedAt),
                   style: pfText(12.5, weight: w700, color: c.sub),
                 ),
               ],

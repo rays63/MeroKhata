@@ -8,14 +8,17 @@ import '../../app/nav.dart';
 import '../../core/format.dart';
 import '../../data/app_store.dart';
 import '../../data/models.dart';
+import '../../l10n/l10n.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/pf.dart';
 import 'goal_form_screen.dart';
 
-String deadlineLabel(DateTime? deadline, {DateTime? now}) {
-  if (deadline == null) return 'No deadline';
+String deadlineLabel(AppLocalizations l, DateTime? deadline, {DateTime? now}) {
+  if (deadline == null) return l.goalNoDeadline;
   final soon = deadline.difference(now ?? DateTime.now()).inDays < 60;
-  return 'By ${DateFormat(soon ? 'd MMM y' : 'MMM y').format(deadline)}';
+  return l.goalDeadlineBy(
+    DateFormat(soon ? 'd MMM y' : 'MMM y').format(deadline),
+  );
 }
 
 class GoalsScreen extends StatelessWidget {
@@ -25,6 +28,7 @@ class GoalsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final store = AppScope.watch(context);
     final c = context.pf;
+    final l = context.l10n;
     final saved = store.goals.fold(
       0.0,
       (sum, goal) => sum + min(goal.savedAmount, goal.targetAmount),
@@ -40,10 +44,10 @@ class GoalsScreen extends StatelessWidget {
           padding: pagePadding,
           children: [
             PfHeader(
-              title: 'Goals',
+              title: l.goals,
               actions: [
                 PfSmallButton(
-                  label: 'New goal',
+                  label: l.goalNew,
                   icon: LucideIcons.plus,
                   onPressed: () => openNewGoal(context),
                 ),
@@ -77,7 +81,7 @@ class GoalsScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Saved across all books',
+                          l.goalSavedAcross,
                           style: pfText(13, color: PfColors.heroLabel),
                         ),
                         FittedBox(
@@ -93,7 +97,7 @@ class GoalsScreen extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          'of ${money(target)}',
+                          l.goalOfTarget(money(target)),
                           style: pfText(
                             12.5,
                             weight: w700,
@@ -110,21 +114,16 @@ class GoalsScreen extends StatelessWidget {
             if (store.goals.isEmpty)
               PfEmptyCard(
                 icon: LucideIcons.target,
-                title: 'No goals yet',
-                body:
-                    'Set a savings target — an emergency fund, a laptop, Dashain gifts.',
-                actionLabel: 'New goal',
+                title: l.goalEmptyTitle,
+                body: l.goalEmptyBody,
+                actionLabel: l.goalNew,
                 onAction: () => openNewGoal(context),
               ),
             for (final goal in store.goals) ...[
               _GoalCard(goal: goal, linked: store.linkedEntries(goal.id)),
               const SizedBox(height: 16),
             ],
-            const PfNote(
-              icon: LucideIcons.sparkles,
-              text:
-                  'Tag any cash-in entry with a goal and progress updates automatically.',
-            ),
+            PfNote(icon: LucideIcons.sparkles, text: l.goalTagHint),
             const SizedBox(height: 30),
           ],
         ),
@@ -142,6 +141,7 @@ class _GoalCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.pf;
+    final l = context.l10n;
     final reached = goal.reached;
     return PfCard(
       padding: const EdgeInsets.all(18),
@@ -160,7 +160,7 @@ class _GoalCard extends StatelessWidget {
                   children: [
                     Text(goal.name, style: pfText(17, weight: w900)),
                     Text(
-                      deadlineLabel(goal.deadline),
+                      deadlineLabel(l, goal.deadline),
                       style: pfText(12.5, weight: w700, color: c.sub),
                     ),
                   ],
@@ -168,7 +168,7 @@ class _GoalCard extends StatelessWidget {
               ),
               PfBadge(
                 label: reached
-                    ? 'REACHED'
+                    ? l.goalReachedBadge
                     : '${(goal.progress * 100).round()}%',
                 pill: true,
                 fontSize: 11.5,
@@ -205,14 +205,12 @@ class _GoalCard extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  reached ? 'Goal reached' : '${money(goal.remaining)} to go',
+                  reached ? l.goalReached : l.goalToGo(money(goal.remaining)),
                   style: pfText(12.5, color: c.sub),
                 ),
               ),
               Text(
-                linked == 0
-                    ? 'No linked entries'
-                    : '$linked linked ${linked == 1 ? 'entry' : 'entries'}',
+                linked == 0 ? l.goalNoLinked : l.goalLinkedCount(linked),
                 style: pfText(12.5, color: c.sub),
               ),
             ],

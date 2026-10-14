@@ -4,6 +4,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../core/format.dart';
 import '../../data/app_store.dart';
 import '../../data/split.dart';
+import '../../l10n/l10n.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/option_sheet.dart';
 import '../../widgets/pf.dart';
@@ -24,7 +25,8 @@ class GroupScreen extends StatelessWidget {
     double amount,
     String cur,
   ) async {
-    final name = personName(store, friendId);
+    final l = context.l10n;
+    final name = personName(l, store, friendId);
     final bookId = await showSettleSheet(
       context,
       friendName: name,
@@ -40,7 +42,11 @@ class GroupScreen extends StatelessWidget {
     if (!context.mounted || settled == 0) return;
     showPfToast(
       context,
-      '${money(settled.abs(), cur)} ${settled > 0 ? 'from' : 'to'} $name recorded in ${store.bookById(bookId)?.name ?? 'your book'}',
+      (settled > 0 ? l.splitReceivedToast : l.splitPaidToast)(
+        money(settled.abs(), cur),
+        name,
+        store.bookById(bookId)?.name ?? l.splitYourBook,
+      ),
     );
   }
 
@@ -49,12 +55,13 @@ class GroupScreen extends StatelessWidget {
     AppStore store,
     GroupExpense expense,
   ) async {
+    final l = context.l10n;
     final choice = await showOptionSheet<String>(
       context,
       title: expense.title,
       selected: null,
-      options: () => const [
-        SheetOption('delete', 'Delete expense', LucideIcons.trash2),
+      options: () => [
+        SheetOption('delete', l.expenseDelete, LucideIcons.trash2),
       ],
     );
     if (choice != 'delete' || !context.mounted) return;
@@ -63,30 +70,30 @@ class GroupScreen extends StatelessWidget {
       for (final s in group?.settlements ?? const <Settlement>[])
         if (expense.shares.containsKey(s.friendId) ||
             expense.paidBy == s.friendId)
-          personName(store, s.friendId),
+          personName(l, store, s.friendId),
     };
     final c = context.pf;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: Text(
-          'Delete “${expense.title}”?',
+          l.splitDeleteTitle(expense.title),
           style: pfText(19, weight: w900),
         ),
         content: Text(
           settledWith.isEmpty
-              ? 'Balances will be recalculated without it.'
-              : 'You’ve already settled up with ${settledWith.join(', ')}. Deleting this changes those balances, so someone may end up owing the other.',
+              ? l.expenseDeleteBody
+              : l.expenseDeleteSettledBody(settledWith.join(', ')),
           style: pfText(14, weight: w600, color: c.sub),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text('Cancel', style: pfText(14, color: c.sub)),
+            child: Text(l.cancel, style: pfText(14, color: c.sub)),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text('Delete', style: pfText(14, color: c.cashOut)),
+            child: Text(l.delete, style: pfText(14, color: c.cashOut)),
           ),
         ],
       ),
@@ -97,8 +104,8 @@ class GroupScreen extends StatelessWidget {
       showPfToast(
         context,
         expense.transactionId == null
-            ? 'Expense deleted'
-            : 'Expense deleted · its book entry stays',
+            ? l.expenseDeleted
+            : l.expenseDeletedEntryStays,
       );
     }
   }
@@ -106,14 +113,15 @@ class GroupScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final store = AppScope.watch(context);
+    final l = context.l10n;
     final c = context.pf;
     final group = store.groups.where((g) => g.id == groupId).firstOrNull;
     if (group == null) {
-      return const Scaffold(
+      return Scaffold(
         body: SafeArea(
           child: Padding(
             padding: pagePadding,
-            child: PfHeader(title: 'Group'),
+            child: PfHeader(title: l.groupTitle),
           ),
         ),
       );
@@ -122,8 +130,8 @@ class GroupScreen extends StatelessWidget {
     final net = group.net;
     final cur = group.currency;
     final members = [
-      'You',
-      for (final id in group.memberIds) personName(store, id),
+      l.splitYou,
+      for (final id in group.memberIds) personName(l, store, id),
     ].join(', ');
 
     return Scaffold(
@@ -139,7 +147,7 @@ class GroupScreen extends StatelessWidget {
                 PfIconButton(
                   icon: LucideIcons.pencil,
                   size: 18,
-                  tooltip: 'Edit group',
+                  tooltip: l.groupEdit,
                   onPressed: () => Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (_) => GroupFormScreen(group: group),
@@ -160,10 +168,10 @@ class GroupScreen extends StatelessWidget {
                 children: [
                   Text(
                     net > .004
-                        ? "You're owed"
+                        ? l.youreOwed
                         : net < -.004
-                        ? 'You owe'
-                        : 'All settled',
+                        ? l.youOwe
+                        : l.splitAllSettled,
                     style: pfText(13, color: PfColors.heroLabel),
                   ),
                   Text(
@@ -172,7 +180,7 @@ class GroupScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Total spent ${money(group.totalSpent, cur)}',
+                    l.groupTotalSpent(money(group.totalSpent, cur)),
                     style: pfText(
                       12.5,
                       weight: w700,
@@ -185,7 +193,7 @@ class GroupScreen extends StatelessWidget {
             const SizedBox(height: 16),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 4),
-              child: Text('Balances', style: pfText(16, weight: w900)),
+              child: Text(l.groupBalances, style: pfText(16, weight: w900)),
             ),
             const SizedBox(height: 16),
             PfCard(
@@ -195,7 +203,7 @@ class GroupScreen extends StatelessWidget {
                   for (final id in group.memberIds) ...[
                     if (id != group.memberIds.first) const PfDivider(),
                     _BalanceRow(
-                      name: personName(store, id),
+                      name: personName(l, store, id),
                       color: personColor(store, id),
                       amount: balances[id] ?? 0,
                       cur: cur,
@@ -209,7 +217,7 @@ class GroupScreen extends StatelessWidget {
             const SizedBox(height: 16),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 4),
-              child: Text('Expenses', style: pfText(16, weight: w900)),
+              child: Text(l.groupExpenses, style: pfText(16, weight: w900)),
             ),
             const SizedBox(height: 16),
             if (group.expenses.isEmpty)
@@ -217,7 +225,7 @@ class GroupScreen extends StatelessWidget {
                 radius: 22,
                 padding: const EdgeInsets.all(18),
                 child: Text(
-                  'No expenses yet. Add the first one below.',
+                  l.groupNoExpenses,
                   style: pfText(14, weight: w700, color: c.sub),
                 ),
               )
@@ -248,7 +256,9 @@ class GroupScreen extends StatelessWidget {
                                       overflow: TextOverflow.ellipsis,
                                     ),
                                     Text(
-                                      'Paid by ${personName(store, expense.paidBy)}',
+                                      l.expensePaidByName(
+                                        personName(l, store, expense.paidBy),
+                                      ),
                                       style: pfText(
                                         12,
                                         weight: w700,
@@ -277,7 +287,7 @@ class GroupScreen extends StatelessWidget {
       bottomNavigationBar: SafeArea(
         minimum: const EdgeInsets.fromLTRB(20, 10, 20, 14),
         child: PfButton(
-          label: 'Add expense',
+          label: l.expenseAdd,
           icon: LucideIcons.plus,
           onPressed: () => Navigator.of(context).push(
             MaterialPageRoute(
@@ -309,13 +319,14 @@ class _BalanceRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     final c = context.pf;
     final settled = amount.abs() < .005;
     final status = settled
-        ? 'settled up'
+        ? l.splitSettledUp
         : amount > 0
-        ? 'owes you ${money(amount, cur)}'
-        : 'you owe ${money(-amount, cur)}';
+        ? l.splitOwesYou(money(amount, cur))
+        : l.splitYouOweAmount(money(-amount, cur));
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
@@ -339,7 +350,7 @@ class _BalanceRow extends StatelessWidget {
           ),
           if (!settled)
             PfSmallButton(
-              label: 'Settle',
+              label: l.splitSettle,
               onPressed: onSettle,
               height: 38,
               radius: 12,
@@ -366,7 +377,8 @@ class BillScreen extends StatelessWidget {
     double amount,
     String cur,
   ) async {
-    final name = personName(store, friendId);
+    final l = context.l10n;
+    final name = personName(l, store, friendId);
     final bookId = await showSettleSheet(
       context,
       friendName: name,
@@ -382,7 +394,11 @@ class BillScreen extends StatelessWidget {
     if (!context.mounted || settled == 0) return;
     showPfToast(
       context,
-      '${money(settled, cur)} from $name recorded in ${store.bookById(bookId)?.name ?? 'your book'}',
+      l.splitReceivedToast(
+        money(settled, cur),
+        name,
+        store.bookById(bookId)?.name ?? l.splitYourBook,
+      ),
     );
   }
 
@@ -392,28 +408,32 @@ class BillScreen extends StatelessWidget {
     SplitBill bill,
   ) async {
     final c = context.pf;
+    final l = context.l10n;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Delete “${bill.title}”?', style: pfText(19, weight: w900)),
+        title: Text(
+          l.splitDeleteTitle(bill.title),
+          style: pfText(19, weight: w900),
+        ),
         content: Text(
-          'Entries already recorded in your books stay.',
+          l.splitEntriesStay,
           style: pfText(14, weight: w600, color: c.sub),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text('Cancel', style: pfText(14, color: c.sub)),
+            child: Text(l.cancel, style: pfText(14, color: c.sub)),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text('Delete', style: pfText(14, color: c.cashOut)),
+            child: Text(l.delete, style: pfText(14, color: c.cashOut)),
           ),
         ],
       ),
     );
     if (confirmed != true || !context.mounted) return;
-    showPfToast(context, 'Bill deleted');
+    showPfToast(context, l.billDeleted);
     Navigator.pop(context);
     await store.deleteBill(bill.id);
   }
@@ -421,14 +441,15 @@ class BillScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final store = AppScope.watch(context);
+    final l = context.l10n;
     final c = context.pf;
     final bill = store.bills.where((b) => b.id == billId).firstOrNull;
     if (bill == null) {
-      return const Scaffold(
+      return Scaffold(
         body: SafeArea(
           child: Padding(
             padding: pagePadding,
-            child: PfHeader(title: 'Bill'),
+            child: PfHeader(title: l.billTitle),
           ),
         ),
       );
@@ -444,12 +465,12 @@ class BillScreen extends StatelessWidget {
             PfHeader(
               title: bill.title,
               subtitle:
-                  '${dayLabel(bill.createdAt)} · ${bill.people} people · paid by you',
+                  '${l.dayLabel(bill.createdAt)} · ${l.splitPeopleCount(bill.people)} · ${l.billPaidByYou}',
               actions: [
                 PfIconButton(
                   icon: LucideIcons.trash2,
                   size: 18,
-                  tooltip: 'Delete bill',
+                  tooltip: l.billDelete,
                   onPressed: () => _delete(context, store, bill),
                 ),
               ],
@@ -465,7 +486,7 @@ class BillScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    bill.settled ? 'All settled' : 'To collect',
+                    bill.settled ? l.splitAllSettled : l.billToCollect,
                     style: pfText(13, color: PfColors.heroLabel),
                   ),
                   Text(
@@ -474,7 +495,10 @@ class BillScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Bill total ${money(bill.amount, cur)} · your share ${money(parts[me] ?? 0, cur)}',
+                    l.billTotalLine(
+                      money(bill.amount, cur),
+                      money(parts[me] ?? 0, cur),
+                    ),
                     style: pfText(
                       12.5,
                       weight: w700,
@@ -492,7 +516,7 @@ class BillScreen extends StatelessWidget {
                   for (final id in balances.keys) ...[
                     if (id != balances.keys.first) const PfDivider(),
                     _BalanceRow(
-                      name: personName(store, id),
+                      name: personName(l, store, id),
                       color: personColor(store, id),
                       amount: balances[id]!,
                       cur: cur,

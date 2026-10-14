@@ -5,6 +5,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../core/format.dart';
 import '../../data/app_store.dart';
 import '../../data/split.dart';
+import '../../l10n/l10n.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/pf.dart';
 import 'split_widgets.dart';
@@ -80,7 +81,7 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
     if (!mounted) return;
     showPfToast(
       context,
-      'Split saved · $friends ${friends == 1 ? 'person owes' : 'people owe'} you ${money(owed, currency)}',
+      context.l10n.splitBillSavedToast(friends, money(owed, currency)),
     );
     Navigator.pop(context);
   }
@@ -88,6 +89,7 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
   @override
   Widget build(BuildContext context) {
     final store = AppScope.watch(context);
+    final l = context.l10n;
     final c = context.pf;
     final ids = [me, ...store.friends.map((f) => f.id)];
     final shares = SharesEditor.effective(weights, byShares);
@@ -99,38 +101,38 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
     ).values.fold(0.0, (a, b) => a + b);
     final ready = amount > 0 && friends > 0;
     final cta = amount <= 0
-        ? 'Enter the total'
+        ? l.splitEnterTotal
         : friends == 0
-        ? 'Pick at least one friend'
-        : 'Save · $friends ${friends == 1 ? 'owes' : 'owe'} you ${money(owed, currency)}';
+        ? l.splitPickFriend
+        : l.splitSaveCta(friends, money(owed, currency));
 
     return Scaffold(
       body: SafeArea(
         child: ListView(
           padding: pagePadding,
           children: [
-            const PfHeader(title: 'Split a bill', close: true),
+            PfHeader(title: l.splitABill, close: true),
             const SizedBox(height: 16),
             PfCard(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   PfField(
-                    label: "What's it for?",
+                    label: l.splitWhatFor,
                     child: TextField(
                       controller: title,
                       autofocus: widget.title == null,
                       textCapitalization: TextCapitalization.sentences,
                       style: pfText(17, color: c.ink),
                       decoration: InputDecoration(
-                        hintText: 'e.g. Thakali dinner',
+                        hintText: l.splitBillHint,
                         hintStyle: pfText(17, color: c.mute),
                       ),
                     ),
                   ),
                   const PfDivider(),
                   PfField(
-                    label: 'Total · paid by you',
+                    label: l.splitTotalPaidByYou,
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.baseline,
                       textBaseline: TextBaseline.alphabetic,
@@ -170,7 +172,7 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            const PfSectionLabel('Split between'),
+            PfSectionLabel(l.splitBetween),
             const SizedBox(height: 10),
             PeoplePicker(
               ids: ids,
@@ -189,11 +191,7 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
             ),
             const SizedBox(height: 16),
             if (widget.linkedEntryId != null)
-              const PfNote(
-                icon: LucideIcons.link,
-                text:
-                    'Linked to the entry you split, so nothing new is recorded in your book.',
-              )
+              PfNote(icon: LucideIcons.link, text: l.splitLinkedNote)
             else
               RecordToggle(
                 on: record,

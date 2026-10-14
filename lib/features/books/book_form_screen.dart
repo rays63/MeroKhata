@@ -4,6 +4,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/format.dart';
 import '../../data/app_store.dart';
+import '../../l10n/l10n.dart';
 import '../../data/models.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/pf.dart';
@@ -38,7 +39,7 @@ class _BookFormScreenState extends State<BookFormScreen> {
 
   Future<void> _pickCurrency(bool locked) async {
     if (locked) {
-      showPfToast(context, 'Currency is fixed once a book has entries');
+      showPfToast(context, context.l10n.bookCurrencyLocked);
       return;
     }
     final picked = await pickCurrency(context, selected: currency);
@@ -58,12 +59,13 @@ class _BookFormScreenState extends State<BookFormScreen> {
           double.tryParse(opening.text.replaceAll(',', '').trim()) ?? 0,
     );
     if (!mounted) return;
-    final title = name.text.trim().isEmpty ? 'Untitled book' : name.text.trim();
+    final l = context.l10n;
+    final title = name.text.trim().isEmpty ? l.bookUntitled : name.text.trim();
     if (editing) {
-      showPfToast(context, 'Book renamed');
+      showPfToast(context, l.bookRenamed);
       navigator.pop();
     } else {
-      showPfToast(context, '“$title” created in $currency');
+      showPfToast(context, l.bookCreated(title, currency));
       navigator.pushReplacement(BookDetailScreen.route(id));
     }
   }
@@ -71,6 +73,7 @@ class _BookFormScreenState extends State<BookFormScreen> {
   @override
   Widget build(BuildContext context) {
     final c = context.pf;
+    final l = context.l10n;
     final store = AppScope.watch(context);
     final info = Currency.of(currency);
     final locked = editing && store.entryCount(widget.book!.id) > 0;
@@ -79,21 +82,21 @@ class _BookFormScreenState extends State<BookFormScreen> {
         child: ListView(
           padding: pagePadding,
           children: [
-            PfHeader(title: editing ? 'Rename book' : 'New book'),
+            PfHeader(title: editing ? l.bookRenameTitle : l.bookNew),
             const SizedBox(height: 18),
             PfCard(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   PfField(
-                    label: 'Book name',
+                    label: l.bookNameLabel,
                     child: TextField(
                       controller: name,
                       autofocus: !editing,
                       textCapitalization: TextCapitalization.words,
                       style: pfText(17, weight: w800, color: c.ink),
                       decoration: InputDecoration(
-                        hintText: 'e.g. Kirana Pasal',
+                        hintText: l.bookNameHint,
                         hintStyle: pfText(17, weight: w800, color: c.mute),
                       ),
                     ),
@@ -113,7 +116,7 @@ class _BookFormScreenState extends State<BookFormScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Currency',
+                                  l.bookCurrencyLabel,
                                   style: pfText(12, color: c.sub),
                                 ),
                                 const SizedBox(height: 4),
@@ -133,7 +136,7 @@ class _BookFormScreenState extends State<BookFormScreen> {
                   if (!editing) ...[
                     const PfDivider(),
                     PfField(
-                      label: 'Opening balance',
+                      label: l.bookOpeningBalance,
                       optional: true,
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.baseline,
@@ -168,14 +171,10 @@ class _BookFormScreenState extends State<BookFormScreen> {
               ),
             ),
             const SizedBox(height: 18),
-            const PfNote(
-              icon: LucideIcons.info,
-              text:
-                  "A book's currency is fixed once it has entries. Use a separate book for each currency.",
-            ),
+            PfNote(icon: LucideIcons.info, text: l.bookCurrencyNote),
             const SizedBox(height: 18),
             PfButton(
-              label: editing ? 'Save changes' : 'Create book',
+              label: editing ? l.saveChanges : l.bookCreate,
               onPressed: saving ? null : _save,
             ),
           ],

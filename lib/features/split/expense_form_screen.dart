@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import '../../core/format.dart';
 import '../../data/app_store.dart';
 import '../../data/split.dart';
+import '../../l10n/l10n.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/pf.dart';
 import 'split_widgets.dart';
@@ -49,13 +50,14 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
   }
 
   Future<void> _save() async {
+    final l = context.l10n;
     final shares = SharesEditor.effective(weights, byShares);
     final problem = amount <= 0
-        ? 'Enter an amount greater than zero'
+        ? l.expenseAmountRequired
         : shares.isEmpty
-        ? 'Pick who shares this expense'
+        ? l.expensePickSharers
         : (shares.length == 1 && shares.containsKey(paidBy))
-        ? 'Add someone besides the payer to split with'
+        ? l.expenseNeedOther
         : null;
     if (problem != null) {
       setState(() => error = problem);
@@ -72,21 +74,22 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
       recordInBookId: paidBy == me && record ? bookId : null,
     );
     if (!mounted) return;
-    showPfToast(context, 'Expense added · balances updated');
+    showPfToast(context, context.l10n.expenseAddedToast);
     Navigator.pop(context);
   }
 
   @override
   Widget build(BuildContext context) {
     final store = AppScope.watch(context);
+    final l = context.l10n;
     final c = context.pf;
     final group = store.groups.where((g) => g.id == widget.groupId).firstOrNull;
     if (group == null) {
-      return const Scaffold(
+      return Scaffold(
         body: SafeArea(
           child: Padding(
             padding: pagePadding,
-            child: PfHeader(title: 'Add expense', close: true),
+            child: PfHeader(title: l.expenseAdd, close: true),
           ),
         ),
       );
@@ -98,28 +101,28 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
         child: ListView(
           padding: pagePadding,
           children: [
-            PfHeader(title: 'Add expense', subtitle: group.name, close: true),
+            PfHeader(title: l.expenseAdd, subtitle: group.name, close: true),
             const SizedBox(height: 16),
             PfCard(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   PfField(
-                    label: "What's it for?",
+                    label: l.splitWhatFor,
                     child: TextField(
                       controller: title,
                       autofocus: true,
                       textCapitalization: TextCapitalization.sentences,
                       style: pfText(17, color: c.ink),
                       decoration: InputDecoration(
-                        hintText: 'e.g. Hotel (2 nights)',
+                        hintText: l.expenseHint,
                         hintStyle: pfText(17, color: c.mute),
                       ),
                     ),
                   ),
                   const PfDivider(),
                   PfField(
-                    label: 'Amount',
+                    label: l.expenseAmount,
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.baseline,
                       textBaseline: TextBaseline.alphabetic,
@@ -159,7 +162,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            const PfSectionLabel('Paid by'),
+            PfSectionLabel(l.expensePaidBy),
             const SizedBox(height: 10),
             PeoplePicker(
               ids: people,
@@ -170,7 +173,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
               }),
             ),
             const SizedBox(height: 16),
-            const PfSectionLabel('Split between'),
+            PfSectionLabel(l.splitBetween),
             const SizedBox(height: 10),
             PeoplePicker(
               ids: people,
@@ -205,7 +208,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
               PfErrorBanner(error!),
             ],
             const SizedBox(height: 16),
-            PfButton(label: 'Add expense', onPressed: saving ? null : _save),
+            PfButton(label: l.expenseAdd, onPressed: saving ? null : _save),
             const SizedBox(height: 30),
           ],
         ),

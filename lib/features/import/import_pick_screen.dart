@@ -4,6 +4,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../data/app_store.dart';
 import '../../data/import_parser.dart';
+import '../../l10n/l10n.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/pf.dart';
 import 'import_preview_screen.dart';
@@ -36,6 +37,7 @@ class _ImportPickScreenState extends State<ImportPickScreen> {
     if (file == null || bytes == null || !mounted) return;
     setState(() => loading = true);
     final store = AppScope.read(context);
+    final l = context.l10n;
     try {
       // Let the progress indicator paint before the synchronous parse.
       await Future<void>.delayed(const Duration(milliseconds: 16));
@@ -54,8 +56,8 @@ class _ImportPickScreenState extends State<ImportPickScreen> {
       if (preview.importable.isEmpty && preview.duplicates.isEmpty) {
         setState(
           () => error = pdf
-              ? 'No entries found in ${file.name}. Scanned, image-only PDFs aren’t supported yet.'
-              : 'No entries found in ${file.name}. Check it has date, debit and credit columns.',
+              ? l.importNoEntriesPdf(file.name)
+              : l.importNoEntriesXls(file.name),
         );
         return;
       }
@@ -70,7 +72,9 @@ class _ImportPickScreenState extends State<ImportPickScreen> {
       );
     } catch (exception) {
       if (mounted) {
-        setState(() => error = 'Couldn’t read ${file.name}: $exception');
+        setState(
+          () => error = l.importReadError(file.name, exception.toString()),
+        );
       }
     } finally {
       if (mounted) setState(() => loading = false);
@@ -81,6 +85,7 @@ class _ImportPickScreenState extends State<ImportPickScreen> {
   Widget build(BuildContext context) {
     final store = AppScope.watch(context);
     final c = context.pf;
+    final l = context.l10n;
     final book = store.bookById(widget.bookId);
     return Scaffold(
       body: SafeArea(
@@ -88,18 +93,17 @@ class _ImportPickScreenState extends State<ImportPickScreen> {
           padding: pagePadding,
           children: [
             PfHeader(
-              title: 'Import statement',
-              subtitle: 'into ${book?.name ?? ''}',
+              title: l.ledgerImportStatement,
+              subtitle: l.importInto(book?.name ?? ''),
             ),
             const SizedBox(height: 16),
             _SourceCard(
               icon: LucideIcons.fileText,
               background: c.outSoft,
               foreground: c.cashOut,
-              title: 'PDF bank statement',
-              body:
-                  'Text-based PDFs with date, description, withdraw, deposit and balance columns.',
-              action: 'Choose PDF →',
+              title: l.importPdfTitle,
+              body: l.importPdfBody,
+              action: l.importPdfAction,
               onTap: loading ? null : () => _choose(pdf: true),
             ),
             const SizedBox(height: 16),
@@ -107,10 +111,9 @@ class _ImportPickScreenState extends State<ImportPickScreen> {
               icon: LucideIcons.fileSpreadsheet,
               background: c.soft,
               foreground: c.cashIn,
-              title: 'XLS wallet statement',
-              body:
-                  'Legacy .xls exports from wallets. Keeps original descriptions and reference codes.',
-              action: 'Choose XLS →',
+              title: l.importXlsTitle,
+              body: l.importXlsBody,
+              action: l.importXlsAction,
               onTap: loading ? null : () => _choose(pdf: false),
             ),
             if (loading) ...[
@@ -134,22 +137,13 @@ class _ImportPickScreenState extends State<ImportPickScreen> {
                 color: c.card2,
                 borderRadius: BorderRadius.circular(22),
               ),
-              child: const Column(
+              child: Column(
                 children: [
-                  _Tip(
-                    LucideIcons.eye,
-                    'You’ll review everything before it’s saved.',
-                  ),
-                  SizedBox(height: 10),
-                  _Tip(
-                    LucideIcons.copyCheck,
-                    'Re-importing the same statement won’t create duplicates.',
-                  ),
-                  SizedBox(height: 10),
-                  _Tip(
-                    LucideIcons.scanLine,
-                    'Scanned, image-only PDFs aren’t supported yet.',
-                  ),
+                  _Tip(LucideIcons.eye, l.importTipReview),
+                  const SizedBox(height: 10),
+                  _Tip(LucideIcons.copyCheck, l.importTipDuplicates),
+                  const SizedBox(height: 10),
+                  _Tip(LucideIcons.scanLine, l.importTipScanned),
                 ],
               ),
             ),

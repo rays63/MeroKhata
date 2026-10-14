@@ -6,6 +6,7 @@ import '../../app/nav.dart';
 import '../../core/format.dart';
 import '../../data/app_store.dart';
 import '../../data/models.dart';
+import '../../l10n/l10n.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/entry_row.dart';
 import '../../widgets/month_grid.dart';
@@ -38,6 +39,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
   Widget build(BuildContext context) {
     final store = AppScope.watch(context);
     final c = context.pf;
+    final l = context.l10n;
     final book =
         store.bookById(bookId ?? '') ?? store.booksByRecent.firstOrNull;
     if (book == null) return const Scaffold(body: SizedBox.shrink());
@@ -61,7 +63,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
     }
     final now = DateTime.now();
     final label = sameDay(selected, now)
-        ? 'Today, ${DateFormat('d MMM').format(selected)}'
+        ? l.entryWhenToday(DateFormat('d MMM').format(selected))
         : DateFormat('EEE, d MMM').format(selected);
 
     return Scaffold(
@@ -70,7 +72,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
           padding: pagePadding,
           children: [
             PfHeader(
-              title: 'Calendar',
+              title: l.calendar,
               actions: [
                 Material(
                   color: c.card,
@@ -149,7 +151,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     child: Text(label, style: pfText(17, weight: w900)),
                   ),
                   Text(
-                    '${dayEntries.length} ${dayEntries.length == 1 ? 'entry' : 'entries'}',
+                    l.entryCount(dayEntries.length),
                     style: pfText(13, color: c.sub),
                   ),
                 ],
@@ -160,7 +162,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
               children: [
                 Expanded(
                   child: _DayTotal(
-                    label: 'Cash in',
+                    label: l.cashIn,
                     value: '+ ${money(dayIn, book.currency)}',
                     background: c.soft,
                     foreground: c.cashIn,
@@ -169,7 +171,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: _DayTotal(
-                    label: 'Cash out',
+                    label: l.cashOut,
                     value: '− ${money(dayOut, book.currency)}',
                     background: c.outSoft,
                     foreground: c.cashOut,
@@ -183,7 +185,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 radius: 22,
                 padding: const EdgeInsets.all(20),
                 child: Text(
-                  'No entries on this day.',
+                  l.calNoEntries,
                   style: pfText(14, weight: w700, color: c.sub),
                 ),
               )

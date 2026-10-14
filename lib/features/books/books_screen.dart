@@ -3,6 +3,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../app/nav.dart';
 import '../../core/format.dart';
+import '../../l10n/l10n.dart';
 import '../../data/app_store.dart';
 import '../../data/models.dart';
 import '../../theme/tokens.dart';
@@ -29,6 +30,7 @@ class _BooksScreenState extends State<BooksScreen> {
   Widget build(BuildContext context) {
     final store = AppScope.watch(context);
     final c = context.pf;
+    final l = context.l10n;
     if (store.books.isEmpty) return const _EmptyBooks();
     final query = search.text.trim().toLowerCase();
     final books = store.booksByRecent
@@ -43,12 +45,14 @@ class _BooksScreenState extends State<BooksScreen> {
           children: [
             Expanded(
               child: Text(
-                'Books',
+                l.bookListTitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: pfText(30, weight: w900, letterSpacing: -.6),
               ),
             ),
             PfSmallButton(
-              label: 'New book',
+              label: l.bookNew,
               icon: LucideIcons.plus,
               onPressed: () => openNewBook(context),
             ),
@@ -72,7 +76,7 @@ class _BooksScreenState extends State<BooksScreen> {
                   onChanged: (_) => setState(() {}),
                   style: pfText(15, weight: w700, color: c.ink),
                   decoration: InputDecoration(
-                    hintText: 'Search books',
+                    hintText: l.bookSearchHint,
                     hintStyle: pfText(15, weight: w700, color: c.mute),
                   ),
                 ),
@@ -95,7 +99,7 @@ class _BooksScreenState extends State<BooksScreen> {
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 10),
             child: Text(
-              'No books match “${search.text.trim()}”',
+              l.bookSearchNoMatch(search.text.trim()),
               textAlign: TextAlign.center,
               style: pfText(15, weight: w700, color: c.sub),
             ),
@@ -121,37 +125,40 @@ class _BookCard extends StatelessWidget {
 
   Future<void> _delete(BuildContext context) async {
     final c = context.pf;
+    final l = context.l10n;
     final count = store.entryCount(book.id);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Delete “${book.name}”?', style: pfText(19, weight: w900)),
+        title: Text(
+          l.bookDeleteTitle(book.name),
+          style: pfText(19, weight: w900),
+        ),
         content: Text(
-          count == 0
-              ? 'This book has no entries.'
-              : 'Its $count ${count == 1 ? 'entry' : 'entries'} will be deleted too. This can’t be undone.',
+          count == 0 ? l.bookDeleteEmpty : l.bookDeleteWithEntries(count),
           style: pfText(14, weight: w600, color: c.sub),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text('Cancel', style: pfText(14, color: c.sub)),
+            child: Text(l.cancel, style: pfText(14, color: c.sub)),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text('Delete', style: pfText(14, color: c.cashOut)),
+            child: Text(l.delete, style: pfText(14, color: c.cashOut)),
           ),
         ],
       ),
     );
     if (confirmed != true || !context.mounted) return;
     await store.deleteBook(book.id);
-    if (context.mounted) showPfToast(context, '“${book.name}” deleted');
+    if (context.mounted) showPfToast(context, l.bookDeleted(book.name));
   }
 
   @override
   Widget build(BuildContext context) {
     final c = context.pf;
+    final l = context.l10n;
     final balance = store.balanceFor(book.id);
     final count = store.entryCount(book.id);
     return PfCard(
@@ -189,7 +196,9 @@ class _BookCard extends StatelessWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          '${updatedLabel(book.updatedAt)} · $count ${count == 1 ? 'entry' : 'entries'}',
+                          '${l.updatedLabel(book.updatedAt)} · ${l.entryCount(count)}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: pfText(12.5, weight: w700, color: c.sub),
                         ),
                         const SizedBox(height: 6),
@@ -206,7 +215,7 @@ class _BookCard extends StatelessWidget {
                   ),
                   PfIconButton(
                     icon: LucideIcons.ellipsis,
-                    tooltip: 'Book actions',
+                    tooltip: l.bookActions,
                     size: 18,
                     background: c.card2,
                     foreground: c.sub,
@@ -226,7 +235,7 @@ class _BookCard extends StatelessWidget {
                       children: [
                         Expanded(
                           child: PfButton(
-                            label: 'Rename',
+                            label: l.bookRename,
                             icon: LucideIcons.pencil,
                             style: PfButtonStyle.neutral,
                             height: 44,
@@ -241,7 +250,7 @@ class _BookCard extends StatelessWidget {
                         const SizedBox(width: 8),
                         Expanded(
                           child: PfButton(
-                            label: 'Delete',
+                            label: l.delete,
                             icon: LucideIcons.trash2,
                             style: PfButtonStyle.softDanger,
                             height: 44,
@@ -267,12 +276,16 @@ class _EmptyBooks extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.pf;
+    final l = context.l10n;
     return Padding(
       padding: pagePadding,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Books', style: pfText(30, weight: w900, letterSpacing: -.6)),
+          Text(
+            l.bookListTitle,
+            style: pfText(30, weight: w900, letterSpacing: -.6),
+          ),
           Expanded(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 10),
@@ -290,7 +303,7 @@ class _EmptyBooks extends StatelessWidget {
                   ),
                   const SizedBox(height: 18),
                   Text(
-                    'Start your first book',
+                    l.bookEmptyTitle,
                     style: pfText(
                       26,
                       weight: w900,
@@ -300,12 +313,12 @@ class _EmptyBooks extends StatelessWidget {
                   ),
                   const SizedBox(height: 18),
                   Text(
-                    'One book per purpose — daily spending, your shop, a trip abroad. It takes under a minute.',
+                    l.bookEmptyBody,
                     style: pfText(15, weight: w600, color: c.sub, height: 1.5),
                   ),
                   const SizedBox(height: 18),
                   PfButton(
-                    label: 'New book',
+                    label: l.bookNew,
                     icon: LucideIcons.plus,
                     expand: false,
                     height: 56,
@@ -316,7 +329,7 @@ class _EmptyBooks extends StatelessWidget {
                     onPressed: () => openImport(context),
                     style: TextButton.styleFrom(padding: EdgeInsets.zero),
                     child: Text(
-                      'or import a statement',
+                      l.bookEmptyImport,
                       style: pfText(15, weight: w800, color: c.cashIn),
                     ),
                   ),

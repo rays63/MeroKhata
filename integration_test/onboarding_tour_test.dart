@@ -19,7 +19,26 @@ void main() {
       await tester.runAsync(() => Future.delayed(const Duration(seconds: 2)));
     }
 
+    /// Waits in real time for [text] to appear: saving the profile is a real
+    /// async write, which pumpAndSettle doesn't wait for.
+    Future<void> waitFor(String text) async {
+      for (var i = 0; i < 40 && find.text(text).evaluate().isEmpty; i++) {
+        await tester.runAsync(
+          () => Future.delayed(const Duration(milliseconds: 250)),
+        );
+        await tester.pumpAndSettle();
+      }
+      expect(find.text(text), findsWidgets);
+    }
+
     Future<void> tap(String text) async {
+      // Close the keyboard first, as a person would: on Android it covers
+      // the bottom buttons while it's animating away.
+      FocusManager.instance.primaryFocus?.unfocus();
+      await tester.runAsync(
+        () => Future.delayed(const Duration(milliseconds: 600)),
+      );
+      await tester.pumpAndSettle();
       await tester.ensureVisible(find.text(text));
       await tester.pumpAndSettle();
       await tester.tap(find.text(text));
@@ -63,8 +82,10 @@ void main() {
     await tester.enterText(find.widgetWithText(TextField, 'aarav@gmail'), '');
     await tap('Continue');
     FocusManager.instance.primaryFocus?.unfocus();
+    await waitFor("Let's set up your first book");
     await shot('setup');
     await tap('Get started');
+    await waitFor('Recently updated');
     await shot('home');
   });
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../l10n/l10n.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/brand.dart';
 import '../../widgets/pf.dart';
@@ -14,6 +15,7 @@ class SplashScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = context.l10n;
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light,
       child: Material(
@@ -65,15 +67,19 @@ class SplashScreen extends StatelessWidget {
                         color: PfColors.heroLabel,
                       ).copyWith(fontFamily: 'Mukta'),
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'Every paisa, accounted for.',
-                      style: pfText(
-                        16,
-                        weight: w700,
-                        color: PfColors.heroLabel,
+                    // The Nepali tagline above already says it in नेपाली.
+                    if (Localizations.localeOf(context).languageCode !=
+                        'ne') ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        l.splashSubtitle,
+                        style: pfText(
+                          16,
+                          weight: w700,
+                          color: PfColors.heroLabel,
+                        ),
                       ),
-                    ),
+                    ],
                   ],
                 ),
               ),
@@ -92,7 +98,7 @@ class SplashScreen extends StatelessWidget {
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      'Offline-first · your data stays on this phone',
+                      l.splashOffline,
                       style: pfText(
                         13,
                         weight: w700,

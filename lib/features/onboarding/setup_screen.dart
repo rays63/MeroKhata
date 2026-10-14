@@ -6,6 +6,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/format.dart';
 import '../../data/app_store.dart';
+import '../../l10n/l10n.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/pf.dart';
 import '../../widgets/store_sheets.dart';
@@ -37,6 +38,7 @@ class _SetupScreenState extends State<SetupScreen> {
     if (saving) return;
     setState(() => saving = true);
     final messenger = ScaffoldMessenger.of(context);
+    final welcome = context.l10n.setupWelcome;
     try {
       await AppScope.read(context).finishSetup(
         name: name.text,
@@ -47,7 +49,7 @@ class _SetupScreenState extends State<SetupScreen> {
     } catch (error) {
       if (mounted) {
         setState(() => saving = false);
-        showPfToast(context, 'Couldn’t save your book: $error');
+        showPfToast(context, context.l10n.setupSaveFailed('$error'));
       }
       return;
     }
@@ -55,12 +57,14 @@ class _SetupScreenState extends State<SetupScreen> {
     // the app-level messenger carries the welcome across.
     messenger
       ..hideCurrentSnackBar()
-      ..showSnackBar(pfToast('Welcome to Paisa Flow'));
+      ..showSnackBar(pfToast(welcome));
   }
 
   @override
   Widget build(BuildContext context) {
     final c = context.pf;
+    final l = context.l10n;
+    final store = AppScope.watch(context);
     final info = Currency.of(currency);
     return Scaffold(
       body: SafeArea(
@@ -77,28 +81,16 @@ class _SetupScreenState extends State<SetupScreen> {
                   children: [
                     const StepHeader(step: 2),
                     const SizedBox(height: 22),
-                    const StepTitle(
-                      step: 2,
-                      title: "Let's set up your first book",
-                      body:
-                          'Books keep money separate — personal, shop, a trip. Each book keeps its own currency.',
-                    ),
+                    StepTitle(step: 2, title: l.setupTitle, body: l.setupBody),
                     const SizedBox(height: 22),
-                    Text('Language', style: pfText(13, color: c.sub)),
+                    Text(l.setupLanguage, style: pfText(13, color: c.sub)),
                     const SizedBox(height: 8),
                     PfSegment<String>(
-                      value: 'en',
+                      value: store.language,
                       height: 44,
                       radius: 18,
                       fontSize: 15,
-                      onChanged: (value) {
-                        if (value == 'ne') {
-                          showPfToast(
-                            context,
-                            'नेपाली is coming in the next update',
-                          );
-                        }
-                      },
+                      onChanged: store.setLanguage,
                       items: const [
                         ('en', 'English', null),
                         ('ne', 'नेपाली', null),
@@ -110,13 +102,13 @@ class _SetupScreenState extends State<SetupScreen> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           PfField(
-                            label: 'Book name',
+                            label: l.setupBookName,
                             child: TextField(
                               controller: name,
                               textCapitalization: TextCapitalization.words,
                               style: pfText(17, color: c.ink),
                               decoration: InputDecoration(
-                                hintText: 'e.g. Personal',
+                                hintText: l.setupBookNameHint,
                                 hintStyle: pfText(17, color: c.mute),
                               ),
                             ),
@@ -145,7 +137,7 @@ class _SetupScreenState extends State<SetupScreen> {
                                           CrossAxisAlignment.start,
                                       children: [
                                         Text(
-                                          'Currency',
+                                          l.setupCurrency,
                                           style: pfText(12, color: c.sub),
                                         ),
                                         const SizedBox(height: 4),
@@ -164,7 +156,7 @@ class _SetupScreenState extends State<SetupScreen> {
                           ),
                           const PfDivider(),
                           PfField(
-                            label: 'Opening balance',
+                            label: l.setupOpeningBalance,
                             optional: true,
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.baseline,
@@ -203,7 +195,7 @@ class _SetupScreenState extends State<SetupScreen> {
                     const Spacer(),
                     const SizedBox(height: 22),
                     PfButton(
-                      label: 'Get started',
+                      label: l.getStarted,
                       trailingIcon: LucideIcons.arrowRight,
                       spread: true,
                       onPressed: saving ? null : _finish,
