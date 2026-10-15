@@ -1,17 +1,107 @@
 # Paisa Flow
 
-Personal finance and cashbook app built with Flutter.
+An offline cashbook and bill-splitting app for Android and iOS, built with Flutter. Track cash in and cash out across books, import bank and wallet statements, split expenses with friends, and see where your money goes. Everything stays on the device: no account, no server, no analytics.
 
-## Getting Started
+Available in English and नेपाली.
 
-This project is a starting point for a Flutter application.
+- **Package:** `com.paisaflow.app`
+- **Privacy policy:** https://www.maharjanraymond.com.np/paisaflow
 
-A few resources to get you started if this is your first Flutter project:
+## Features
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+- **Books:** separate ledgers (personal, business, …), each with its own currency and opening balance, plus a running balance on every entry.
+- **Entries:** cash in and cash out entries with category, payment mode, date, notes and an edit history. Categories and payment modes can be added, renamed and deleted.
+- **Statement import:**
+  - Text-based PDF bank statements (NIC Asia, Nabil, Standard Chartered and similar), including password-protected PDFs.
+  - Legacy `.xls` / `.xlsx` / `.csv` wallet exports (eSewa).
+  - Duplicates are detected on re-import.
+- **Split:** groups, shared expenses and one-off bills, with balances per friend and settle-up.
+- **Insights and reports:** spending trends and category breakdowns, and PDF / Excel reports for any date range.
+- **Goals:** savings targets with progress.
+- **Personalisation:** light and dark themes, English and Nepali.
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Tech stack
+
+| Area | Choice |
+|---|---|
+| Framework | Flutter 3.41, Dart 3.11 |
+| State | `ChangeNotifier` store exposed through an `InheritedNotifier` (`AppScope`) |
+| Storage | JSON in `shared_preferences` |
+| PDF | `syncfusion_flutter_pdf` (reading), `pdf` + `printing` (export) |
+| Spreadsheets | `spreadsheet_decoder`, a built-in BIFF8 reader for legacy `.xls`, and a hand-written `.xlsx` writer (`archive`) |
+| Localisation | `flutter_localizations` + gen-l10n (ARB files) |
+| UI | Bundled Nunito and Mukta fonts, Lucide icons |
+
+## Project structure
+
+```
+lib/
+├── app/          App root, shell (bottom tabs), navigation helpers
+├── core/         Formatting (money, dates)
+├── data/         AppStore, models, statement parsers, reports, export
+├── features/     One folder per feature
+│   ├── books/  calendar/  entries/  goals/  home/  import/
+│   └── insights/  onboarding/  reports/  settings/  split/
+├── l10n/         app_en.arb, app_ne.arb and generated localisations
+├── theme/        Design tokens (PfColors) and ThemeData
+└── widgets/      Shared UI (buttons, cards, sheets, entry rows)
+test/             Unit and widget tests
+integration_test/ End-to-end flows run on a simulator or emulator
+store_listing/    Play Store and App Store assets, listing copy, privacy policy
+```
+
+## Getting started
+
+Requires the Flutter SDK (3.41 or newer), plus Xcode for iOS or Android Studio for Android.
+
+```bash
+flutter pub get
+flutter run
+```
+
+Localisations are generated from the ARB files on build. After editing `lib/l10n/*.arb`, run `flutter gen-l10n`.
+
+## Tests
+
+```bash
+flutter analyze
+flutter test
+```
+
+Integration tests run on a booted simulator or emulator:
+
+```bash
+flutter test integration_test/onboarding_tour_test.dart -d <device-id>
+flutter test integration_test/statement_import_flow_test.dart -d <device-id> \
+  --dart-define=STATEMENTS_DIR=<folder with statements on the device>
+```
+
+## Release build (Android)
+
+Release signing reads `android/key.properties`. That file is git-ignored; create it locally:
+
+```properties
+storePassword=<keystore password>
+keyPassword=<key password>
+keyAlias=upload
+storeFile=/absolute/path/to/upload-keystore.jks
+```
+
+Without it, release builds fall back to the debug key, which Google Play will not accept.
+
+Before every Play upload, bump the build number after `+` in `pubspec.yaml`, for example `1.0.0+2` → `1.0.0+3`. Then build:
+
+```bash
+flutter build appbundle --release
+# build/app/outputs/bundle/release/app-release.aab
+```
+
+Never commit `key.properties` or the `.jks` keystore.
+
+## Privacy
+
+Paisa Flow stores all data locally on the device. The Android release build does not request internet access. See the [privacy policy](https://www.maharjanraymond.com.np/paisaflow).
+
+## Author
+
+Raymond Maharjan
