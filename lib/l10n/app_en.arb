@@ -137,6 +137,22 @@
       }
     }
   },
+  "optionRemoved": "“{name}” removed. Entries that use it keep it.",
+  "@optionRemoved": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteOption": "Delete {name}",
+  "@deleteOption": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "previousMonth": "Previous month",
   "nextMonth": "Next month",
   "weekdaysShort": "S,M,T,W,T,F,S",
@@ -655,6 +671,29 @@
       }
     }
   },
+  "importWrongFileType": "{file} isn’t a supported file. Choose a {types} file.",
+  "@importWrongFileType": {
+    "placeholders": {
+      "file": {
+        "type": "String"
+      },
+      "types": {
+        "type": "String"
+      }
+    }
+  },
+  "pdfPasswordTitle": "Password protected",
+  "pdfPasswordBody": "{file} is locked. Enter the password your bank gave you to open it.",
+  "@pdfPasswordBody": {
+    "placeholders": {
+      "file": {
+        "type": "String"
+      }
+    }
+  },
+  "pdfPasswordHint": "PDF password",
+  "pdfPasswordWrong": "That password didn’t work. Try again.",
+  "pdfPasswordOpen": "Open",
   "importReadError": "Couldn’t read {file}: {error}",
   "@importReadError": {
     "placeholders": {

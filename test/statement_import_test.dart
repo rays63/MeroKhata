@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -11,10 +12,32 @@ final _statements = Directory('.claude/test statement');
 
 File _file(String name) => File('${_statements.path}/$name');
 
+/// Passwords for locked statements, keyed by file name, in
+/// `.claude/test statement/passwords.json` (local only, never committed).
+final Map<String, String> _passwords = () {
+  final file = _file('passwords.json');
+  if (!file.existsSync()) return <String, String>{};
+  return (jsonDecode(file.readAsStringSync()) as Map).cast<String, String>();
+}();
+
+bool _isLocked(File file) {
+  try {
+    sfpdf.PdfDocument(inputBytes: file.readAsBytesSync()).dispose();
+    return false;
+  } on ArgumentError catch (error) {
+    return error.name == 'password';
+  }
+}
+
 ImportPreview _parse(AppStore store, String bookId, File file) {
   final bytes = file.readAsBytesSync();
   return file.path.endsWith('.pdf')
-      ? ImportParser.parsePdfBytes(store: store, bookId: bookId, bytes: bytes)
+      ? ImportParser.parsePdfBytes(
+          store: store,
+          bookId: bookId,
+          bytes: bytes,
+          password: _passwords[file.uri.pathSegments.last],
+        )
       : ImportParser.parseXlsBytes(store: store, bookId: bookId, bytes: bytes);
 }
 
@@ -24,7 +47,10 @@ double _total(Iterable<LedgerTransaction> rows, TransactionType type) => rows
 
 /// Opening and closing balances printed in a PDF statement's summary, if any.
 (double, double)? _summary(File file) {
-  final document = sfpdf.PdfDocument(inputBytes: file.readAsBytesSync());
+  final document = sfpdf.PdfDocument(
+    inputBytes: file.readAsBytesSync(),
+    password: _passwords[file.uri.pathSegments.last],
+  );
   final text = sfpdf.PdfTextExtractor(document).extractText();
   document.dispose();
   double? find(String label) {
@@ -65,39 +91,77 @@ void main() {
 
     for (final file in files) {
       final name = file.path.split('test statement/').last;
-      test('$name parses every row consistently', () {
-        final rows = _parse(AppStore(), 'book', file).importable;
-        expect(rows, isNotEmpty);
+      final locked = file.path.endsWith('.pdf') && _isLocked(file);
+      if (locked) {
+        test('$name asks for a password, then rejects a wrong one', () {
+          final bytes = file.readAsBytesSync();
+          ImportPreview parse(String? password) => ImportParser.parsePdfBytes(
+            store: AppStore(),
+            bookId: 'book',
+            bytes: bytes,
+            password: password,
+          );
+          expect(
+            () => parse(null),
+            throwsA(
+              isA<PdfPasswordException>().having(
+                (e) => e.wrongPassword,
+                'wrongPassword',
+                isFalse,
+              ),
+            ),
+          );
+          expect(
+            () => parse('not-the-password'),
+            throwsA(
+              isA<PdfPasswordException>().having(
+                (e) => e.wrongPassword,
+                'wrongPassword',
+                isTrue,
+              ),
+            ),
+          );
+        });
+      }
+      test(
+        '$name parses every row consistently',
+        () {
+          final rows = _parse(AppStore(), 'book', file).importable;
+          expect(rows, isNotEmpty);
 
-        // Each row's previous balance (balance - signed amount) must be the
-        // balance of another row, except for the very first transaction,
-        // which starts from the opening balance. A dropped, merged or
-        // mis-signed row breaks this chain.
-        final balances = {
-          for (final row in rows) row.statementBalance!.toStringAsFixed(2),
-        };
-        final breaks = rows.where(
-          (row) => !balances.contains(
-            (row.statementBalance! - row.signedAmount).toStringAsFixed(2),
-          ),
-        );
-        expect(breaks, hasLength(1), reason: breaks.join('\n'));
-        expect(
-          rows.where((row) => row.title == 'Imported transaction'),
-          isEmpty,
-        );
+          // Each row's previous balance (balance - signed amount) must be the
+          // balance of another row, except for the very first transaction,
+          // which starts from the opening balance. A dropped, merged or
+          // mis-signed row breaks this chain.
+          final balances = {
+            for (final row in rows) row.statementBalance!.toStringAsFixed(2),
+          };
+          final breaks = rows.where(
+            (row) => !balances.contains(
+              (row.statementBalance! - row.signedAmount).toStringAsFixed(2),
+            ),
+          );
+          expect(breaks, hasLength(1), reason: breaks.join('\n'));
+          expect(
+            rows.where((row) => row.title == 'Imported transaction'),
+            isEmpty,
+          );
 
-        if (file.path.endsWith('.pdf')) {
-          final summary = _summary(file);
-          if (summary != null) {
-            final (opening, closing) = summary;
-            final net =
-                _total(rows, TransactionType.cashIn) -
-                _total(rows, TransactionType.cashOut);
-            expect(opening + net, closeTo(closing, 0.005));
+          if (file.path.endsWith('.pdf')) {
+            final summary = _summary(file);
+            if (summary != null) {
+              final (opening, closing) = summary;
+              final net =
+                  _total(rows, TransactionType.cashIn) -
+                  _total(rows, TransactionType.cashOut);
+              expect(opening + net, closeTo(closing, 0.005));
+            }
           }
-        }
-      });
+        },
+        skip: locked && !_passwords.containsKey(file.uri.pathSegments.last)
+            ? 'Add its password to passwords.json'
+            : false,
+      );
     }
   }, skip: skip);
 

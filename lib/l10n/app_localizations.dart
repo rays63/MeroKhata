@@ -440,6 +440,18 @@ abstract class AppLocalizations {
   /// **'“{name}” added'**
   String optionAdded(String name);
 
+  /// No description provided for @optionRemoved.
+  ///
+  /// In en, this message translates to:
+  /// **'“{name}” removed. Entries that use it keep it.'**
+  String optionRemoved(String name);
+
+  /// No description provided for @deleteOption.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete {name}'**
+  String deleteOption(String name);
+
   /// No description provided for @previousMonth.
   ///
   /// In en, this message translates to:
@@ -1507,6 +1519,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No entries found in {file}. Check it has date, debit and credit columns.'**
   String importNoEntriesXls(String file);
+
+  /// No description provided for @importWrongFileType.
+  ///
+  /// In en, this message translates to:
+  /// **'{file} isn’t a supported file. Choose a {types} file.'**
+  String importWrongFileType(String file, String types);
+
+  /// No description provided for @pdfPasswordTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Password protected'**
+  String get pdfPasswordTitle;
+
+  /// No description provided for @pdfPasswordBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{file} is locked. Enter the password your bank gave you to open it.'**
+  String pdfPasswordBody(String file);
+
+  /// No description provided for @pdfPasswordHint.
+  ///
+  /// In en, this message translates to:
+  /// **'PDF password'**
+  String get pdfPasswordHint;
+
+  /// No description provided for @pdfPasswordWrong.
+  ///
+  /// In en, this message translates to:
+  /// **'That password didn’t work. Try again.'**
+  String get pdfPasswordWrong;
+
+  /// No description provided for @pdfPasswordOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get pdfPasswordOpen;
 
   /// No description provided for @importReadError.
   ///

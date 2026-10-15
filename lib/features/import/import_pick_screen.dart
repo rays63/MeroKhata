@@ -4,6 +4,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../data/app_store.dart';
 import '../../data/import_parser.dart';
+import '../../data/models.dart';
 import '../../l10n/l10n.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/pf.dart';
@@ -25,33 +26,59 @@ class _ImportPickScreenState extends State<ImportPickScreen> {
 
   Future<void> _choose({required bool pdf}) async {
     setState(() => error = null);
+    final allowed = pdf ? const ['pdf'] : const ['xls', 'xlsx', 'csv', 'tsv'];
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
-      allowedExtensions: pdf
-          ? const ['pdf']
-          : const ['xls', 'xlsx', 'csv', 'tsv'],
+      allowedExtensions: allowed,
       withData: true,
     );
     final file = result?.files.single;
     final bytes = file?.bytes;
     if (file == null || bytes == null || !mounted) return;
+    // Some pickers ignore the type filter, so check the extension too.
+    if (!allowed.contains(file.extension?.toLowerCase())) {
+      setState(
+        () => error = context.l10n.importWrongFileType(
+          file.name,
+          allowed.map((ext) => '.$ext').join(', '),
+        ),
+      );
+      return;
+    }
     setState(() => loading = true);
     final store = AppScope.read(context);
     final l = context.l10n;
     try {
-      // Let the progress indicator paint before the synchronous parse.
-      await Future<void>.delayed(const Duration(milliseconds: 16));
-      final preview = pdf
-          ? ImportParser.parsePdfBytes(
-              store: store,
-              bookId: widget.bookId,
-              bytes: bytes,
-            )
-          : ImportParser.parseXlsBytes(
-              store: store,
-              bookId: widget.bookId,
-              bytes: bytes,
-            );
+      ImportPreview? parsed;
+      String? password;
+      while (parsed == null) {
+        // Let the progress indicator paint before the synchronous parse.
+        await Future<void>.delayed(const Duration(milliseconds: 16));
+        try {
+          parsed = pdf
+              ? ImportParser.parsePdfBytes(
+                  store: store,
+                  bookId: widget.bookId,
+                  bytes: bytes,
+                  password: password,
+                )
+              : ImportParser.parseXlsBytes(
+                  store: store,
+                  bookId: widget.bookId,
+                  bytes: bytes,
+                );
+        } on PdfPasswordException catch (locked) {
+          if (!mounted) return;
+          setState(() => loading = false);
+          password = await _askPassword(
+            file.name,
+            wrongPassword: locked.wrongPassword,
+          );
+          if (password == null || !mounted) return;
+          setState(() => loading = true);
+        }
+      }
+      final preview = parsed;
       if (!mounted) return;
       if (preview.importable.isEmpty && preview.duplicates.isEmpty) {
         setState(
@@ -79,6 +106,16 @@ class _ImportPickScreenState extends State<ImportPickScreen> {
     } finally {
       if (mounted) setState(() => loading = false);
     }
+  }
+
+  /// Asks for a locked statement's password. It is only used to open the
+  /// file and is never saved.
+  Future<String?> _askPassword(String fileName, {required bool wrongPassword}) {
+    return showDialog<String>(
+      context: context,
+      builder: (_) =>
+          _PasswordDialog(fileName: fileName, wrongPassword: wrongPassword),
+    );
   }
 
   @override
@@ -235,6 +272,75 @@ class _Tip extends StatelessWidget {
             text,
             style: pfText(13.5, weight: w700, color: c.sub, height: 1.4),
           ),
+        ),
+      ],
+    );
+  }
+}
+
+class _PasswordDialog extends StatefulWidget {
+  const _PasswordDialog({required this.fileName, required this.wrongPassword});
+
+  final String fileName;
+  final bool wrongPassword;
+
+  @override
+  State<_PasswordDialog> createState() => _PasswordDialogState();
+}
+
+class _PasswordDialogState extends State<_PasswordDialog> {
+  final controller = TextEditingController();
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.pf;
+    final l = context.l10n;
+    return AlertDialog(
+      title: Text(l.pdfPasswordTitle, style: pfText(19, weight: w900)),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            widget.wrongPassword
+                ? l.pdfPasswordWrong
+                : l.pdfPasswordBody(widget.fileName),
+            style: pfText(
+              14,
+              weight: w700,
+              color: widget.wrongPassword ? c.cashOut : c.sub,
+            ),
+          ),
+          const SizedBox(height: 8),
+          TextField(
+            controller: controller,
+            autofocus: true,
+            obscureText: true,
+            enableSuggestions: false,
+            autocorrect: false,
+            onSubmitted: (value) => Navigator.pop(context, value),
+            style: pfText(17, color: c.ink),
+            decoration: InputDecoration(
+              hintText: l.pdfPasswordHint,
+              hintStyle: pfText(17, color: c.mute),
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text(l.cancel, style: pfText(14, color: c.sub)),
+        ),
+        TextButton(
+          onPressed: () => Navigator.pop(context, controller.text),
+          child: Text(l.pdfPasswordOpen, style: pfText(14, color: c.cashIn)),
         ),
       ],
     );

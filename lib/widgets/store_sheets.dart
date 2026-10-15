@@ -27,6 +27,7 @@ Future<String?> pickCategory(
     icon: categoryIcon,
     rename: store.renameCategory,
     add: store.addCategory,
+    remove: store.removeCategory,
   );
 }
 
@@ -45,6 +46,7 @@ Future<String?> pickPaymentMode(
     icon: (_) => LucideIcons.wallet,
     rename: store.renamePaymentMode,
     add: store.addPaymentMode,
+    remove: store.removePaymentMode,
   );
 }
 
@@ -57,6 +59,7 @@ Future<String?> _pickEditable(
   required IconData Function(String) icon,
   required Future<void> Function(String, String) rename,
   required Future<void> Function(String) add,
+  required Future<void> Function(String) remove,
 }) async {
   var current = selected;
   final picked = await showOptionSheet<String>(
@@ -74,6 +77,7 @@ Future<String?> _pickEditable(
         if (from == current) current = to.trim();
       },
       onAdd: add,
+      onRemove: remove,
     ),
   );
   return picked ?? (current == selected ? null : current);

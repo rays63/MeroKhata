@@ -416,6 +416,17 @@ class AppStore extends ChangeNotifier {
   Future<void> renamePaymentMode(String from, String to) =>
       _renameOption(paymentModes, from, to, category: false);
 
+  /// Removes an option from the picker. Entries that use it keep it.
+  Future<void> removeCategory(String name) => _removeOption(categories, name);
+
+  Future<void> removePaymentMode(String name) =>
+      _removeOption(paymentModes, name);
+
+  Future<void> _removeOption(List<String> list, String name) async {
+    if (!list.remove(name)) return;
+    await _commit();
+  }
+
   Future<void> _addOption(List<String> list, String name) async {
     final value = name.trim();
     if (value.isEmpty || list.contains(value)) return;

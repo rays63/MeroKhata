@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:file_picker/file_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:spreadsheet_decoder/spreadsheet_decoder.dart';
 import 'package:syncfusion_flutter_pdf/pdf.dart' as sfpdf;
@@ -20,38 +19,31 @@ typedef _TableHeader = ({
   int? status,
 });
 
-class ImportParser {
-  static Future<ImportPreview> parsePdf({
-    required AppStore store,
-    required String bookId,
-  }) async {
-    final file = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: const ['pdf'],
-      withData: true,
-    );
-    final bytes = file?.files.single.bytes;
-    if (bytes == null) {
-      return const ImportPreview(
-        source: 'PDF',
-        importable: [],
-        duplicates: [],
-        ignored: [],
-      );
-    }
-    return parsePdfBytes(store: store, bookId: bookId, bytes: bytes);
-  }
+/// The statement PDF is password protected.
+class PdfPasswordException implements Exception {
+  const PdfPasswordException({required this.wrongPassword});
 
+  /// A password was given but didn't open the file.
+  final bool wrongPassword;
+}
+
+class ImportParser {
+  /// Throws [PdfPasswordException] when the PDF is locked and [password]
+  /// is missing or wrong.
   static ImportPreview parsePdfBytes({
     required AppStore store,
     required String bookId,
     required List<int> bytes,
+    String? password,
   }) {
     sfpdf.PdfDocument? document;
     final String text;
     try {
-      document = sfpdf.PdfDocument(inputBytes: bytes);
+      document = sfpdf.PdfDocument(inputBytes: bytes, password: password);
       text = sfpdf.PdfTextExtractor(document).extractText();
+    } on ArgumentError catch (error) {
+      if (error.name != 'password') rethrow;
+      throw PdfPasswordException(wrongPassword: password != null);
     } finally {
       document?.dispose();
     }
@@ -70,27 +62,6 @@ class ImportParser {
       parsed: parsed,
       ignored: ignored,
     );
-  }
-
-  static Future<ImportPreview> parseXls({
-    required AppStore store,
-    required String bookId,
-  }) async {
-    final file = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: const ['xls', 'xlsx', 'csv', 'tsv'],
-      withData: true,
-    );
-    final bytes = file?.files.single.bytes;
-    if (bytes == null) {
-      return const ImportPreview(
-        source: 'XLS',
-        importable: [],
-        duplicates: [],
-        ignored: [],
-      );
-    }
-    return parseXlsBytes(store: store, bookId: bookId, bytes: bytes);
   }
 
   static ImportPreview parseXlsBytes({

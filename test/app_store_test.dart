@@ -140,6 +140,23 @@ void main() {
     expect(store.transactionById('t1')!.category, 'Tea');
   });
 
+  test('deleting a category keeps it on entries and stays deleted', () async {
+    final store = await _load({_key: jsonEncode(_legacyData())});
+
+    await store.removeCategory('Chiya');
+    await store.removePaymentMode('Wallet');
+
+    expect(store.categories, isNot(contains('Chiya')));
+    expect(store.paymentModes, isNot(contains('Wallet')));
+    expect(store.transactionById('t1')!.category, 'Chiya');
+    expect(store.transactionById('t1')!.paymentMode, 'Wallet');
+
+    final reloaded = AppStore();
+    await reloaded.load();
+    expect(reloaded.categories, isNot(contains('Chiya')));
+    expect(reloaded.paymentModes, isNot(contains('Wallet')));
+  });
+
   test('editing an entry records each change in its history', () async {
     final store = await _load({_key: jsonEncode(_legacyData())});
     final entry = store.transactionById('t1')!;

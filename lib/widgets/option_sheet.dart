@@ -20,15 +20,17 @@ class EditableList {
     required this.items,
     required this.onRename,
     required this.onAdd,
+    required this.onRemove,
   });
 
   final List<String> Function() items;
   final Future<void> Function(String from, String to) onRename;
   final Future<void> Function(String value) onAdd;
+  final Future<void> Function(String value) onRemove;
 }
 
 /// Bottom sheet listing options with the current one checked. When
-/// [editable] is given, "Edit list" switches to rename/add mode.
+/// [editable] is given, "Edit list" switches to rename/add/delete mode.
 Future<T?> showOptionSheet<T>(
   BuildContext context, {
   required String title,
@@ -164,8 +166,9 @@ class _OptionSheetState<T> extends State<_OptionSheet<T>> {
 
   List<Widget> _manageRows(PfColors c) {
     final editable = widget.editable!;
+    final items = editable.items();
     return [
-      for (final item in editable.items())
+      for (final item in items)
         Padding(
           padding: const EdgeInsets.only(bottom: 6),
           child: _EditableRow(
@@ -175,6 +178,15 @@ class _OptionSheetState<T> extends State<_OptionSheet<T>> {
               await editable.onRename(item, to);
               if (mounted) setState(() {});
             },
+            // Keep at least one option so the picker is never empty.
+            onRemove: items.length < 2
+                ? null
+                : () async {
+                    await editable.onRemove(item);
+                    if (!mounted) return;
+                    setState(() {});
+                    showPfToast(context, context.l10n.optionRemoved(item));
+                  },
           ),
         ),
       const SizedBox(height: 6),
@@ -268,10 +280,16 @@ class _OptionRow extends StatelessWidget {
 }
 
 class _EditableRow extends StatefulWidget {
-  const _EditableRow({super.key, required this.value, required this.onRename});
+  const _EditableRow({
+    super.key,
+    required this.value,
+    required this.onRename,
+    required this.onRemove,
+  });
 
   final String value;
   final ValueChanged<String> onRename;
+  final VoidCallback? onRemove;
 
   @override
   State<_EditableRow> createState() => _EditableRowState();
@@ -311,7 +329,7 @@ class _EditableRowState extends State<_EditableRow> {
     final c = context.pf;
     return Container(
       height: 48,
-      padding: const EdgeInsets.symmetric(horizontal: 14),
+      padding: const EdgeInsets.only(left: 14, right: 4),
       decoration: BoxDecoration(
         color: c.card2,
         borderRadius: BorderRadius.circular(14),
@@ -329,6 +347,15 @@ class _EditableRowState extends State<_EditableRow> {
             ),
           ),
           Icon(LucideIcons.pencil, size: 15, color: c.mute),
+          if (widget.onRemove != null)
+            IconButton(
+              onPressed: widget.onRemove,
+              tooltip: context.l10n.deleteOption(widget.value),
+              icon: Icon(LucideIcons.trash2, size: 17, color: c.cashOut),
+              visualDensity: VisualDensity.compact,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+            ),
         ],
       ),
     );

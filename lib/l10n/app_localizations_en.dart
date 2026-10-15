@@ -220,6 +220,16 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String optionRemoved(String name) {
+    return '“$name” removed. Entries that use it keep it.';
+  }
+
+  @override
+  String deleteOption(String name) {
+    return 'Delete $name';
+  }
+
+  @override
   String get previousMonth => 'Previous month';
 
   @override
@@ -879,6 +889,28 @@ class AppLocalizationsEn extends AppLocalizations {
   String importNoEntriesXls(String file) {
     return 'No entries found in $file. Check it has date, debit and credit columns.';
   }
+
+  @override
+  String importWrongFileType(String file, String types) {
+    return '$file isn’t a supported file. Choose a $types file.';
+  }
+
+  @override
+  String get pdfPasswordTitle => 'Password protected';
+
+  @override
+  String pdfPasswordBody(String file) {
+    return '$file is locked. Enter the password your bank gave you to open it.';
+  }
+
+  @override
+  String get pdfPasswordHint => 'PDF password';
+
+  @override
+  String get pdfPasswordWrong => 'That password didn’t work. Try again.';
+
+  @override
+  String get pdfPasswordOpen => 'Open';
 
   @override
   String importReadError(String file, String error) {

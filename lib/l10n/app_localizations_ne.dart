@@ -217,6 +217,16 @@ class AppLocalizationsNe extends AppLocalizations {
   }
 
   @override
+  String optionRemoved(String name) {
+    return '“$name” हटाइयो। यो प्रयोग गर्ने प्रविष्टिहरूमा यो रहिरहन्छ।';
+  }
+
+  @override
+  String deleteOption(String name) {
+    return '$name मेटाउनुहोस्';
+  }
+
+  @override
   String get previousMonth => 'अघिल्लो महिना';
 
   @override
@@ -878,6 +888,28 @@ class AppLocalizationsNe extends AppLocalizations {
   String importNoEntriesXls(String file) {
     return '$file मा कुनै प्रविष्टि भेटिएन। यसमा मिति, डेबिट र क्रेडिट स्तम्भ छन् कि जाँच गर्नुहोस्।';
   }
+
+  @override
+  String importWrongFileType(String file, String types) {
+    return '$file समर्थित फाइल होइन। $types फाइल छान्नुहोस्।';
+  }
+
+  @override
+  String get pdfPasswordTitle => 'पासवर्ड सुरक्षित';
+
+  @override
+  String pdfPasswordBody(String file) {
+    return '$file लक गरिएको छ। खोल्न बैंकले दिएको पासवर्ड हाल्नुहोस्।';
+  }
+
+  @override
+  String get pdfPasswordHint => 'PDF पासवर्ड';
+
+  @override
+  String get pdfPasswordWrong => 'पासवर्ड मिलेन। फेरि प्रयास गर्नुहोस्।';
+
+  @override
+  String get pdfPasswordOpen => 'खोल्नुहोस्';
 
   @override
   String importReadError(String file, String error) {
