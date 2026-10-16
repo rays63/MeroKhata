@@ -1,0 +1,22 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+body{margin:0;background:transparent}
+.drop{border-radius:50% 14% 50% 50%;transform:rotate(-45deg);display:grid;place-items:center}
+.coin{border-radius:50%}
+#store{width:512px;height:512px;background:#0F7A4A;position:relative;overflow:hidden;display:grid;place-items:center}
+#store .c{position:absolute;width:560px;height:560px;border-radius:50%;background:#12915A;left:-230px;top:-300px}
+#store .drop{position:relative;width:230px;height:230px;background:#fff;margin-top:34px}
+#store .coin{width:86px;height:86px;background:#0F7A4A}
+#fg{width:432px;height:432px;display:grid;place-items:center;background:transparent}
+#fg .drop{width:150px;height:150px;background:#fff;margin-top:22px}
+#fg .coin{width:56px;height:56px;background:#0F7A4A}
+#bg{width:432px;height:432px;background:#0F7A4A;position:relative;overflow:hidden}
+#bg .c{position:absolute;width:470px;height:470px;border-radius:50%;background:#12915A;left:-190px;top:-250px}
+/* Themed (monochrome): the drop with the coin cut out. */
+#mono{width:432px;height:432px;display:grid;place-items:center;background:transparent}
+#mono .drop{width:150px;height:150px;margin-top:22px;background:radial-gradient(circle at center,transparent 28px,#fff 28.5px)}
+</style></head><body>
+<div id="store"><div class="c"></div><div class="drop"><div class="coin"></div></div></div>
+<div id="fg"><div class="drop"><div class="coin"></div></div></div>
+<div id="bg"><div class="c"></div></div>
+<div id="mono"><div class="drop"></div></div>
+</body></html>

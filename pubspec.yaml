@@ -1,7 +1,7 @@
-name: cashbook_pro
-description: "HissabKitab personal finance and cashbook app."
+name: paisa_flow
+description: "Paisa Flow personal finance and cashbook app."
 publish_to: 'none'
-version: 1.0.0+1
+version: 1.0.0+2
 
 environment:
   sdk: ^3.11.4
@@ -9,20 +9,54 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
   cupertino_icons: ^1.0.8
   file_picker: ^10.3.7
-  google_fonts: ^6.2.1
   intl: ^0.20.2
   pdf: ^3.11.3
   printing: ^5.14.2
   shared_preferences: ^2.5.3
   spreadsheet_decoder: ^2.3.0
   syncfusion_flutter_pdf: ^29.2.11
+  lucide_icons_flutter: ^3.1.25
+  archive: ^3.6.1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+  integration_test:
+    sdk: flutter
+  plugin_platform_interface: ^2.1.8
 
 flutter:
   uses-material-design: true
+  generate: true
+  fonts:
+    - family: Nunito
+      fonts:
+        - asset: assets/fonts/Nunito-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Nunito-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Nunito-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Nunito-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/Nunito-ExtraBold.ttf
+          weight: 800
+        - asset: assets/fonts/Nunito-Black.ttf
+          weight: 900
+    # Devanagari (नेपाली) text; also the fallback for Nunito, which has no
+    # Devanagari glyphs.
+    - family: Mukta
+      fonts:
+        - asset: assets/fonts/Mukta-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Mukta-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Mukta-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/Mukta-ExtraBold.ttf
+          weight: 800
