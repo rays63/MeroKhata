@@ -50,7 +50,11 @@ Future<void> openImport(BuildContext context, {String? bookId}) async {
     await openNewBook(context);
     return;
   }
-  await _push(context, ImportPickScreen(bookId: id));
+  // From Home the book can be switched; from inside a book it is fixed.
+  await _push(
+    context,
+    ImportPickScreen(bookId: id, canChangeBook: bookId == null),
+  );
 }
 
 Future<void> openNewBook(BuildContext context) =>

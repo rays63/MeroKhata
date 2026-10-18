@@ -112,8 +112,8 @@ class _InsightsScreenState extends State<InsightsScreen> {
         PfCard(
           radius: 26,
           padding: const EdgeInsets.symmetric(horizontal: 8),
-          child: SizedBox(
-            height: 60,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 60),
             child: Row(
               children: [
                 IconButton(
@@ -121,11 +121,16 @@ class _InsightsScreenState extends State<InsightsScreen> {
                   onPressed: () => _shiftMonth(-1),
                   icon: Icon(LucideIcons.chevronLeft, size: 22, color: c.ink),
                 ),
+                // One line that shrinks with large text instead of wrapping
+                // out of the bar.
                 Expanded(
-                  child: Text(
-                    DateFormat('MMMM y').format(month),
-                    textAlign: TextAlign.center,
-                    style: pfText(18, weight: w900),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      DateFormat('MMMM y').format(month),
+                      maxLines: 1,
+                      style: pfText(18, weight: w900),
+                    ),
                   ),
                 ),
                 TextButton(

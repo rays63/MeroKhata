@@ -8,13 +8,22 @@ import '../../data/models.dart';
 import '../../l10n/l10n.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/pf.dart';
+import '../../widgets/store_sheets.dart';
 import 'import_preview_screen.dart';
 
 /// Choose a PDF bank statement or XLS wallet export to import into a book.
 class ImportPickScreen extends StatefulWidget {
-  const ImportPickScreen({super.key, required this.bookId});
+  const ImportPickScreen({
+    super.key,
+    required this.bookId,
+    this.canChangeBook = false,
+  });
 
+  /// The book to import into at first.
   final String bookId;
+
+  /// Opened from Home: the user may pick another book.
+  final bool canChangeBook;
 
   @override
   State<ImportPickScreen> createState() => _ImportPickScreenState();
@@ -23,88 +32,121 @@ class ImportPickScreen extends StatefulWidget {
 class _ImportPickScreenState extends State<ImportPickScreen> {
   bool loading = false;
   String? error;
+  late String bookId = widget.bookId;
 
+  Future<void> _changeBook() async {
+    final picked = await pickBook(context, selected: bookId);
+    if (picked != null && mounted) setState(() => bookId = picked);
+  }
+
+  /// Picks one or more statements, reads each on its own (a locked, wrong
+  /// or unreadable file never blocks the others) and opens one combined
+  /// preview.
   Future<void> _choose({required bool pdf}) async {
     setState(() => error = null);
     final allowed = pdf ? const ['pdf'] : const ['xls', 'xlsx', 'csv', 'tsv'];
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: allowed,
+      allowMultiple: true,
       withData: true,
     );
-    final file = result?.files.single;
-    final bytes = file?.bytes;
-    if (file == null || bytes == null || !mounted) return;
-    // Some pickers ignore the type filter, so check the extension too.
-    if (!allowed.contains(file.extension?.toLowerCase())) {
-      setState(
-        () => error = context.l10n.importWrongFileType(
-          file.name,
-          allowed.map((ext) => '.$ext').join(', '),
-        ),
-      );
-      return;
-    }
-    setState(() => loading = true);
+    final files = result?.files ?? const <PlatformFile>[];
+    if (files.isEmpty || !mounted) return;
     final store = AppScope.read(context);
     final l = context.l10n;
+    final statements = <ParsedStatement>[];
+    final problems = <String>[];
+    setState(() => loading = true);
     try {
-      ImportPreview? parsed;
-      String? password;
-      while (parsed == null) {
-        // Let the progress indicator paint before the synchronous parse.
-        await Future<void>.delayed(const Duration(milliseconds: 16));
-        try {
-          parsed = pdf
-              ? ImportParser.parsePdfBytes(
-                  store: store,
-                  bookId: widget.bookId,
-                  bytes: bytes,
-                  password: password,
-                )
-              : ImportParser.parseXlsBytes(
-                  store: store,
-                  bookId: widget.bookId,
-                  bytes: bytes,
-                );
-        } on PdfPasswordException catch (locked) {
-          if (!mounted) return;
-          setState(() => loading = false);
-          password = await _askPassword(
-            file.name,
-            wrongPassword: locked.wrongPassword,
+      for (final file in files) {
+        final bytes = file.bytes;
+        if (bytes == null) {
+          problems.add(l.importFileUnreadable(file.name));
+          continue;
+        }
+        // Some pickers ignore the type filter, so check the extension too.
+        if (!allowed.contains(file.extension?.toLowerCase())) {
+          problems.add(
+            l.importWrongFileType(
+              file.name,
+              allowed.map((ext) => '.$ext').join(', '),
+            ),
           );
-          if (password == null || !mounted) return;
-          setState(() => loading = true);
+          continue;
+        }
+        try {
+          final statement = await _read(file.name, bytes, pdf: pdf);
+          if (!mounted) return;
+          if (statement == null) {
+            problems.add(l.importPasswordSkipped(file.name));
+          } else if (statement.rows.isEmpty) {
+            problems.add(
+              pdf
+                  ? l.importNoEntriesPdf(file.name)
+                  : l.importNoEntriesXls(file.name),
+            );
+          } else {
+            statements.add(statement);
+          }
+        } catch (exception) {
+          problems.add(l.importReadError(file.name, exception.toString()));
         }
       }
-      final preview = parsed;
       if (!mounted) return;
-      if (preview.importable.isEmpty && preview.duplicates.isEmpty) {
-        setState(
-          () => error = pdf
-              ? l.importNoEntriesPdf(file.name)
-              : l.importNoEntriesXls(file.name),
-        );
+      if (statements.isEmpty) {
+        setState(() => error = problems.join('\n'));
         return;
       }
+      final batch = store.previewBatch(bookId, statements);
       await Navigator.of(context).push(
         MaterialPageRoute(
           builder: (_) => ImportPreviewScreen(
-            bookId: widget.bookId,
-            fileName: file.name,
-            preview: preview,
+            bookId: bookId,
+            batch: batch,
+            problems: problems,
           ),
         ),
       );
-    } catch (exception) {
-      if (mounted) {
-        setState(
-          () => error = l.importReadError(file.name, exception.toString()),
-        );
-      }
     } finally {
       if (mounted) setState(() => loading = false);
+    }
+  }
+
+  /// Reads one statement, asking for its password while it is locked.
+  /// Returns null when the user cancels the password prompt.
+  Future<ParsedStatement?> _read(
+    String fileName,
+    List<int> bytes, {
+    required bool pdf,
+  }) async {
+    String? password;
+    while (true) {
+      // Let the progress indicator paint before the synchronous parse.
+      await Future<void>.delayed(const Duration(milliseconds: 16));
+      try {
+        return pdf
+            ? ImportParser.readPdf(
+                fileName: fileName,
+                bookId: bookId,
+                bytes: bytes,
+                password: password,
+              )
+            : ImportParser.readXls(
+                fileName: fileName,
+                bookId: bookId,
+                bytes: bytes,
+              );
+      } on PdfPasswordException catch (locked) {
+        if (!mounted) return null;
+        setState(() => loading = false);
+        password = await _askPassword(
+          fileName,
+          wrongPassword: locked.wrongPassword,
+        );
+        if (password == null || !mounted) return null;
+        setState(() => loading = true);
+      }
     }
   }
 
@@ -123,7 +165,7 @@ class _ImportPickScreenState extends State<ImportPickScreen> {
     final store = AppScope.watch(context);
     final c = context.pf;
     final l = context.l10n;
-    final book = store.bookById(widget.bookId);
+    final book = store.bookById(bookId);
     return Scaffold(
       body: SafeArea(
         child: ListView(
@@ -132,6 +174,9 @@ class _ImportPickScreenState extends State<ImportPickScreen> {
             PfHeader(
               title: l.ledgerImportStatement,
               subtitle: l.importInto(book?.name ?? ''),
+              onSubtitleTap: widget.canChangeBook && store.books.length > 1
+                  ? (loading ? null : _changeBook)
+                  : null,
             ),
             const SizedBox(height: 16),
             _SourceCard(

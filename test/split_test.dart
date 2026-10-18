@@ -119,6 +119,33 @@ void main() {
     expect(store.lastSplitBookId, 'personal');
   });
 
+  test(
+    'settling without a book clears the balance and records nothing',
+    () async {
+      final store = await _store();
+      final sita = await store.addFriend('Sita');
+      final groupId = await store.saveGroup(name: 'Flat', memberIds: [sita.id]);
+      await store.addGroupExpense(
+        groupId: groupId,
+        title: 'Rent',
+        amount: 2000,
+        paidBy: sita.id,
+        shares: {me: 1, sita.id: 1},
+      );
+      expect(store.youOwe, 1000);
+
+      final settled = await store.settleGroup(
+        groupId: groupId,
+        friendId: sita.id,
+        bookId: null,
+      );
+      expect(settled, -1000);
+      expect(store.youOwe, 0);
+      expect(store.groups.single.settlements.single.transactionId, isNull);
+      expect(store.transactions, isEmpty);
+    },
+  );
+
   test('members in an expense stay when the group is edited', () async {
     final store = await _store();
     final sita = await store.addFriend('Sita');

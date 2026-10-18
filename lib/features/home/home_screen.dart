@@ -82,13 +82,16 @@ class HomeScreen extends StatelessWidget {
         const SizedBox(height: 18),
         const _QuickActions(),
         const SizedBox(height: 18),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(child: _GoalsCard(store: store)),
-            const SizedBox(width: 10),
-            const Expanded(child: _SplitCard()),
-          ],
+        // Same height side by side, whichever card has more content.
+        IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(child: _GoalsCard(store: store)),
+              const SizedBox(width: 10),
+              const Expanded(child: _SplitCard()),
+            ],
+          ),
         ),
         const SizedBox(height: 18),
         Row(

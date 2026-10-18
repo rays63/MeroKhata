@@ -13,9 +13,20 @@ import 'book_detail_screen.dart';
 
 /// New book (name, currency, opening balance) or rename an existing one.
 class BookFormScreen extends StatefulWidget {
-  const BookFormScreen({super.key, this.book});
+  const BookFormScreen({
+    super.key,
+    this.book,
+    this.initialCurrency,
+    this.popWithId = false,
+  });
 
   final LedgerBook? book;
+
+  /// Currency a new book starts with (default: the app's default currency).
+  final String? initialCurrency;
+
+  /// Return the new book's id to the caller instead of opening the book.
+  final bool popWithId;
 
   @override
   State<BookFormScreen> createState() => _BookFormScreenState();
@@ -25,7 +36,9 @@ class _BookFormScreenState extends State<BookFormScreen> {
   late final name = TextEditingController(text: widget.book?.name ?? '');
   final opening = TextEditingController();
   late String currency =
-      widget.book?.currency ?? AppScope.read(context).defaultCurrency;
+      widget.book?.currency ??
+      widget.initialCurrency ??
+      AppScope.read(context).defaultCurrency;
   bool saving = false;
 
   bool get editing => widget.book != null;
@@ -66,7 +79,11 @@ class _BookFormScreenState extends State<BookFormScreen> {
       navigator.pop();
     } else {
       showPfToast(context, l.bookCreated(title, currency));
-      navigator.pushReplacement(BookDetailScreen.route(id));
+      if (widget.popWithId) {
+        navigator.pop(id);
+      } else {
+        navigator.pushReplacement(BookDetailScreen.route(id));
+      }
     }
   }
 

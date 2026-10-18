@@ -480,6 +480,32 @@ class AppLocalizationsNe extends AppLocalizations {
   String get splitSettle => 'मिलाउनुहोस्';
 
   @override
+  String get splitRecordTitle => 'यो भुक्तानी रेकर्ड गर्नुहोस्';
+
+  @override
+  String splitRecordPaidMessage(String amount) {
+    return 'तपाईंले $amount तिर्नुभयो। रेकर्ड गर्ने खाता छान्नुहोस्।';
+  }
+
+  @override
+  String get splitDontRecord => 'खातामा रेकर्ड नगर्नुहोस्';
+
+  @override
+  String splitNoBookInCurrency(String currency) {
+    return 'तपाईंसँग अहिलेसम्म $currency खाता छैन।';
+  }
+
+  @override
+  String splitCreateBookIn(String currency) {
+    return '$currency खाता बनाउनुहोस्';
+  }
+
+  @override
+  String splitSettledToast(String amount, String name) {
+    return '$name सँग $amount हिसाब मिलाइयो';
+  }
+
+  @override
   String get splitYourBook => 'तपाईंको खाता';
 
   @override
@@ -1000,6 +1026,60 @@ class AppLocalizationsNe extends AppLocalizations {
   @override
   String importUpToDateBody(String book) {
     return 'यो विवरणका सबै प्रविष्टि $book मा पहिले नै छन्। आयात गर्न नयाँ केही छैन।';
+  }
+
+  @override
+  String importOpeningWillSet(String opening, String closing) {
+    return 'यो खाता खाली छ, त्यसैले $opening सुरु मौज्दात थपिनेछ। आयातपछि यो विवरणको अन्तिम मौज्दात $closing सँग मिल्नेछ।';
+  }
+
+  @override
+  String importOpeningWillSetFiles(
+    String opening,
+    String file,
+    String balance,
+  ) {
+    return 'यो खाता खाली छ, त्यसैले $opening सुरु मौज्दात ($file बाट) थपिनेछ। आयातपछि मौज्दात $balance हुनेछ।';
+  }
+
+  @override
+  String importOpeningInfo(String opening) {
+    return 'विवरण $opening बाट सुरु हुन्छ। यो खातामा पहिले नै प्रविष्टिहरू छन्, त्यसैले मौज्दात परिवर्तन हुँदैन।';
+  }
+
+  @override
+  String importFilesParsed(int files, int lines) {
+    return '$files फाइल · $lines लाइन पढियो';
+  }
+
+  @override
+  String importFileCounts(int ready, int duplicates, int ignored) {
+    return '$ready तयार · $duplicates दोहोरिएका · $ignored प्रविष्टि नभएका';
+  }
+
+  @override
+  String importWarnMixedSources(String sources) {
+    return 'यी फाइलहरू फरक स्रोतका हुन् ($sources)। सबै यही खातामा जानेछन्।';
+  }
+
+  @override
+  String importWarnChainGap(
+    String from,
+    String to,
+    String closing,
+    String opening,
+  ) {
+    return '$from $closing मा सकिन्छ, तर $to $opening बाट सुरु हुन्छ। बीचको विवरण छुटेको हुन सक्छ।';
+  }
+
+  @override
+  String importPasswordSkipped(String file) {
+    return 'पासवर्ड नहालेकाले $file छोडियो।';
+  }
+
+  @override
+  String importFileUnreadable(String file) {
+    return '$file पढ्न सकिएन।';
   }
 
   @override

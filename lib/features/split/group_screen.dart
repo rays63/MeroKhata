@@ -27,13 +27,14 @@ class GroupScreen extends StatelessWidget {
   ) async {
     final l = context.l10n;
     final name = personName(l, store, friendId);
-    final bookId = await showSettleSheet(
+    final choice = await showSettleSheet(
       context,
       friendName: name,
       amount: amount,
       currency: cur,
     );
-    if (bookId == null || !context.mounted) return;
+    if (choice == null || !context.mounted) return;
+    final bookId = choice.bookId;
     final settled = await store.settleGroup(
       groupId: groupId,
       friendId: friendId,
@@ -42,11 +43,13 @@ class GroupScreen extends StatelessWidget {
     if (!context.mounted || settled == 0) return;
     showPfToast(
       context,
-      (settled > 0 ? l.splitReceivedToast : l.splitPaidToast)(
-        money(settled.abs(), cur),
-        name,
-        store.bookById(bookId)?.name ?? l.splitYourBook,
-      ),
+      bookId == null
+          ? l.splitSettledToast(money(settled.abs(), cur), name)
+          : (settled > 0 ? l.splitReceivedToast : l.splitPaidToast)(
+              money(settled.abs(), cur),
+              name,
+              store.bookById(bookId)?.name ?? l.splitYourBook,
+            ),
     );
   }
 
@@ -379,13 +382,14 @@ class BillScreen extends StatelessWidget {
   ) async {
     final l = context.l10n;
     final name = personName(l, store, friendId);
-    final bookId = await showSettleSheet(
+    final choice = await showSettleSheet(
       context,
       friendName: name,
       amount: amount,
       currency: cur,
     );
-    if (bookId == null || !context.mounted) return;
+    if (choice == null || !context.mounted) return;
+    final bookId = choice.bookId;
     final settled = await store.settleBill(
       billId: billId,
       friendId: friendId,
@@ -394,11 +398,13 @@ class BillScreen extends StatelessWidget {
     if (!context.mounted || settled == 0) return;
     showPfToast(
       context,
-      l.splitReceivedToast(
-        money(settled, cur),
-        name,
-        store.bookById(bookId)?.name ?? l.splitYourBook,
-      ),
+      bookId == null
+          ? l.splitSettledToast(money(settled.abs(), cur), name)
+          : l.splitReceivedToast(
+              money(settled, cur),
+              name,
+              store.bookById(bookId)?.name ?? l.splitYourBook,
+            ),
     );
   }
 

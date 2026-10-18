@@ -397,7 +397,13 @@ void main() {
     }
 
     Future<void> back() async {
-      await tester.pageBack();
+      // At large text sizes the header (and its Back button) can be
+      // scrolled away; fall back to the system back action.
+      if (find.byTooltip('Back').evaluate().isEmpty) {
+        await tester.binding.handlePopRoute();
+      } else {
+        await tester.pageBack();
+      }
       await tester.pumpAndSettle();
     }
 

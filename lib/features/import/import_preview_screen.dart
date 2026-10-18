@@ -10,19 +10,21 @@ import '../../theme/tokens.dart';
 import '../../widgets/pf.dart';
 import '../books/book_detail_screen.dart';
 
-/// Review a parsed statement: ready rows, duplicates (dimmed) and ignored
-/// lines, then import the ready ones.
+/// Review parsed statements: ready rows, duplicates (dimmed) and ignored
+/// lines per file, plus any warnings, then import the ready ones.
 class ImportPreviewScreen extends StatefulWidget {
   const ImportPreviewScreen({
     super.key,
     required this.bookId,
-    required this.fileName,
-    required this.preview,
+    required this.batch,
+    this.problems = const [],
   });
 
   final String bookId;
-  final String fileName;
-  final ImportPreview preview;
+  final ImportBatch batch;
+
+  /// Files that were skipped or couldn't be read, one message each.
+  final List<String> problems;
 
   @override
   State<ImportPreviewScreen> createState() => _ImportPreviewScreenState();
@@ -31,15 +33,21 @@ class ImportPreviewScreen extends StatefulWidget {
 class _ImportPreviewScreenState extends State<ImportPreviewScreen> {
   bool saving = false;
 
-  /// Ready and duplicate rows together, in statement (date) order.
-  late final rows =
-      [
-        for (final entry in widget.preview.importable) (entry, false),
-        for (final entry in widget.preview.duplicates) (entry, true),
-      ]..sort((a, b) {
-        final date = a.$1.occurredAt.compareTo(b.$1.occurredAt);
-        return date != 0 ? date : a.$1.sequence.compareTo(b.$1.sequence);
-      });
+  /// Each file's ready and duplicate rows together, in date order.
+  late final sections = [
+    for (final (statement, preview) in widget.batch.files)
+      (
+        statement,
+        preview,
+        [
+          for (final entry in preview.importable) (entry, false),
+          for (final entry in preview.duplicates) (entry, true),
+        ]..sort((a, b) {
+          final date = a.$1.occurredAt.compareTo(b.$1.occurredAt);
+          return date != 0 ? date : a.$1.sequence.compareTo(b.$1.sequence);
+        }),
+      ),
+  ];
 
   void _backToBook() =>
       BookDetailScreen.returnTo(Navigator.of(context), widget.bookId);
@@ -47,7 +55,7 @@ class _ImportPreviewScreenState extends State<ImportPreviewScreen> {
   Future<void> _import() async {
     if (saving) return;
     setState(() => saving = true);
-    final preview = widget.preview;
+    final preview = widget.batch.combined;
     await AppScope.read(context).commitImport(preview);
     if (!mounted) return;
     final l = context.l10n;
@@ -67,13 +75,15 @@ class _ImportPreviewScreenState extends State<ImportPreviewScreen> {
     final store = AppScope.watch(context);
     final c = context.pf;
     final l = context.l10n;
-    final preview = widget.preview;
+    final batch = widget.batch;
+    final preview = batch.combined;
     final book = store.bookById(widget.bookId);
     final currency = book?.currency ?? 'NPR';
     final ready = preview.importable.length;
     final dupes = preview.duplicates.length;
     final ignored = preview.ignored.length;
     final lines = ready + dupes + ignored;
+    final single = batch.files.length == 1;
 
     return Scaffold(
       body: SafeArea(
@@ -86,7 +96,12 @@ class _ImportPreviewScreenState extends State<ImportPreviewScreen> {
                 children: [
                   PfHeader(
                     title: l.importReviewTitle,
-                    subtitle: l.importParsedLines(widget.fileName, lines),
+                    subtitle: single
+                        ? l.importParsedLines(
+                            batch.files.single.$1.fileName,
+                            lines,
+                          )
+                        : l.importFilesParsed(batch.files.length, lines),
                   ),
                   const SizedBox(height: 14),
                   Row(
@@ -111,6 +126,69 @@ class _ImportPreviewScreenState extends State<ImportPreviewScreen> {
                     ],
                   ),
                   const SizedBox(height: 14),
+                  for (final problem in widget.problems) ...[
+                    _Note(
+                      icon: LucideIcons.fileX,
+                      color: c.cashOut,
+                      text: problem,
+                    ),
+                    const SizedBox(height: 10),
+                  ],
+                  if (batch.sources.length > 1) ...[
+                    _Note(
+                      icon: LucideIcons.triangleAlert,
+                      color: c.gold,
+                      text: l.importWarnMixedSources(batch.sources.join(', ')),
+                    ),
+                    const SizedBox(height: 10),
+                  ],
+                  for (final gap in batch.chainGaps) ...[
+                    _Note(
+                      icon: LucideIcons.triangleAlert,
+                      color: c.gold,
+                      text: l.importWarnChainGap(
+                        gap.from,
+                        gap.to,
+                        balanceMoney(gap.closing, currency),
+                        balanceMoney(gap.opening, currency),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                  ],
+                  if (preview.openingBalance != null) ...[
+                    _Note(
+                      icon: LucideIcons.wallet,
+                      color: c.cashIn,
+                      text:
+                          store.importSetsOpeningBalance(widget.bookId, preview)
+                          ? single
+                                ? l.importOpeningWillSet(
+                                    balanceMoney(
+                                      preview.openingBalance!,
+                                      currency,
+                                    ),
+                                    balanceMoney(
+                                      preview.closingBalance!,
+                                      currency,
+                                    ),
+                                  )
+                                : l.importOpeningWillSetFiles(
+                                    balanceMoney(
+                                      preview.openingBalance!,
+                                      currency,
+                                    ),
+                                    batch.openingFrom!,
+                                    balanceMoney(
+                                      preview.closingBalance!,
+                                      currency,
+                                    ),
+                                  )
+                          : l.importOpeningInfo(
+                              balanceMoney(preview.openingBalance!, currency),
+                            ),
+                    ),
+                    const SizedBox(height: 14),
+                  ],
                   if (ready == 0) ...[
                     Container(
                       padding: const EdgeInsets.all(22),
@@ -153,28 +231,44 @@ class _ImportPreviewScreenState extends State<ImportPreviewScreen> {
                 ],
               ),
             ),
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              sliver: DecoratedSliver(
-                decoration: BoxDecoration(
-                  color: c.card,
-                  borderRadius: BorderRadius.circular(22),
+            for (final (statement, filePreview, rows) in sections) ...[
+              if (!single)
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(24, 4, 24, 8),
+                  sliver: SliverToBoxAdapter(
+                    child: _FileHeader(
+                      name: statement.fileName,
+                      counts: l.importFileCounts(
+                        filePreview.importable.length,
+                        filePreview.duplicates.length,
+                        filePreview.ignored.length,
+                      ),
+                    ),
+                  ),
                 ),
-                sliver: SliverList.separated(
-                  itemCount: rows.length,
-                  separatorBuilder: (_, _) => const PfDivider(),
-                  itemBuilder: (context, index) {
-                    final (entry, duplicate) = rows[index];
-                    return _PreviewRow(
-                      entry: entry,
-                      duplicate: duplicate,
-                      currency: currency,
-                    );
-                  },
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+                sliver: DecoratedSliver(
+                  decoration: BoxDecoration(
+                    color: c.card,
+                    borderRadius: BorderRadius.circular(22),
+                  ),
+                  sliver: SliverList.separated(
+                    itemCount: rows.length,
+                    separatorBuilder: (_, _) => const PfDivider(),
+                    itemBuilder: (context, index) {
+                      final (entry, duplicate) = rows[index];
+                      return _PreviewRow(
+                        entry: entry,
+                        duplicate: duplicate,
+                        currency: currency,
+                      );
+                    },
+                  ),
                 ),
               ),
-            ),
-            const SliverToBoxAdapter(child: SizedBox(height: 24)),
+            ],
+            const SliverToBoxAdapter(child: SizedBox(height: 8)),
           ],
         ),
       ),
@@ -188,6 +282,68 @@ class _ImportPreviewScreenState extends State<ImportPreviewScreen> {
                 onPressed: saving ? null : _import,
               ),
             ),
+    );
+  }
+}
+
+/// A file's name and its ready / duplicate / ignored counts.
+class _FileHeader extends StatelessWidget {
+  const _FileHeader({required this.name, required this.counts});
+
+  final String name;
+  final String counts;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.pf;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          name,
+          style: pfText(15, weight: w900, color: c.ink),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        Text(
+          counts,
+          style: pfText(12, weight: w700, color: c.sub),
+        ),
+      ],
+    );
+  }
+}
+
+/// An info or warning line above the rows.
+class _Note extends StatelessWidget {
+  const _Note({required this.icon, required this.color, required this.text});
+
+  final IconData icon;
+  final Color color;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.pf;
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: c.card,
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 20, color: color),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              text,
+              style: pfText(14, weight: w700, color: c.sub, height: 1.45),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -247,6 +403,7 @@ class _PreviewRow extends StatelessWidget {
     final isIn = entry.type == TransactionType.cashIn;
     final meta = [
       DateFormat('d MMM').format(entry.occurredAt),
+      entry.category,
       if (entry.externalReference.isNotEmpty)
         l.importRef(entry.externalReference),
     ].join(' · ');

@@ -344,10 +344,104 @@ class ImportPreview {
     required this.importable,
     required this.duplicates,
     required this.ignored,
+    this.openingBalance,
+    this.closingBalance,
   });
 
   final String source;
   final List<LedgerTransaction> importable;
   final List<LedgerTransaction> duplicates;
   final List<String> ignored;
+
+  /// The account balance before the statement's first transaction and after
+  /// its last one. Null when the format has no balance column.
+  final double? openingBalance;
+  final double? closingBalance;
+}
+
+/// One statement file read by the parser, not yet compared with a book.
+class ParsedStatement {
+  const ParsedStatement({
+    required this.fileName,
+    required this.format,
+    required this.rows,
+    required this.ignored,
+    this.source,
+    this.account,
+    this.openingBalance,
+    this.closingBalance,
+  });
+
+  final String fileName;
+
+  /// 'PDF' or 'XLS'.
+  final String format;
+  final List<LedgerTransaction> rows;
+  final List<String> ignored;
+
+  /// The bank or wallet ("NIC Asia", "eSewa", …); null for unknown formats.
+  final String? source;
+
+  /// Digits of the account number, when the statement shows it readably.
+  final String? account;
+  final double? openingBalance;
+  final double? closingBalance;
+
+  /// The statement's first transaction date, used to order a batch.
+  DateTime? get periodStart => rows.isEmpty
+      ? null
+      : rows
+            .map((row) => row.occurredAt)
+            .reduce((a, b) => a.isBefore(b) ? a : b);
+
+  /// Every balance the statement passes through, opening included.
+  Set<String> get balanceKeys => {
+    if (openingBalance != null) openingBalance!.toStringAsFixed(2),
+    for (final row in rows)
+      if (row.statementBalance != null)
+        row.statementBalance!.toStringAsFixed(2),
+  };
+}
+
+/// [from] ends at [closing] but the next statement, [to], doesn't continue
+/// from there: a statement in between may be missing.
+class ChainGap {
+  const ChainGap({
+    required this.from,
+    required this.to,
+    required this.closing,
+    required this.opening,
+  });
+
+  final String from;
+  final String to;
+  final double closing;
+  final double opening;
+}
+
+/// Several statements checked against one book, in statement-period order.
+class ImportBatch {
+  const ImportBatch({
+    required this.files,
+    required this.combined,
+    required this.sources,
+    required this.chainGaps,
+    this.openingFrom,
+  });
+
+  /// The file the opening balance comes from: the earliest statement.
+  final String? openingFrom;
+
+  /// Each file with its own importable / duplicate / ignored rows.
+  final List<(ParsedStatement, ImportPreview)> files;
+
+  /// Everything together. Its opening balance is the earliest statement's;
+  /// for several files its closing balance is what the book will hold after
+  /// import (the opening balance plus every imported row).
+  final ImportPreview combined;
+
+  /// Distinct sources in the batch ('PDF'/'XLS' for unknown formats). More
+  /// than one means files from different banks or wallets.
+  final List<String> sources;
+  final List<ChainGap> chainGaps;
 }

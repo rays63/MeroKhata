@@ -28,10 +28,6 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
     for (final id in _group?.memberIds ?? const <String>[]) id: 1,
   };
   bool byShares = false;
-  bool record = true;
-  late String? bookId = AppScope.read(
-    context,
-  ).defaultSplitBookId(_group?.currency);
   String? error;
   bool saving = false;
 
@@ -64,6 +60,20 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
       return;
     }
     if (saving) return;
+    // Money left your pocket: ask which book records it.
+    RecordChoice? record;
+    if (paidBy == me) {
+      final currency =
+          _group?.currency ?? AppScope.read(context).defaultCurrency;
+      record = await showRecordBookSheet(
+        context,
+        title: l.splitRecordTitle,
+        message: l.splitRecordPaidMessage(money(amount, currency)),
+        currency: currency,
+        cashIn: false,
+      );
+      if (record == null || !mounted) return;
+    }
     setState(() => saving = true);
     await AppScope.read(context).addGroupExpense(
       groupId: widget.groupId,
@@ -71,7 +81,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
       amount: amount,
       paidBy: paidBy,
       shares: shares,
-      recordInBookId: paidBy == me && record ? bookId : null,
+      recordInBookId: record?.bookId,
     );
     if (!mounted) return;
     showPfToast(context, context.l10n.expenseAddedToast);
@@ -192,17 +202,6 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
               onMethod: (value) => setState(() => byShares = value),
               onWeight: (id, weight) => setState(() => weights[id] = weight),
             ),
-            if (paidBy == me) ...[
-              const SizedBox(height: 16),
-              RecordToggle(
-                on: record,
-                amount: amount,
-                currency: currency,
-                bookId: bookId,
-                onChanged: (value) => setState(() => record = value),
-                onBook: (value) => setState(() => bookId = value),
-              ),
-            ],
             if (error != null) ...[
               const SizedBox(height: 16),
               PfErrorBanner(error!),

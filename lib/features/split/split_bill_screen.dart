@@ -37,11 +37,9 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
   );
   final Shares weights = {me: 1};
   bool byShares = false;
-  late bool record = widget.linkedEntryId == null;
 
   /// Bills are kept in the home currency at the time they're made.
   late final String currency = AppScope.read(context).defaultCurrency;
-  late String? bookId = AppScope.read(context).defaultSplitBookId(currency);
   bool saving = false;
 
   static String _plain(double v) =>
@@ -69,13 +67,27 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
 
   Future<void> _save(int friends, double owed) async {
     if (saving) return;
+    // You paid the bill: ask which book records it, unless it was split
+    // from an entry that is already in a book.
+    RecordChoice? record;
+    if (widget.linkedEntryId == null) {
+      final l = context.l10n;
+      record = await showRecordBookSheet(
+        context,
+        title: l.splitRecordTitle,
+        message: l.splitRecordPaidMessage(money(amount, currency)),
+        currency: currency,
+        cashIn: false,
+      );
+      if (record == null || !mounted) return;
+    }
     setState(() => saving = true);
     final store = AppScope.read(context);
     await store.saveBill(
       title: title.text,
       amount: amount,
       shares: SharesEditor.effective(weights, byShares),
-      recordInBookId: record ? bookId : null,
+      recordInBookId: record?.bookId,
       linkedEntryId: widget.linkedEntryId,
     );
     if (!mounted) return;
@@ -190,18 +202,10 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
               onWeight: (id, weight) => setState(() => weights[id] = weight),
             ),
             const SizedBox(height: 16),
-            if (widget.linkedEntryId != null)
-              PfNote(icon: LucideIcons.link, text: l.splitLinkedNote)
-            else
-              RecordToggle(
-                on: record,
-                amount: amount,
-                currency: currency,
-                bookId: bookId,
-                onChanged: (value) => setState(() => record = value),
-                onBook: (value) => setState(() => bookId = value),
-              ),
-            const SizedBox(height: 16),
+            if (widget.linkedEntryId != null) ...[
+              PfNote(icon: LucideIcons.link, text: l.splitLinkedNote),
+              const SizedBox(height: 16),
+            ],
             PfButton(
               label: cta,
               fontSize: 16,

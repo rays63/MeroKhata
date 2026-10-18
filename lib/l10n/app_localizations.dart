@@ -806,6 +806,42 @@ abstract class AppLocalizations {
   /// **'Settle'**
   String get splitSettle;
 
+  /// No description provided for @splitRecordTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Record this payment'**
+  String get splitRecordTitle;
+
+  /// No description provided for @splitRecordPaidMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'You paid {amount}. Pick the book to record it in.'**
+  String splitRecordPaidMessage(String amount);
+
+  /// No description provided for @splitDontRecord.
+  ///
+  /// In en, this message translates to:
+  /// **'Don’t record in a book'**
+  String get splitDontRecord;
+
+  /// No description provided for @splitNoBookInCurrency.
+  ///
+  /// In en, this message translates to:
+  /// **'You don’t have a {currency} book yet.'**
+  String splitNoBookInCurrency(String currency);
+
+  /// No description provided for @splitCreateBookIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Create a {currency} book'**
+  String splitCreateBookIn(String currency);
+
+  /// No description provided for @splitSettledToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Settled {amount} with {name}'**
+  String splitSettledToast(String amount, String name);
+
   /// No description provided for @splitYourBook.
   ///
   /// In en, this message translates to:
@@ -1675,6 +1711,65 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Every entry in this statement is already in {book}. Nothing new to import.'**
   String importUpToDateBody(String book);
+
+  /// No description provided for @importOpeningWillSet.
+  ///
+  /// In en, this message translates to:
+  /// **'This book is empty, so an opening balance of {opening} will be added. After import it matches the statement’s closing balance of {closing}.'**
+  String importOpeningWillSet(String opening, String closing);
+
+  /// No description provided for @importOpeningWillSetFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'This book is empty, so an opening balance of {opening} (from {file}) will be added. Its balance after import will be {balance}.'**
+  String importOpeningWillSetFiles(String opening, String file, String balance);
+
+  /// No description provided for @importOpeningInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'The statement opens at {opening}. This book already has entries, so its balance isn’t changed.'**
+  String importOpeningInfo(String opening);
+
+  /// No description provided for @importFilesParsed.
+  ///
+  /// In en, this message translates to:
+  /// **'{files} files · parsed {lines} lines'**
+  String importFilesParsed(int files, int lines);
+
+  /// No description provided for @importFileCounts.
+  ///
+  /// In en, this message translates to:
+  /// **'{ready} ready · {duplicates} duplicates · {ignored} non-entry'**
+  String importFileCounts(int ready, int duplicates, int ignored);
+
+  /// No description provided for @importWarnMixedSources.
+  ///
+  /// In en, this message translates to:
+  /// **'These files come from different sources ({sources}). All of them will go into this book.'**
+  String importWarnMixedSources(String sources);
+
+  /// No description provided for @importWarnChainGap.
+  ///
+  /// In en, this message translates to:
+  /// **'{from} ends at {closing}, but {to} starts at {opening}. A statement in between may be missing.'**
+  String importWarnChainGap(
+    String from,
+    String to,
+    String closing,
+    String opening,
+  );
+
+  /// No description provided for @importPasswordSkipped.
+  ///
+  /// In en, this message translates to:
+  /// **'{file} was skipped because no password was entered.'**
+  String importPasswordSkipped(String file);
+
+  /// No description provided for @importFileUnreadable.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn’t read {file}.'**
+  String importFileUnreadable(String file);
 
   /// No description provided for @importThisBook.
   ///
