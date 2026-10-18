@@ -33,6 +33,7 @@ class AppStore extends ChangeNotifier {
   static const _storageKey = 'hissabkitab_data_v1';
   static const _themeKey = 'hissabkitab_theme_mode';
   static const _languageKey = 'paisaflow_language';
+  static const _bookFiltersKey = 'paisaflow_book_filters';
 
   /// UI languages: English and Nepali.
   static const languages = ['en', 'ne'];
@@ -90,6 +91,15 @@ class AppStore extends ChangeNotifier {
     );
     final savedLanguage = preferences.getString(_languageKey);
     language = languages.contains(savedLanguage) ? savedLanguage! : 'en';
+    _bookFilters.clear();
+    try {
+      final saved = jsonDecode(preferences.getString(_bookFiltersKey) ?? '{}');
+      for (final MapEntry(:key, :value) in (saved as Map).entries) {
+        _bookFilters[key as String] = (value as Map).cast<String, String>();
+      }
+    } catch (_) {
+      // Filters are a convenience; unreadable ones just reset.
+    }
     final raw = preferences.getString(_storageKey);
     if (raw == null) {
       _seed();
@@ -240,6 +250,30 @@ class AppStore extends ChangeNotifier {
     notifyListeners();
     final preferences = await SharedPreferences.getInstance();
     await preferences.setString(_themeKey, mode.name);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Book filters (remembered per book, saved on the phone)
+  // ---------------------------------------------------------------------------
+
+  final Map<String, Map<String, String>> _bookFilters = {};
+
+  /// The filters last used in [bookId]'s ledger: keys `range`, `category`,
+  /// `mode` and `type`; missing keys mean "all".
+  Map<String, String> bookFilters(String bookId) =>
+      Map.unmodifiable(_bookFilters[bookId] ?? const {});
+
+  Future<void> saveBookFilters(
+    String bookId,
+    Map<String, String> filters,
+  ) async {
+    if (filters.isEmpty) {
+      _bookFilters.remove(bookId);
+    } else {
+      _bookFilters[bookId] = Map.of(filters);
+    }
+    final preferences = await SharedPreferences.getInstance();
+    await preferences.setString(_bookFiltersKey, jsonEncode(_bookFilters));
   }
 
   Future<void> setLanguage(String code) async {
@@ -399,6 +433,7 @@ class AppStore extends ChangeNotifier {
     transactions.removeWhere((transaction) => transaction.bookId == id);
     _recalculateGoalProgress();
     await _commit();
+    if (_bookFilters.containsKey(id)) await saveBookFilters(id, const {});
   }
 
   // ---------------------------------------------------------------------------

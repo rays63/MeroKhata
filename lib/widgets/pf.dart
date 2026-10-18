@@ -82,6 +82,7 @@ class PfHeader extends StatelessWidget {
     this.close = false,
     this.onBack,
     this.actions = const [],
+    this.onSubtitleTap,
   });
 
   final String title;
@@ -89,6 +90,9 @@ class PfHeader extends StatelessWidget {
   final bool close;
   final VoidCallback? onBack;
   final List<Widget> actions;
+
+  /// Makes the subtitle a dropdown (e.g. to switch book), with a chevron.
+  final VoidCallback? onSubtitleTap;
 
   @override
   Widget build(BuildContext context) {
@@ -111,12 +115,38 @@ class PfHeader extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
-              if (subtitle != null)
+              if (subtitle != null && onSubtitleTap == null)
                 Text(
                   subtitle!,
                   style: pfText(12, weight: w800, color: c.sub),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
+                ),
+              if (subtitle != null && onSubtitleTap != null)
+                Semantics(
+                  button: true,
+                  child: InkWell(
+                    onTap: onSubtitleTap,
+                    borderRadius: BorderRadius.circular(6),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 2),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Flexible(
+                            child: Text(
+                              subtitle!,
+                              style: pfText(12, weight: w800, color: c.sub),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 2),
+                          Icon(LucideIcons.chevronDown, size: 14, color: c.sub),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
             ],
           ),

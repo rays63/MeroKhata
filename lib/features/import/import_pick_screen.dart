@@ -8,13 +8,22 @@ import '../../data/models.dart';
 import '../../l10n/l10n.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/pf.dart';
+import '../../widgets/store_sheets.dart';
 import 'import_preview_screen.dart';
 
 /// Choose a PDF bank statement or XLS wallet export to import into a book.
 class ImportPickScreen extends StatefulWidget {
-  const ImportPickScreen({super.key, required this.bookId});
+  const ImportPickScreen({
+    super.key,
+    required this.bookId,
+    this.canChangeBook = false,
+  });
 
+  /// The book to import into at first.
   final String bookId;
+
+  /// Opened from Home: the user may pick another book.
+  final bool canChangeBook;
 
   @override
   State<ImportPickScreen> createState() => _ImportPickScreenState();
@@ -23,6 +32,12 @@ class ImportPickScreen extends StatefulWidget {
 class _ImportPickScreenState extends State<ImportPickScreen> {
   bool loading = false;
   String? error;
+  late String bookId = widget.bookId;
+
+  Future<void> _changeBook() async {
+    final picked = await pickBook(context, selected: bookId);
+    if (picked != null && mounted) setState(() => bookId = picked);
+  }
 
   /// Picks one or more statements, reads each on its own (a locked, wrong
   /// or unreadable file never blocks the others) and opens one combined
@@ -83,11 +98,11 @@ class _ImportPickScreenState extends State<ImportPickScreen> {
         setState(() => error = problems.join('\n'));
         return;
       }
-      final batch = store.previewBatch(widget.bookId, statements);
+      final batch = store.previewBatch(bookId, statements);
       await Navigator.of(context).push(
         MaterialPageRoute(
           builder: (_) => ImportPreviewScreen(
-            bookId: widget.bookId,
+            bookId: bookId,
             batch: batch,
             problems: problems,
           ),
@@ -113,13 +128,13 @@ class _ImportPickScreenState extends State<ImportPickScreen> {
         return pdf
             ? ImportParser.readPdf(
                 fileName: fileName,
-                bookId: widget.bookId,
+                bookId: bookId,
                 bytes: bytes,
                 password: password,
               )
             : ImportParser.readXls(
                 fileName: fileName,
-                bookId: widget.bookId,
+                bookId: bookId,
                 bytes: bytes,
               );
       } on PdfPasswordException catch (locked) {
@@ -150,7 +165,7 @@ class _ImportPickScreenState extends State<ImportPickScreen> {
     final store = AppScope.watch(context);
     final c = context.pf;
     final l = context.l10n;
-    final book = store.bookById(widget.bookId);
+    final book = store.bookById(bookId);
     return Scaffold(
       body: SafeArea(
         child: ListView(
@@ -159,6 +174,9 @@ class _ImportPickScreenState extends State<ImportPickScreen> {
             PfHeader(
               title: l.ledgerImportStatement,
               subtitle: l.importInto(book?.name ?? ''),
+              onSubtitleTap: widget.canChangeBook && store.books.length > 1
+                  ? (loading ? null : _changeBook)
+                  : null,
             ),
             const SizedBox(height: 16),
             _SourceCard(

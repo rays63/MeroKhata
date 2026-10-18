@@ -72,12 +72,35 @@ class BookDetailScreen extends StatefulWidget {
 }
 
 class _BookDetailScreenState extends State<BookDetailScreen> {
-  DateRange? range;
+  DateRange range = DateRange.all;
   String? category;
   String? mode;
   TransactionType? type;
 
-  void _clearFilters() => setState(() {
+  @override
+  void initState() {
+    super.initState();
+    // Each book reopens with the filters it was left with (All time when
+    // it has never been filtered).
+    final saved = AppScope.read(context).bookFilters(widget.bookId);
+    range = DateRange.values.asNameMap()[saved['range']] ?? DateRange.all;
+    category = saved['category'];
+    mode = saved['mode'];
+    type = TransactionType.values.asNameMap()[saved['type']];
+  }
+
+  /// Applies a filter change and remembers it for this book.
+  void _setFilters(VoidCallback change) {
+    setState(change);
+    AppScope.read(context).saveBookFilters(widget.bookId, {
+      if (range != DateRange.all) 'range': range.name,
+      'category': ?category,
+      'mode': ?mode,
+      'type': ?type?.name,
+    });
+  }
+
+  void _clearFilters() => _setFilters(() {
     range = DateRange.all;
     category = null;
     mode = null;
@@ -95,7 +118,7 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
           SheetOption(value, value.localizedLabel(l), LucideIcons.calendar),
       ],
     );
-    if (picked != null) setState(() => range = picked);
+    if (picked != null) _setFilters(() => range = picked);
   }
 
   Future<void> _pickCategory(AppStore store) async {
@@ -112,7 +135,7 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
       ],
     );
     if (picked != null) {
-      setState(() => category = picked == all ? null : picked);
+      _setFilters(() => category = picked == all ? null : picked);
     }
   }
 
@@ -133,7 +156,7 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
           SheetOption(value, value, LucideIcons.wallet),
       ],
     );
-    if (picked != null) setState(() => mode = picked == all ? null : picked);
+    if (picked != null) _setFilters(() => mode = picked == all ? null : picked);
   }
 
   /// The shared list plus any value this book's entries use (e.g. imported).
@@ -176,11 +199,7 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
     final l = context.l10n;
     final now = DateTime.now();
     final all = store.transactionsForBook(book.id);
-    final effectiveRange =
-        range ??
-        (all.any((e) => DateRange.month.contains(e.occurredAt, now))
-            ? DateRange.month
-            : DateRange.all);
+    final effectiveRange = range;
     final filtered = [
       for (final entry in all)
         if (effectiveRange.contains(entry.occurredAt, now) &&
@@ -275,7 +294,7 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                   const SizedBox(height: 14),
                   PfSegment<TransactionType?>(
                     value: type,
-                    onChanged: (value) => setState(() => type = value),
+                    onChanged: (value) => _setFilters(() => type = value),
                     items: [
                       (null, l.all, null),
                       (TransactionType.cashIn, l.cashIn, null),
