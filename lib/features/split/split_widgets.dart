@@ -97,12 +97,38 @@ class AvatarStack extends StatelessWidget {
 
 /// Asks for a friend's name and adds them. Returns the new friend's id.
 Future<String?> addFriendDialog(BuildContext context) async {
-  final c = context.pf;
-  final l = context.l10n;
-  final controller = TextEditingController();
   final name = await showDialog<String>(
     context: context,
-    builder: (context) => AlertDialog(
+    builder: (_) => const _AddFriendDialog(),
+  );
+  if (name == null || name.trim().isEmpty || !context.mounted) return null;
+  final friend = await AppScope.read(context).addFriend(name);
+  return friend.id;
+}
+
+/// Owns its controller so it is disposed with the dialog, after the closing
+/// animation, not while the field is still on screen.
+class _AddFriendDialog extends StatefulWidget {
+  const _AddFriendDialog();
+
+  @override
+  State<_AddFriendDialog> createState() => _AddFriendDialogState();
+}
+
+class _AddFriendDialogState extends State<_AddFriendDialog> {
+  final controller = TextEditingController();
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.pf;
+    final l = context.l10n;
+    return AlertDialog(
       title: Text(l.splitAddFriendTitle, style: pfText(19, weight: w900)),
       content: TextField(
         controller: controller,
@@ -125,12 +151,8 @@ Future<String?> addFriendDialog(BuildContext context) async {
           child: Text(l.add, style: pfText(14, color: c.cashIn)),
         ),
       ],
-    ),
-  );
-  controller.dispose();
-  if (name == null || name.trim().isEmpty || !context.mounted) return null;
-  final friend = await AppScope.read(context).addFriend(name);
-  return friend.id;
+    );
+  }
 }
 
 /// Horizontal row of selectable avatars, with an "Add" button at the end.

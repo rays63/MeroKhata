@@ -89,6 +89,7 @@ class _SplitScreenState extends State<SplitScreen> {
         title: l.splitNoGroupsTitle,
         body: l.splitNoGroupsBody,
       ),
+    if (store.groups.isEmpty) const SizedBox(height: 12),
     for (final group in store.groups) ...[
       _GroupTile(
         group: group,
@@ -173,6 +174,8 @@ class _Total extends StatelessWidget {
   }
 }
 
+String _keep(String text) => text.replaceAll(' ', '\u00A0');
+
 class _GroupTile extends StatelessWidget {
   const _GroupTile({required this.group, required this.onTap});
 
@@ -201,6 +204,7 @@ class _GroupTile extends StatelessWidget {
           AvatarStack(ids: [me, ...group.memberIds]),
           const SizedBox(width: 14),
           Expanded(
+            flex: 3,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -210,8 +214,11 @@ class _GroupTile extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
+                // Non-breaking spaces keep "3 expenses" together; it only
+                // wraps at the dot.
                 Text(
-                  '${l.splitPeopleCount(people)} · ${l.splitExpenseCount(expenses)}',
+                  '${_keep(l.splitPeopleCount(people))} · '
+                  '${_keep(l.splitExpenseCount(expenses))}',
                   style: pfText(12.5, weight: w700, color: c.sub),
                 ),
               ],
@@ -220,6 +227,7 @@ class _GroupTile extends StatelessWidget {
           const SizedBox(width: 8),
           // Flexible so longer translations wrap instead of squeezing the name.
           Flexible(
+            flex: 2,
             child: Text(
               status,
               textAlign: TextAlign.end,

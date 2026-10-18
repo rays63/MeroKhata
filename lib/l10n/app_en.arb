@@ -762,6 +762,105 @@
       }
     }
   },
+  "importOpeningWillSet": "This book is empty, so an opening balance of {opening} will be added. After import it matches the statement’s closing balance of {closing}.",
+  "@importOpeningWillSet": {
+    "placeholders": {
+      "opening": {
+        "type": "String"
+      },
+      "closing": {
+        "type": "String"
+      }
+    }
+  },
+  "importOpeningWillSetFiles": "This book is empty, so an opening balance of {opening} (from {file}) will be added. Its balance after import will be {balance}.",
+  "@importOpeningWillSetFiles": {
+    "placeholders": {
+      "opening": {
+        "type": "String"
+      },
+      "file": {
+        "type": "String"
+      },
+      "balance": {
+        "type": "String"
+      }
+    }
+  },
+  "importOpeningInfo": "The statement opens at {opening}. This book already has entries, so its balance isn’t changed.",
+  "@importOpeningInfo": {
+    "placeholders": {
+      "opening": {
+        "type": "String"
+      }
+    }
+  },
+  "importFilesParsed": "{files} files · parsed {lines} lines",
+  "@importFilesParsed": {
+    "placeholders": {
+      "files": {
+        "type": "int"
+      },
+      "lines": {
+        "type": "int"
+      }
+    }
+  },
+  "importFileCounts": "{ready} ready · {duplicates} duplicates · {ignored} non-entry",
+  "@importFileCounts": {
+    "placeholders": {
+      "ready": {
+        "type": "int"
+      },
+      "duplicates": {
+        "type": "int"
+      },
+      "ignored": {
+        "type": "int"
+      }
+    }
+  },
+  "importWarnMixedSources": "These files come from different sources ({sources}). All of them will go into this book.",
+  "@importWarnMixedSources": {
+    "placeholders": {
+      "sources": {
+        "type": "String"
+      }
+    }
+  },
+  "importWarnChainGap": "{from} ends at {closing}, but {to} starts at {opening}. A statement in between may be missing.",
+  "@importWarnChainGap": {
+    "placeholders": {
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      },
+      "closing": {
+        "type": "String"
+      },
+      "opening": {
+        "type": "String"
+      }
+    }
+  },
+  "importPasswordSkipped": "{file} was skipped because no password was entered.",
+  "@importPasswordSkipped": {
+    "placeholders": {
+      "file": {
+        "type": "String"
+      }
+    }
+  },
+  "importFileUnreadable": "Couldn’t read {file}.",
+  "@importFileUnreadable": {
+    "placeholders": {
+      "file": {
+        "type": "String"
+      }
+    }
+  },
   "importThisBook": "this book",
   "importBackToBook": "Back to book",
   "importButton": "{count, plural, =1{Import 1 entry} other{Import {count} entries}}",

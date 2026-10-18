@@ -926,6 +926,8 @@ class AppStore extends ChangeNotifier {
     required String source,
     required List<LedgerTransaction> parsed,
     required List<String> ignored,
+    double? openingBalance,
+    double? closingBalance,
   }) {
     // Counted rather than a set: a statement can legitimately contain two
     // identical rows, and only as many as already exist are duplicates.
@@ -951,24 +953,200 @@ class AppStore extends ChangeNotifier {
       importable: importable,
       duplicates: duplicates,
       ignored: ignored,
+      openingBalance: openingBalance,
+      closingBalance: closingBalance,
     );
   }
 
+  ImportPreview previewStatement(String bookId, ParsedStatement statement) =>
+      previewImport(
+        bookId: bookId,
+        source: statement.format,
+        parsed: statement.rows,
+        ignored: statement.ignored,
+        openingBalance: statement.openingBalance,
+        closingBalance: statement.closingBalance,
+      );
+
+  /// Checks several statements against [bookId] in statement-period order.
+  /// Rows one file will import count as existing for the files after it, so
+  /// days where statements overlap are imported once.
+  ImportBatch previewBatch(String bookId, List<ParsedStatement> statements) {
+    final ordered = [...statements]
+      ..sort((a, b) {
+        final start = (a.periodStart ?? DateTime(9999)).compareTo(
+          b.periodStart ?? DateTime(9999),
+        );
+        return start != 0 ? start : a.fileName.compareTo(b.fileName);
+      });
+    final existing = <String, int>{};
+    for (final transaction in transactionsForBook(bookId)) {
+      final key = _duplicateKey(transaction);
+      existing[key] = (existing[key] ?? 0) + 1;
+    }
+    final files = <(ParsedStatement, ImportPreview)>[];
+    for (final statement in ordered) {
+      final importable = <LedgerTransaction>[];
+      final duplicates = <LedgerTransaction>[];
+      for (final transaction in statement.rows) {
+        final key = _duplicateKey(transaction);
+        final remaining = existing[key] ?? 0;
+        if (remaining > 0) {
+          existing[key] = remaining - 1;
+          duplicates.add(transaction);
+        } else {
+          importable.add(transaction);
+        }
+      }
+      for (final transaction in importable) {
+        final key = _duplicateKey(transaction);
+        existing[key] = (existing[key] ?? 0) + 1;
+      }
+      files.add((
+        statement,
+        ImportPreview(
+          source: statement.format,
+          importable: importable,
+          duplicates: duplicates,
+          ignored: statement.ignored,
+          openingBalance: statement.openingBalance,
+          closingBalance: statement.closingBalance,
+        ),
+      ));
+    }
+
+    // Consecutive statements of one account should continue each other's
+    // balance. Only checked when both name the same source and account.
+    final gaps = <ChainGap>[];
+    final groups = <String, List<ParsedStatement>>{};
+    for (final statement in ordered) {
+      if (statement.source == null || statement.account == null) continue;
+      groups
+          .putIfAbsent('${statement.source}|${statement.account}', () => [])
+          .add(statement);
+    }
+    for (final group in groups.values) {
+      for (var i = 1; i < group.length; i++) {
+        final previous = group[i - 1];
+        final next = group[i];
+        final closing = previous.closingBalance;
+        final opening = next.openingBalance;
+        if (closing == null || opening == null) continue;
+        // Overlapping statements pass through the earlier closing balance.
+        if (next.balanceKeys.contains(closing.toStringAsFixed(2))) continue;
+        gaps.add(
+          ChainGap(
+            from: previous.fileName,
+            to: next.fileName,
+            closing: closing,
+            opening: opening,
+          ),
+        );
+      }
+    }
+
+    final first = ordered.where((s) => s.openingBalance != null).firstOrNull;
+    final importable = [for (final (_, p) in files) ...p.importable];
+    // What the book will hold after import. It equals the last statement's
+    // closing balance when the files continue one account without gaps.
+    final after = first == null
+        ? null
+        : roundMoney(
+            importable.fold(
+              first.openingBalance!,
+              (total, entry) => total + entry.signedAmount,
+            ),
+          );
+    return ImportBatch(
+      files: files,
+      combined: ImportPreview(
+        source: ordered.map((s) => s.format).toSet().join('/'),
+        importable: importable,
+        duplicates: [for (final (_, p) in files) ...p.duplicates],
+        ignored: [for (final (_, p) in files) ...p.ignored],
+        openingBalance: first?.openingBalance,
+        closingBalance: files.length == 1 ? first?.closingBalance : after,
+      ),
+      openingFrom: first?.fileName,
+      sources: ordered.map((s) => s.source ?? s.format).toSet().toList(),
+      chainGaps: gaps,
+    );
+  }
+
+  /// Whether saving [preview] will add an "Opening balance" entry: only for a
+  /// book with no entries, so a balance the user set is never changed.
+  bool importSetsOpeningBalance(String bookId, ImportPreview preview) =>
+      preview.openingBalance != null &&
+      roundMoney(preview.openingBalance!) != 0 &&
+      preview.importable.isNotEmpty &&
+      transactionsForBook(bookId).isEmpty;
+
   Future<void> commitImport(ImportPreview preview) async {
+    if (preview.importable.isNotEmpty) {
+      final bookId = preview.importable.first.bookId;
+      if (importSetsOpeningBalance(bookId, preview)) {
+        _addImportOpening(bookId, preview);
+      }
+    }
     transactions.addAll(preview.importable);
+    // Imported rows can name a payment mode (the statement's bank or
+    // wallet) the user hasn't added yet; add it so filters can find them.
+    for (final transaction in preview.importable) {
+      final mode = transaction.paymentMode.trim();
+      if (mode.isNotEmpty && !paymentModes.contains(mode)) {
+        paymentModes.add(mode);
+      }
+      // Likewise a category suggested by a keyword rule ("Cellular topup").
+      final category = transaction.category;
+      if (category != 'Imported' && !categories.contains(category)) {
+        categories.add(category);
+      }
+    }
     for (final transaction in preview.importable) {
       _addLog(
         transaction.id,
         'imported',
-        'Imported from ${preview.source}',
+        'Imported from ${transaction.importSource}',
         code: 'imported',
-        args: [preview.source],
+        args: [transaction.importSource],
       );
       _touchBook(transaction.bookId);
     }
     _recalculateAll();
     await persist();
     notifyListeners();
+  }
+
+  /// The statement's opening balance as an "Opening balance" entry (which
+  /// Insights leaves out), just before its first row, so the book balance
+  /// ends at the statement's closing balance.
+  void _addImportOpening(String bookId, ImportPreview preview) {
+    final opening = roundMoney(preview.openingBalance!);
+    final first = preview.importable
+        .map((entry) => entry.occurredAt)
+        .reduce((a, b) => a.isBefore(b) ? a : b);
+    final now = DateTime.now();
+    final entry = LedgerTransaction(
+      id: newId('txn'),
+      bookId: bookId,
+      title: 'Opening balance',
+      amount: opening.abs(),
+      type: opening > 0 ? TransactionType.cashIn : TransactionType.cashOut,
+      occurredAt: first.subtract(const Duration(seconds: 1)),
+      createdAt: now,
+      updatedAt: now,
+      category: 'Opening balance',
+      paymentMode: preview.importable.first.paymentMode,
+      notes: '',
+      goalId: null,
+      runningBalance: 0,
+      externalReference: '',
+      statementBalance: null,
+      sequence: 0,
+      importSource: preview.source,
+    );
+    transactions.add(entry);
+    _addLog(entry.id, 'created', 'Entry created', code: 'created');
   }
 
   void _seed() {

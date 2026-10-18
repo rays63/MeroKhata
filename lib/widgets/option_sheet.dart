@@ -89,7 +89,7 @@ class _OptionSheetState<T> extends State<_OptionSheet<T>> {
     newOption.clear();
     if (!mounted) return;
     setState(() {});
-    showPfToast(context, context.l10n.optionAdded(value));
+    showPfToastOverlay(context, context.l10n.optionAdded(value));
   }
 
   @override
@@ -185,7 +185,10 @@ class _OptionSheetState<T> extends State<_OptionSheet<T>> {
                     await editable.onRemove(item);
                     if (!mounted) return;
                     setState(() {});
-                    showPfToast(context, context.l10n.optionRemoved(item));
+                    showPfToastOverlay(
+                      context,
+                      context.l10n.optionRemoved(item),
+                    );
                   },
           ),
         ),

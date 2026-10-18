@@ -1007,6 +1007,60 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String importOpeningWillSet(String opening, String closing) {
+    return 'This book is empty, so an opening balance of $opening will be added. After import it matches the statement’s closing balance of $closing.';
+  }
+
+  @override
+  String importOpeningWillSetFiles(
+    String opening,
+    String file,
+    String balance,
+  ) {
+    return 'This book is empty, so an opening balance of $opening (from $file) will be added. Its balance after import will be $balance.';
+  }
+
+  @override
+  String importOpeningInfo(String opening) {
+    return 'The statement opens at $opening. This book already has entries, so its balance isn’t changed.';
+  }
+
+  @override
+  String importFilesParsed(int files, int lines) {
+    return '$files files · parsed $lines lines';
+  }
+
+  @override
+  String importFileCounts(int ready, int duplicates, int ignored) {
+    return '$ready ready · $duplicates duplicates · $ignored non-entry';
+  }
+
+  @override
+  String importWarnMixedSources(String sources) {
+    return 'These files come from different sources ($sources). All of them will go into this book.';
+  }
+
+  @override
+  String importWarnChainGap(
+    String from,
+    String to,
+    String closing,
+    String opening,
+  ) {
+    return '$from ends at $closing, but $to starts at $opening. A statement in between may be missing.';
+  }
+
+  @override
+  String importPasswordSkipped(String file) {
+    return '$file was skipped because no password was entered.';
+  }
+
+  @override
+  String importFileUnreadable(String file) {
+    return 'Couldn’t read $file.';
+  }
+
+  @override
   String get importThisBook => 'this book';
 
   @override

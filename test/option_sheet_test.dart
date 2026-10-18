@@ -58,7 +58,16 @@ void main() {
 
     expect(items, ['Food', 'Bills']);
     expect(find.byTooltip('Delete Chiya'), findsNothing);
-    expect(find.textContaining('“Chiya” removed'), findsOneWidget);
+    // The toast is drawn above the open sheet, not behind it.
+    expect(find.byType(BottomSheet), findsOneWidget);
+    expect(
+      find.textContaining('“Chiya” removed').hitTestable(),
+      findsOneWidget,
+    );
+
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('“Chiya” removed'), findsNothing);
   });
 
   testWidgets('the last option cannot be deleted', (tester) async {

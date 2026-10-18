@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
@@ -254,13 +256,17 @@ class PfButton extends StatelessWidget {
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: onPressed,
+          // A minimum rather than a fixed height, so long labels (Nepali)
+          // and large text sizes grow the button instead of clipping.
           child: Container(
-            height: height,
+            constraints: BoxConstraints(minHeight: height),
             padding: EdgeInsets.symmetric(
               horizontal: spread ? 22 : (trailingIcon == null ? 18 : 26),
+              vertical: 8,
             ),
-            alignment: Alignment.center,
-            child: content,
+            // heightFactor keeps the button at its own height where the parent
+            // allows more (e.g. a bottomNavigationBar).
+            child: Center(heightFactor: 1, child: content),
           ),
         ),
       ),
@@ -792,6 +798,109 @@ void showPfToast(BuildContext context, String message) {
   messenger
     ..hideCurrentSnackBar()
     ..showSnackBar(pfToast(message));
+}
+
+/// Shows the toast above every route, including bottom sheets and dialogs,
+/// where a SnackBar would be drawn behind the sheet.
+void showPfToastOverlay(BuildContext context, String message) {
+  final overlay = Overlay.maybeOf(context, rootOverlay: true);
+  if (overlay == null) return;
+  _overlayToast?.remove();
+  late final OverlayEntry entry;
+  entry = OverlayEntry(
+    builder: (context) => _OverlayToast(
+      message: message,
+      onDone: () {
+        if (_overlayToast == entry) _overlayToast = null;
+        if (entry.mounted) entry.remove();
+      },
+    ),
+  );
+  _overlayToast = entry;
+  overlay.insert(entry);
+}
+
+OverlayEntry? _overlayToast;
+
+class _OverlayToast extends StatefulWidget {
+  const _OverlayToast({required this.message, required this.onDone});
+
+  final String message;
+  final VoidCallback onDone;
+
+  @override
+  State<_OverlayToast> createState() => _OverlayToastState();
+}
+
+class _OverlayToastState extends State<_OverlayToast>
+    with SingleTickerProviderStateMixin {
+  late final controller = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 200),
+  )..forward();
+  Timer? timer;
+
+  @override
+  void initState() {
+    super.initState();
+    timer = Timer(const Duration(milliseconds: 2600), () async {
+      if (!mounted) return;
+      await controller.reverse();
+      widget.onDone();
+    });
+  }
+
+  @override
+  void dispose() {
+    timer?.cancel();
+    controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final media = MediaQuery.of(context);
+    final bottom = media.viewInsets.bottom > 0
+        ? media.viewInsets.bottom
+        : media.padding.bottom;
+    return Positioned(
+      left: 16,
+      right: 16,
+      bottom: bottom + 16,
+      child: FadeTransition(
+        opacity: controller,
+        child: Semantics(
+          liveRegion: true,
+          child: Material(
+            color: PfColors.toast,
+            elevation: 8,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              child: Row(
+                children: [
+                  const Icon(
+                    LucideIcons.circleCheck,
+                    size: 20,
+                    color: PfColors.toastIcon,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      widget.message,
+                      style: pfText(14, weight: w800, color: Colors.white),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 /// The toast as a SnackBar, for showing through a messenger captured before

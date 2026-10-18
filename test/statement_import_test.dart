@@ -20,6 +20,9 @@ final Map<String, String> _passwords = () {
   return (jsonDecode(file.readAsStringSync()) as Map).cast<String, String>();
 }();
 
+bool _hasPassword(File file) =>
+    _passwords.containsKey(file.uri.pathSegments.last);
+
 bool _isLocked(File file) {
   try {
     sfpdf.PdfDocument(inputBytes: file.readAsBytesSync()).dispose();
@@ -186,6 +189,193 @@ void main() {
     expect(first.occurredAt, DateTime(2026, 3, 26, 13, 15, 59));
   }, skip: skip);
 
+  group('payment mode from source', () {
+    String expectedSource(String name) {
+      if (name.startsWith('Nic/')) return ImportParser.nicAsia;
+      if (name.startsWith('Nabil/') || name.startsWith('Statements-')) {
+        return ImportParser.nabil;
+      }
+      if (name.startsWith('Standart') || name.startsWith('SCpassword')) {
+        return ImportParser.standardChartered;
+      }
+      if (name.startsWith('eSewa')) return ImportParser.esewa;
+      throw StateError('No expected source for $name');
+    }
+
+    test('every statement gets its bank or wallet as payment mode', () {
+      final files = _statements
+          .listSync(recursive: true)
+          .whereType<File>()
+          .where((file) => RegExp(r'\.(pdf|xls)$').hasMatch(file.path))
+          .where((file) => !_isLocked(file) || _hasPassword(file));
+      for (final file in files) {
+        final name = file.path.split('test statement/').last;
+        final rows = _parse(AppStore(), 'book', file).importable;
+        expect(rows.map((row) => row.paymentMode).toSet(), {
+          expectedSource(name),
+        }, reason: name);
+      }
+    });
+
+    test('eSewa entries appear under the eSewa filter after import', () async {
+      final store = await _freshStore();
+      final bookId = store.books.first.id;
+      store.paymentModes.remove(ImportParser.esewa);
+      final preview = _parse(
+        store,
+        bookId,
+        _file('eSewa_statement_2026-02-24_2026-03-26.xls'),
+      );
+      await store.commitImport(preview);
+
+      expect(store.paymentModes, contains(ImportParser.esewa));
+      // The book screen's payment-mode filter keeps entries whose mode
+      // equals the picked one.
+      final filtered = store
+          .transactionsForBook(bookId)
+          .where((entry) => entry.paymentMode == ImportParser.esewa);
+      // The imported rows plus the opening balance added to this empty book.
+      expect(filtered, hasLength(preview.importable.length + 1));
+      expect(filtered, isNotEmpty);
+    });
+  }, skip: skip);
+
+  group('opening balance', () {
+    List<File> readable() =>
+        _statements
+            .listSync(recursive: true)
+            .whereType<File>()
+            .where((file) => RegExp(r'\.(pdf|xls)$').hasMatch(file.path))
+            .where((file) => !_isLocked(file) || _hasPassword(file))
+            .toList()
+          ..sort((a, b) => a.path.compareTo(b.path));
+
+    test('an empty book ends at the statement closing balance', () async {
+      for (final file in readable()) {
+        final name = file.path.split('test statement/').last;
+        final store = await _freshStore();
+        final bookId = store.books.first.id;
+        final preview = _parse(store, bookId, file);
+        expect(preview.openingBalance, isNotNull, reason: name);
+        expect(store.importSetsOpeningBalance(bookId, preview), isTrue);
+
+        final summary = file.path.endsWith('.pdf') ? _summary(file) : null;
+        if (summary != null) {
+          expect(preview.openingBalance, closeTo(summary.$1, 0.005));
+          expect(preview.closingBalance, closeTo(summary.$2, 0.005));
+        }
+
+        await store.commitImport(preview);
+        // openingBalance + net == closing balance.
+        expect(
+          store.balanceFor(bookId),
+          closeTo(preview.closingBalance!, 0.005),
+          reason: name,
+        );
+        final openings = store
+            .transactionsForBook(bookId)
+            .where((entry) => entry.category == 'Opening balance');
+        expect(openings, hasLength(1), reason: name);
+      }
+    });
+
+    test('a book with entries keeps its balance as it is', () async {
+      final store = await _freshStore();
+      final bookId = store.books.first.id;
+      final existing = _parse(store, bookId, _file('Nic/DEC 2025.pdf'));
+      await store.commitImport(existing);
+      final before = store.transactionsForBook(bookId).length;
+
+      final preview = _parse(store, bookId, _file('Nic/Jan26.pdf'));
+      expect(preview.openingBalance, isNotNull);
+      expect(store.importSetsOpeningBalance(bookId, preview), isFalse);
+      await store.commitImport(preview);
+
+      expect(
+        store.transactionsForBook(bookId),
+        hasLength(before + preview.importable.length),
+      );
+      expect(
+        store
+            .transactionsForBook(bookId)
+            .where((entry) => entry.category == 'Opening balance'),
+        hasLength(1), // Only the one from the first import into the empty book.
+      );
+    });
+  }, skip: skip);
+
+  group('multi-file import', () {
+    ParsedStatement read(String bookId, String name) => ImportParser.readPdf(
+      fileName: name.split('/').last,
+      bookId: bookId,
+      bytes: _file(name).readAsBytesSync(),
+    );
+
+    test('a batch imports the same rows as one file after another', () async {
+      final sequential = await _freshStore();
+      final seqBook = sequential.books.first.id;
+      final december = _parse(sequential, seqBook, _file('Nic/DEC 2025.pdf'));
+      await sequential.commitImport(december);
+      final january = _parse(sequential, seqBook, _file('Nic/Jan26.pdf'));
+
+      final store = await _freshStore();
+      final bookId = store.books.first.id;
+      final batch = store.previewBatch(bookId, [
+        read(bookId, 'Nic/Jan26.pdf'),
+        read(bookId, 'Nic/DEC 2025.pdf'),
+      ]);
+      expect(batch.files.first.$1.fileName, 'DEC 2025.pdf');
+      expect(
+        batch.combined.importable,
+        hasLength(december.importable.length + january.importable.length),
+      );
+      expect(
+        batch.files.last.$2.duplicates,
+        hasLength(january.duplicates.length),
+      );
+      expect(batch.chainGaps, isEmpty);
+    });
+
+    test('a year of NIC statements flags only the missing day', () async {
+      final store = await _freshStore();
+      final bookId = store.books.first.id;
+      final files = _statements
+          .listSync(recursive: true)
+          .whereType<File>()
+          .where((file) => file.path.contains('/Nic/'))
+          .map((file) => read(bookId, 'Nic/${file.uri.pathSegments.last}'))
+          .toList()
+          .reversed
+          .toList();
+      final batch = store.previewBatch(bookId, files);
+
+      final starts = [for (final (s, _) in batch.files) s.periodStart!];
+      expect(starts, [...starts]..sort());
+      expect(batch.sources, [ImportParser.nicAsia]);
+      // Aug.pdf ends on 27 Aug and sep28.pdf starts on 29 Aug.
+      expect(batch.chainGaps.map((gap) => '${gap.from}>${gap.to}'), [
+        'Aug.pdf>sep28.pdf',
+      ]);
+
+      await store.commitImport(batch.combined);
+      final gap = batch.chainGaps.single;
+      // The preview's "balance after import" is what the book ends at.
+      expect(
+        store.balanceFor(bookId),
+        closeTo(batch.combined.closingBalance!, 0.005),
+      );
+      // Everything else continues, so the book is off the bank's final
+      // balance by exactly the missing day.
+      expect(
+        store.balanceFor(bookId),
+        closeTo(
+          batch.files.last.$1.closingBalance! + gap.closing - gap.opening,
+          0.005,
+        ),
+      );
+    });
+  }, skip: skip);
+
   group('duplicate detection', () {
     test('re-importing the same statement flags every row', () async {
       final store = await _freshStore();
@@ -290,5 +480,97 @@ void main() {
     );
     expect(second.duplicates, hasLength(2));
     expect(second.importable, hasLength(1));
+  });
+
+  test('unknown statement layouts keep an empty payment mode', () {
+    expect(ImportParser.detectSource('Date Description Debit Credit'), isNull);
+    expect(
+      ImportParser.detectSource(
+        "Electronic Account Statement\nAccount Holder's\nS.N\nWithdraw",
+      ),
+      ImportParser.nabil,
+    );
+    expect(
+      ImportParser.detectSource(
+        'Electronic Account Statement\nAccount Name: X\nDebit\nCredit',
+      ),
+      ImportParser.nicAsia,
+    );
+  });
+
+  group('statement balances', () {
+    LedgerTransaction row(
+      int day,
+      TransactionType type,
+      double amount,
+      double balance,
+      int sequence,
+    ) {
+      final at = DateTime(2026, 1, day, 10);
+      return LedgerTransaction(
+        id: 't$sequence',
+        bookId: 'book',
+        title: 'Row $sequence',
+        amount: amount,
+        type: type,
+        occurredAt: at,
+        createdAt: at,
+        updatedAt: at,
+        category: 'Imported',
+        paymentMode: '',
+        notes: '',
+        goalId: null,
+        runningBalance: 0,
+        externalReference: '',
+        statementBalance: balance,
+        sequence: sequence,
+        importSource: 'PDF',
+      );
+    }
+
+    // 50 → +50 on 1 Jan → 100 → −30 on 2 Jan → 70, listed newest first.
+    final newestFirst = [
+      row(2, TransactionType.cashOut, 30, 70, 1),
+      row(1, TransactionType.cashIn, 50, 100, 2),
+    ];
+
+    test('newest-first statements start from the oldest row', () {
+      final (opening, closing) = ImportParser.statementBalances(newestFirst);
+      expect(opening, 50);
+      expect(closing, 70);
+    });
+
+    test('an explicit opening balance line wins', () {
+      final (opening, closing) = ImportParser.statementBalances(
+        newestFirst,
+        text: 'Opening Balance :\n1,234.50\nClosing Balance :\n70.00',
+      );
+      expect(opening, 1234.5);
+      expect(closing, 70);
+    });
+
+    test('formats without a balance column are skipped', () async {
+      SharedPreferences.setMockInitialValues({});
+      final store = AppStore();
+      await store.load();
+      final bookId = store.books.first.id;
+      final plain = row(1, TransactionType.cashIn, 50, 0, 1);
+      final noBalance = LedgerTransaction.fromJson({
+        ...plain.toJson(),
+        'bookId': bookId,
+        'statementBalance': null,
+      });
+      expect(ImportParser.statementBalances([noBalance]), (null, null));
+
+      final preview = store.previewImport(
+        bookId: bookId,
+        source: 'PDF',
+        parsed: [noBalance],
+        ignored: const [],
+      );
+      expect(store.importSetsOpeningBalance(bookId, preview), isFalse);
+      await store.commitImport(preview);
+      expect(store.transactionsForBook(bookId), hasLength(1));
+    });
   });
 }

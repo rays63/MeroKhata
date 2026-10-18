@@ -5,8 +5,11 @@ import 'package:spreadsheet_decoder/spreadsheet_decoder.dart';
 import 'package:syncfusion_flutter_pdf/pdf.dart' as sfpdf;
 
 import 'app_store.dart';
+import 'category_rules.dart';
+import 'description_cleaner.dart';
 import 'legacy_xls_reader.dart';
 import 'models.dart';
+import 'split.dart' show roundMoney;
 
 typedef _TableHeader = ({
   int row,
@@ -35,6 +38,28 @@ class ImportParser {
     required String bookId,
     required List<int> bytes,
     String? password,
+  }) => store.previewStatement(
+    bookId,
+    readPdf(fileName: '', bookId: bookId, bytes: bytes, password: password),
+  );
+
+  static ImportPreview parseXlsBytes({
+    required AppStore store,
+    required String bookId,
+    required List<int> bytes,
+  }) => store.previewStatement(
+    bookId,
+    readXls(fileName: '', bookId: bookId, bytes: bytes),
+  );
+
+  /// Reads a PDF statement without comparing it to a book. Throws
+  /// [PdfPasswordException] when it is locked and [password] is missing or
+  /// wrong.
+  static ParsedStatement readPdf({
+    required String fileName,
+    required String bookId,
+    required List<int> bytes,
+    String? password,
   }) {
     sfpdf.PdfDocument? document;
     final String text;
@@ -47,25 +72,38 @@ class ImportParser {
     } finally {
       document?.dispose();
     }
-    final (parsed, ignored) = _statementRecords(text, bookId, 'PDF');
-    if (parsed.isEmpty) {
-      return _parseText(
-        store: store,
+    final source = detectSource(text);
+    final (records, ignored) = _statementRecords(text, bookId, 'PDF');
+    if (records.isEmpty) {
+      final (rows, lines) = _parseText(
         bookId: bookId,
         source: 'PDF',
         text: text,
       );
+      return ParsedStatement(
+        fileName: fileName,
+        format: 'PDF',
+        rows: _withSource(rows, null),
+        ignored: lines,
+      );
     }
-    return store.previewImport(
-      bookId: bookId,
-      source: 'PDF',
-      parsed: parsed,
+    final rows = _withSource(records, source);
+    final (opening, closing) = statementBalances(rows, text: text);
+    return ParsedStatement(
+      fileName: fileName,
+      format: 'PDF',
+      rows: rows,
       ignored: ignored,
+      source: source,
+      account: accountNumber(text),
+      openingBalance: opening,
+      closingBalance: closing,
     );
   }
 
-  static ImportPreview parseXlsBytes({
-    required AppStore store,
+  /// Reads an XLS/XLSX/CSV statement without comparing it to a book.
+  static ParsedStatement readXls({
+    required String fileName,
     required String bookId,
     required List<int> bytes,
   }) {
@@ -85,20 +123,141 @@ class ImportParser {
       final text = utf8.decode(bytes, allowMalformed: true);
       rows = _delimitedRows(text);
       if (_findHeader(rows) == null) {
-        return _parseText(
-          store: store,
+        final (parsed, lines) = _parseText(
           bookId: bookId,
           source: 'XLS',
           text: text,
         );
+        return ParsedStatement(
+          fileName: fileName,
+          format: 'XLS',
+          rows: _withSource(parsed, null),
+          ignored: lines,
+        );
       }
     }
-    final (parsed, ignored) = _tableRecords(rows, bookId, 'XLS');
-    return store.previewImport(
-      bookId: bookId,
-      source: 'XLS',
-      parsed: parsed,
+    final head = rows.take(12).map((row) => row.join('\n')).join('\n');
+    final source = detectSource(head);
+    final (records, ignored) = _tableRecords(rows, bookId, 'XLS');
+    final parsed = _withSource(records, source);
+    final (opening, closing) = statementBalances(parsed);
+    return ParsedStatement(
+      fileName: fileName,
+      format: 'XLS',
+      rows: parsed,
       ignored: ignored,
+      source: source,
+      account: accountNumber(head),
+      openingBalance: opening,
+      closingBalance: closing,
+    );
+  }
+
+  /// The account number printed on the statement, when it can be read
+  /// reliably (8+ digits on or right after its label); null otherwise, e.g.
+  /// when the PDF's text order puts a date there.
+  static String? accountNumber(String text) {
+    final match = RegExp(
+      r'account (?:number|no\.?)\s*:?\s*([0-9][0-9 -]*[0-9])',
+      caseSensitive: false,
+    ).firstMatch(text);
+    if (match == null) return null;
+    final value = match.group(1)!;
+    if (RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(value)) return null;
+    final digits = value.replaceAll(RegExp(r'\D'), '');
+    return digits.length >= 8 ? digits : null;
+  }
+
+  /// Payment modes for the statement layouts the parser knows.
+  static const esewa = 'eSewa';
+  static const nicAsia = 'NIC Asia';
+  static const nabil = 'Nabil Bank';
+  static const standardChartered = 'Standard Chartered';
+
+  /// Which bank or wallet a statement came from, recognised by its layout
+  /// (the bank's name is rarely in the text, and transaction remarks often
+  /// mention other banks). Null for formats the parser doesn't know.
+  static String? detectSource(String text) {
+    final lower = text.toLowerCase();
+    bool has(String label) => lower.contains(label);
+    if (has('statement report') && has('channel') && has('dr/cr')) {
+      return esewa;
+    }
+    if (has('electronic account statement')) {
+      if (has("account holder's") && has('withdraw') && has('s.n')) {
+        return nabil;
+      }
+      if (has('account name:') && has('debit') && has('credit')) {
+        return nicAsia;
+      }
+    }
+    if (has('account type') && has('ledger balance') && has('withdrawal')) {
+      return standardChartered;
+    }
+    return null;
+  }
+
+  /// The balance before the statement's first transaction and after its
+  /// last. An explicit "Opening Balance" line in [text] wins; otherwise both
+  /// come from the balance chain, which also handles newest-first statements:
+  /// the first row is the one whose previous balance (balance minus its
+  /// signed amount) isn't another row's balance. Null without a balance
+  /// column.
+  static (double?, double?) statementBalances(
+    List<LedgerTransaction> rows, {
+    String text = '',
+  }) {
+    final chained = rows.where((row) => row.statementBalance != null).toList();
+    if (chained.isEmpty) return (null, null);
+    String key(double value) => value.toStringAsFixed(2);
+    double previous(LedgerTransaction row) =>
+        row.statementBalance! - row.signedAmount;
+    final balances = {for (final row in chained) key(row.statementBalance!)};
+    final previousBalances = {for (final row in chained) key(previous(row))};
+    final starts = chained.where(
+      (row) => !balances.contains(key(previous(row))),
+    );
+    final ends = chained.where(
+      (row) => !previousBalances.contains(key(row.statementBalance!)),
+    );
+    // A repeated balance makes the chain ambiguous; fall back to the
+    // statement's own order, newest-first when its dates run backwards.
+    final newestFirst = chained.first.occurredAt.isAfter(
+      chained.last.occurredAt,
+    );
+    final first = starts.length == 1
+        ? starts.single
+        : (newestFirst ? chained.last : chained.first);
+    final last = ends.length == 1
+        ? ends.single
+        : (newestFirst ? chained.first : chained.last);
+    final explicit = RegExp(
+      r'opening balance\s*:?\s*(?:npr\.?\s*)?(-?[\d,]+\.\d{2})',
+      caseSensitive: false,
+    ).firstMatch(text);
+    final opening = explicit != null
+        ? double.parse(explicit.group(1)!.replaceAll(',', ''))
+        : previous(first);
+    return (roundMoney(opening), roundMoney(last.statementBalance!));
+  }
+
+  /// Tags rows with the statement's bank or wallet as payment mode, a
+  /// keyword-based category ("Imported" when no rule matches) and a readable
+  /// title. The bank's own description moves to the notes when the title
+  /// changes, so nothing is lost.
+  static List<LedgerTransaction> _withSource(
+    List<LedgerTransaction> rows,
+    String? source,
+  ) => [for (final row in rows) _tidyRow(row, source)];
+
+  static LedgerTransaction _tidyRow(LedgerTransaction row, String? source) {
+    final raw = row.title.replaceAll(RegExp(r'\s+'), ' ').trim();
+    final title = cleanDescription(raw);
+    return row.copyWith(
+      title: title,
+      notes: title == raw ? row.notes : raw,
+      paymentMode: source ?? row.paymentMode,
+      category: suggestCategory(raw, row.type) ?? row.category,
     );
   }
 
@@ -364,8 +523,7 @@ class ImportParser {
     return cells;
   }
 
-  static ImportPreview _parseText({
-    required AppStore store,
+  static (List<LedgerTransaction>, List<String>) _parseText({
     required String bookId,
     required String source,
     required String text,
@@ -384,12 +542,7 @@ class ImportParser {
         parsed.add(transaction);
       }
     }
-    return store.previewImport(
-      bookId: bookId,
-      source: source,
-      parsed: parsed,
-      ignored: ignored,
-    );
+    return (parsed, ignored);
   }
 
   static LedgerTransaction? _fromCells(
