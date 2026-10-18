@@ -806,6 +806,42 @@ abstract class AppLocalizations {
   /// **'Settle'**
   String get splitSettle;
 
+  /// No description provided for @splitRecordTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Record this payment'**
+  String get splitRecordTitle;
+
+  /// No description provided for @splitRecordPaidMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'You paid {amount}. Pick the book to record it in.'**
+  String splitRecordPaidMessage(String amount);
+
+  /// No description provided for @splitDontRecord.
+  ///
+  /// In en, this message translates to:
+  /// **'Don’t record in a book'**
+  String get splitDontRecord;
+
+  /// No description provided for @splitNoBookInCurrency.
+  ///
+  /// In en, this message translates to:
+  /// **'You don’t have a {currency} book yet.'**
+  String splitNoBookInCurrency(String currency);
+
+  /// No description provided for @splitCreateBookIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Create a {currency} book'**
+  String splitCreateBookIn(String currency);
+
+  /// No description provided for @splitSettledToast.
+  ///
+  /// In en, this message translates to:
+  /// **'Settled {amount} with {name}'**
+  String splitSettledToast(String amount, String name);
+
   /// No description provided for @splitYourBook.
   ///
   /// In en, this message translates to:

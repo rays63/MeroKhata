@@ -408,6 +408,43 @@
   "splitEntriesStay": "Entries already recorded in your books stay.",
   "splitAllSettled": "All settled",
   "splitSettle": "Settle",
+  "splitRecordTitle": "Record this payment",
+  "splitRecordPaidMessage": "You paid {amount}. Pick the book to record it in.",
+  "@splitRecordPaidMessage": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "splitDontRecord": "Don’t record in a book",
+  "splitNoBookInCurrency": "You don’t have a {currency} book yet.",
+  "@splitNoBookInCurrency": {
+    "placeholders": {
+      "currency": {
+        "type": "String"
+      }
+    }
+  },
+  "splitCreateBookIn": "Create a {currency} book",
+  "@splitCreateBookIn": {
+    "placeholders": {
+      "currency": {
+        "type": "String"
+      }
+    }
+  },
+  "splitSettledToast": "Settled {amount} with {name}",
+  "@splitSettledToast": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "splitYourBook": "your book",
   "splitReceivedToast": "{amount} from {name} recorded in {book}",
   "@splitReceivedToast": {

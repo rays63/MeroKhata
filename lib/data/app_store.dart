@@ -787,7 +787,7 @@ class AppStore extends ChangeNotifier {
   Future<double> settleGroup({
     required String groupId,
     required String friendId,
-    required String bookId,
+    required String? bookId,
   }) async {
     final index = groups.indexWhere((g) => g.id == groupId);
     if (index == -1) return 0;
@@ -844,7 +844,7 @@ class AppStore extends ChangeNotifier {
   Future<double> settleBill({
     required String billId,
     required String friendId,
-    required String bookId,
+    required String? bookId,
   }) async {
     final index = bills.indexWhere((b) => b.id == billId);
     if (index == -1) return 0;
@@ -883,24 +883,30 @@ class AppStore extends ChangeNotifier {
       ) ||
       bills.any((b) => b.settlements.any((s) => s.transactionId == entryId));
 
+  /// Records a settle-up, plus a cash entry in [bookId] unless it is null
+  /// (settled without recording it in a book).
   Settlement _settle(
     String friendId,
     double amount,
-    String bookId,
+    String? bookId,
     String source,
   ) {
     final friend = friendById(friendId)?.name ?? 'friend';
-    if (!categories.contains('Settlement')) categories.add('Settlement');
-    final entryId = _postSplitEntry(
-      bookId: bookId,
-      type: amount > 0 ? TransactionType.cashIn : TransactionType.cashOut,
-      amount: amount.abs(),
-      title: 'Settlement · $friend',
-      category: 'Settlement',
-      log: 'Settled from $source',
-      logCode: 'settled',
-      logArgs: [source],
-    );
+    if (bookId != null && !categories.contains('Settlement')) {
+      categories.add('Settlement');
+    }
+    final entryId = bookId == null
+        ? null
+        : _postSplitEntry(
+            bookId: bookId,
+            type: amount > 0 ? TransactionType.cashIn : TransactionType.cashOut,
+            amount: amount.abs(),
+            title: 'Settlement · $friend',
+            category: 'Settlement',
+            log: 'Settled from $source',
+            logCode: 'settled',
+            logArgs: [source],
+          );
     return Settlement(
       id: newId('settle'),
       friendId: friendId,

@@ -480,6 +480,32 @@ class AppLocalizationsNe extends AppLocalizations {
   String get splitSettle => 'मिलाउनुहोस्';
 
   @override
+  String get splitRecordTitle => 'यो भुक्तानी रेकर्ड गर्नुहोस्';
+
+  @override
+  String splitRecordPaidMessage(String amount) {
+    return 'तपाईंले $amount तिर्नुभयो। रेकर्ड गर्ने खाता छान्नुहोस्।';
+  }
+
+  @override
+  String get splitDontRecord => 'खातामा रेकर्ड नगर्नुहोस्';
+
+  @override
+  String splitNoBookInCurrency(String currency) {
+    return 'तपाईंसँग अहिलेसम्म $currency खाता छैन।';
+  }
+
+  @override
+  String splitCreateBookIn(String currency) {
+    return '$currency खाता बनाउनुहोस्';
+  }
+
+  @override
+  String splitSettledToast(String amount, String name) {
+    return '$name सँग $amount हिसाब मिलाइयो';
+  }
+
+  @override
   String get splitYourBook => 'तपाईंको खाता';
 
   @override

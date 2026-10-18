@@ -157,6 +157,25 @@ void main() {
     expect(reloaded.paymentModes, isNot(contains('Wallet')));
   });
 
+  test('book filters are remembered per book across a restart', () async {
+    final store = await _load({_key: jsonEncode(_legacyData())});
+    expect(store.bookFilters('book_default'), isEmpty);
+
+    await store.saveBookFilters('book_default', {
+      'range': 'week',
+      'category': 'Chiya',
+    });
+    final reloaded = AppStore();
+    await reloaded.load();
+    expect(reloaded.bookFilters('book_default'), {
+      'range': 'week',
+      'category': 'Chiya',
+    });
+
+    await reloaded.deleteBook('book_default');
+    expect(reloaded.bookFilters('book_default'), isEmpty);
+  });
+
   test('editing an entry records each change in its history', () async {
     final store = await _load({_key: jsonEncode(_legacyData())});
     final entry = store.transactionById('t1')!;

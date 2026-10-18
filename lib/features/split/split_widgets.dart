@@ -7,7 +7,7 @@ import '../../data/split.dart';
 import '../../l10n/l10n.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/pf.dart';
-import '../../widgets/store_sheets.dart';
+import '../books/book_form_screen.dart';
 
 /// Display name for a split participant: "You" (localised) for the current
 /// user, otherwise the friend's stored name.
@@ -393,104 +393,148 @@ class SharesEditor extends StatelessWidget {
   }
 }
 
-/// "Record Rs 3,600 as cash out in [Personal ▾]" switch.
-class RecordToggle extends StatelessWidget {
-  const RecordToggle({
-    super.key,
-    required this.on,
-    required this.amount,
+/// Where money that changed hands is recorded: a book, or nowhere
+/// ([bookId] null).
+class RecordChoice {
+  const RecordChoice(this.bookId);
+
+  final String? bookId;
+}
+
+/// Confirms a settle-up and asks which book to record it in. Null when
+/// dismissed.
+Future<RecordChoice?> showSettleSheet(
+  BuildContext context, {
+  required String friendName,
+  required double amount,
+  required String currency,
+}) {
+  final l = context.l10n;
+  final theyPay = amount > 0;
+  return showRecordBookSheet(
+    context,
+    title: theyPay
+        ? l.splitSettleUpWith(friendName)
+        : l.splitPayName(friendName),
+    message: theyPay
+        ? l.splitTheyPayYou(friendName, money(amount, currency))
+        : l.splitYouPayThem(friendName, money(amount.abs(), currency)),
+    currency: currency,
+    cashIn: theyPay,
+  );
+}
+
+/// Asks where to record money that moved: one of the books in [currency]
+/// (one tap), a new book in that currency, or no book. Null when dismissed.
+Future<RecordChoice?> showRecordBookSheet(
+  BuildContext context, {
+  required String title,
+  required String message,
+  required String currency,
+  required bool cashIn,
+}) => showModalBottomSheet<RecordChoice>(
+  context: context,
+  useSafeArea: true,
+  isScrollControlled: true,
+  builder: (_) => _RecordBookSheet(
+    title: title,
+    message: message,
+    currency: currency,
+    cashIn: cashIn,
+  ),
+);
+
+class _RecordBookSheet extends StatelessWidget {
+  const _RecordBookSheet({
+    required this.title,
+    required this.message,
     required this.currency,
-    required this.bookId,
-    required this.onChanged,
-    required this.onBook,
+    required this.cashIn,
   });
 
-  final bool on;
-  final double amount;
+  final String title;
+  final String message;
   final String currency;
-  final String? bookId;
-  final ValueChanged<bool> onChanged;
-  final ValueChanged<String> onBook;
+  final bool cashIn;
+
+  Future<void> _createBook(BuildContext context) async {
+    final navigator = Navigator.of(context);
+    final id = await navigator.push<String>(
+      MaterialPageRoute(
+        builder: (_) =>
+            BookFormScreen(initialCurrency: currency, popWithId: true),
+      ),
+    );
+    if (id != null) navigator.pop(RecordChoice(id));
+  }
 
   @override
   Widget build(BuildContext context) {
     final store = AppScope.watch(context);
     final l = context.l10n;
     final c = context.pf;
-    final book = bookId == null ? null : store.bookById(bookId!);
-    if (book == null) return const SizedBox.shrink();
-    final textStyle = pfText(13.5, weight: w700, height: 1.4);
-    // Split around the book link so each language keeps its own word order
-    // ("Record Rs 3,600 as cash out in [Book]" / "… खर्चको रूपमा [Book] खातामा …").
-    final after = l.splitRecordAfterBook;
-    return Material(
-      color: c.card2,
-      borderRadius: BorderRadius.circular(18),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(18),
-        onTap: () => onChanged(!on),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Row(
-            children: [
-              Switch.adaptive(
-                value: on,
-                onChanged: onChanged,
-                activeTrackColor: c.pri,
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Wrap(
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    Text(
-                      '${l.splitRecordBeforeBook(money(amount, currency))} ',
-                      style: textStyle,
-                    ),
-                    _BookLink(
-                      name: book.name,
-                      onTap: () async {
-                        final picked = await pickSplitBook(
-                          context,
-                          book.id,
-                          currency,
-                        );
-                        if (picked != null) onBook(picked);
-                      },
-                    ),
-                    if (after.isNotEmpty) Text(' $after', style: textStyle),
-                  ],
+    final books = store.splitBooks(currency);
+    return ConstrainedBox(
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.sizeOf(context).height * .8,
+      ),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(20, 10, 20, 30),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 5,
+                margin: const EdgeInsets.only(bottom: 14),
+                decoration: BoxDecoration(
+                  color: c.line,
+                  borderRadius: BorderRadius.circular(3),
                 ),
               ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _BookLink extends StatelessWidget {
-  const _BookLink({required this.name, required this.onTap});
-
-  final String name;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.pf;
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              name,
-              style: pfText(13.5, weight: w900, color: c.cashIn),
             ),
-            Icon(LucideIcons.chevronDown, size: 14, color: c.cashIn),
+            Text(title, style: pfText(19, weight: w900)),
+            const SizedBox(height: 6),
+            Text(
+              message,
+              style: pfText(15, weight: w600, color: c.sub),
+            ),
+            const SizedBox(height: 16),
+            for (final book in books) ...[
+              _ChoiceRow(
+                icon: cashIn
+                    ? LucideIcons.arrowDownLeft
+                    : LucideIcons.arrowUpRight,
+                color: c.amount(cashIn),
+                label: cashIn
+                    ? l.splitAddAsCashIn(book.name)
+                    : l.splitAddAsCashOut(book.name),
+                onTap: () => Navigator.pop(context, RecordChoice(book.id)),
+              ),
+              const SizedBox(height: 8),
+            ],
+            if (books.isEmpty) ...[
+              PfNote(
+                icon: LucideIcons.info,
+                text: l.splitNoBookInCurrency(currency),
+              ),
+              const SizedBox(height: 8),
+              _ChoiceRow(
+                icon: LucideIcons.plus,
+                color: c.cashIn,
+                label: l.splitCreateBookIn(currency),
+                onTap: () => _createBook(context),
+              ),
+              const SizedBox(height: 8),
+            ],
+            _ChoiceRow(
+              icon: LucideIcons.ban,
+              color: c.sub,
+              label: l.splitDontRecord,
+              onTap: () => Navigator.pop(context, const RecordChoice(null)),
+            ),
           ],
         ),
       ),
@@ -498,142 +542,35 @@ class _BookLink extends StatelessWidget {
   }
 }
 
-/// Book picker limited to books in the split's [currency].
-Future<String?> pickSplitBook(
-  BuildContext context,
-  String selected,
-  String currency,
-) => pickBook(context, selected: selected, onlyCurrency: currency);
-
-/// Confirms a settle-up and picks the book to record it in. Returns the
-/// book id, or null if cancelled.
-Future<String?> showSettleSheet(
-  BuildContext context, {
-  required String friendName,
-  required double amount,
-  required String currency,
-}) {
-  return showModalBottomSheet<String>(
-    context: context,
-    useSafeArea: true,
-    builder: (_) => _SettleSheet(
-      friendName: friendName,
-      amount: amount,
-      currency: currency,
-    ),
-  );
-}
-
-class _SettleSheet extends StatefulWidget {
-  const _SettleSheet({
-    required this.friendName,
-    required this.amount,
-    required this.currency,
+class _ChoiceRow extends StatelessWidget {
+  const _ChoiceRow({
+    required this.icon,
+    required this.color,
+    required this.label,
+    required this.onTap,
   });
 
-  final String friendName;
-  final double amount;
-  final String currency;
-
-  @override
-  State<_SettleSheet> createState() => _SettleSheetState();
-}
-
-class _SettleSheetState extends State<_SettleSheet> {
-  late String? bookId = AppScope.read(
-    context,
-  ).defaultSplitBookId(widget.currency);
+  final IconData icon;
+  final Color color;
+  final String label;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final store = AppScope.watch(context);
-    final l = context.l10n;
     final c = context.pf;
-    final theyPay = widget.amount > 0;
-    final book = bookId == null ? null : store.bookById(bookId!);
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 10, 20, 30),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+    return PfCard(
+      color: c.card2,
+      radius: 18,
+      onTap: onTap,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      child: Row(
         children: [
-          Center(
-            child: Container(
-              width: 40,
-              height: 5,
-              margin: const EdgeInsets.only(bottom: 14),
-              decoration: BoxDecoration(
-                color: c.line,
-                borderRadius: BorderRadius.circular(3),
-              ),
-            ),
+          Icon(icon, size: 18, color: color),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(label, style: pfText(14, weight: w700)),
           ),
-          Text(
-            theyPay
-                ? l.splitSettleUpWith(widget.friendName)
-                : l.splitPayName(widget.friendName),
-            style: pfText(19, weight: w900),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            theyPay
-                ? l.splitTheyPayYou(
-                    widget.friendName,
-                    money(widget.amount, widget.currency),
-                  )
-                : l.splitYouPayThem(
-                    widget.friendName,
-                    money(widget.amount.abs(), widget.currency),
-                  ),
-            style: pfText(15, weight: w600, color: c.sub),
-          ),
-          const SizedBox(height: 16),
-          if (book == null)
-            PfNote(icon: LucideIcons.info, text: l.splitNoBookForCurrency)
-          else
-            PfCard(
-              color: c.card2,
-              radius: 18,
-              onTap: () async {
-                final picked = await pickSplitBook(
-                  context,
-                  book.id,
-                  widget.currency,
-                );
-                if (picked != null) setState(() => bookId = picked);
-              },
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              child: Row(
-                children: [
-                  Icon(
-                    theyPay
-                        ? LucideIcons.arrowDownLeft
-                        : LucideIcons.arrowUpRight,
-                    size: 18,
-                    color: c.amount(theyPay),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      theyPay
-                          ? l.splitAddAsCashIn(book.name)
-                          : l.splitAddAsCashOut(book.name),
-                      style: pfText(14, weight: w700),
-                    ),
-                  ),
-                  Icon(LucideIcons.chevronDown, size: 16, color: c.sub),
-                ],
-              ),
-            ),
-          const SizedBox(height: 16),
-          PfButton(
-            label: theyPay
-                ? l.splitSettleAmount(money(widget.amount, widget.currency))
-                : l.splitPayAmount(money(widget.amount.abs(), widget.currency)),
-            onPressed: book == null
-                ? null
-                : () => Navigator.pop(context, book.id),
-          ),
+          Icon(LucideIcons.chevronRight, size: 16, color: c.sub),
         ],
       ),
     );

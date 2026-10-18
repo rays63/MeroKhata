@@ -485,6 +485,32 @@ class AppLocalizationsEn extends AppLocalizations {
   String get splitSettle => 'Settle';
 
   @override
+  String get splitRecordTitle => 'Record this payment';
+
+  @override
+  String splitRecordPaidMessage(String amount) {
+    return 'You paid $amount. Pick the book to record it in.';
+  }
+
+  @override
+  String get splitDontRecord => 'Don’t record in a book';
+
+  @override
+  String splitNoBookInCurrency(String currency) {
+    return 'You don’t have a $currency book yet.';
+  }
+
+  @override
+  String splitCreateBookIn(String currency) {
+    return 'Create a $currency book';
+  }
+
+  @override
+  String splitSettledToast(String amount, String name) {
+    return 'Settled $amount with $name';
+  }
+
+  @override
   String get splitYourBook => 'your book';
 
   @override
