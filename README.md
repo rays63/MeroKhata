@@ -5,7 +5,7 @@ An offline cashbook and bill-splitting app for Android and iOS, built with Flutt
 Available in English and नेपाली.
 
 - **Package:** `com.paisaflow.app`
-- **Privacy policy:** https://www.maharjanraymond.com.np/paisaflow
+- **Privacy policy:** https://sites.google.com/view/paisaflow-privacypolicy/home
 
 ## Features
 
@@ -14,7 +14,12 @@ Available in English and नेपाली.
 - **Statement import:**
   - Text-based PDF bank statements (NIC Asia, Nabil, Standard Chartered and similar), including password-protected PDFs.
   - Legacy `.xls` / `.xlsx` / `.csv` wallet exports (eSewa).
+  - Several files at once, with one combined preview. Overlapping days are imported once, and a gap between two statements of the same account is flagged.
   - Duplicates are detected on re-import.
+  - Each entry's payment mode is set to the bank or wallet it came from.
+  - Simple keyword rules (`lib/data/category_rules.dart`) suggest a category.
+  - Bank codes in descriptions become readable titles, such as `QR · Mega Mart Nagaun` or `IPS · Name · Loan Paid` (`lib/data/description_cleaner.dart`). The bank's original text is kept in the entry's notes.
+  - Importing into an empty book adds the statement's opening balance, so the book ends at the bank's closing balance.
 - **Split:** groups, shared expenses and one-off bills, with balances per friend and settle-up.
 - **Insights and reports:** spending trends and category breakdowns, and PDF / Excel reports for any date range.
 - **Goals:** savings targets with progress.
@@ -89,7 +94,7 @@ storeFile=/absolute/path/to/upload-keystore.jks
 
 Without it, release builds fall back to the debug key, which Google Play will not accept.
 
-Before every Play upload, bump the build number after `+` in `pubspec.yaml`, for example `1.0.0+2` → `1.0.0+3`. Then build:
+Before every Play upload, bump the build number after `+` in `pubspec.yaml`, for example `1.0.0+3` → `1.0.0+4`. Then build:
 
 ```bash
 flutter build appbundle --release
@@ -100,7 +105,7 @@ Never commit `key.properties` or the `.jks` keystore.
 
 ## Privacy
 
-Paisa Flow stores all data locally on the device. The Android release build does not request internet access. See the [privacy policy](https://www.maharjanraymond.com.np/paisaflow).
+Paisa Flow stores all data locally on the device. The Android release build does not request internet access. See the [privacy policy](https://sites.google.com/view/paisaflow-privacypolicy/home).
 
 ## Author
 
