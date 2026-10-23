@@ -1,14 +1,17 @@
 import 'dart:convert';
+import 'dart:ui' show Rect;
 
 import 'package:intl/intl.dart';
 import 'package:spreadsheet_decoder/spreadsheet_decoder.dart';
 import 'package:syncfusion_flutter_pdf/pdf.dart' as sfpdf;
 
+import '../core/amount_input.dart' show maxAmount;
 import 'app_store.dart';
 import 'category_rules.dart';
 import 'description_cleaner.dart';
 import 'legacy_xls_reader.dart';
 import 'models.dart';
+import 'paisa_report_reader.dart';
 import 'split.dart' show roundMoney;
 
 typedef _TableHeader = ({
@@ -28,6 +31,12 @@ class PdfPasswordException implements Exception {
 
   /// A password was given but didn't open the file.
   final bool wrongPassword;
+}
+
+/// A Paisa Flow day-, category- or mode-wise report: it holds totals only,
+/// no entries to import.
+class SummaryReportException implements Exception {
+  const SummaryReportException();
 }
 
 class ImportParser {
@@ -63,14 +72,44 @@ class ImportParser {
   }) {
     sfpdf.PdfDocument? document;
     final String text;
+    final String? keywords;
+    var words = <({String text, Rect box, int page})>[];
     try {
       document = sfpdf.PdfDocument(inputBytes: bytes, password: password);
       text = sfpdf.PdfTextExtractor(document).extractText();
+      keywords = document.documentInformation.keywords;
+      if (!keywords.startsWith(PaisaReportReader.pdfMarker) &&
+          PaisaReportReader.isPaisaPdf(text)) {
+        words = [
+          for (final line in sfpdf.PdfTextExtractor(
+            document,
+          ).extractTextLines())
+            for (final word in line.wordCollection)
+              (text: word.text, box: word.bounds, page: line.pageIndex),
+        ];
+      }
     } on ArgumentError catch (error) {
       if (error.name != 'password') rethrow;
       throw PdfPasswordException(wrongPassword: password != null);
     } finally {
       document?.dispose();
+    }
+    final own =
+        PaisaReportReader.fromPdfKeywords(keywords, bookId) ??
+        (PaisaReportReader.isPaisaPdf(text)
+            ? PaisaReportReader.fromPdfWords(words, bookId)
+            : null);
+    if (own != null) {
+      if (own.isEmpty && PaisaReportReader.isSummaryReport(text)) {
+        throw const SummaryReportException();
+      }
+      return ParsedStatement(
+        fileName: fileName,
+        format: 'PDF',
+        rows: own,
+        ignored: const [],
+        source: PaisaReportReader.source,
+      );
     }
     final source = detectSource(text);
     final (records, ignored) = _statementRecords(text, bookId, 'PDF');
@@ -135,6 +174,19 @@ class ImportParser {
           ignored: lines,
         );
       }
+    }
+    final own = PaisaReportReader.fromTable(rows, bookId);
+    if (own != null) {
+      return ParsedStatement(
+        fileName: fileName,
+        format: 'XLS',
+        rows: own,
+        ignored: const [],
+        source: PaisaReportReader.source,
+      );
+    }
+    if (PaisaReportReader.isSummaryTable(rows)) {
+      throw const SummaryReportException();
     }
     final head = rows.take(12).map((row) => row.join('\n')).join('\n');
     final source = detectSource(head);
@@ -710,9 +762,12 @@ class ImportParser {
     return null;
   }
 
+  /// Null for anything that isn't a number or is beyond [maxAmount], so a
+  /// stray account number in an amount column can't become an entry.
   static double? _parseAmount(String input) {
-    return double.tryParse(
+    final value = double.tryParse(
       input.replaceAll(',', '').replaceAll(RegExp(r'[^0-9.+-]'), ''),
     );
+    return value == null || value.abs() > maxAmount ? null : value;
   }
 }

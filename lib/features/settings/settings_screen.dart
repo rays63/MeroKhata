@@ -1,45 +1,22 @@
-import 'dart:convert';
-import 'dart:typed_data';
-
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../app/nav.dart';
+import '../../core/app_info.dart';
 import '../../data/app_store.dart';
 import '../../l10n/l10n.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/pf.dart';
 import '../../widgets/store_sheets.dart';
+import '../backup/backup_screen.dart';
+import '../budgets/budgets_screen.dart';
+import '../lock/app_lock_screen.dart';
 import '../onboarding/profile_screen.dart';
+import 'categories_screen.dart';
+import '../repeating/repeating_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
-
-  Future<void> _exportAll(BuildContext context, AppStore store) async {
-    final l = context.l10n;
-    await store.persist();
-    final raw =
-        (await SharedPreferences.getInstance()).getString(
-          'hissabkitab_data_v1',
-        ) ??
-        '{}';
-    final name =
-        'paisaflow_backup_${DateFormat('yyyy-MM-dd').format(DateTime.now())}.json';
-    try {
-      final saved = await FilePicker.platform.saveFile(
-        dialogTitle: l.settingsExportAll,
-        fileName: name,
-        bytes: Uint8List.fromList(utf8.encode(raw)),
-      );
-      if (saved != null && context.mounted) {
-        showPfToast(context, l.readyToShare(name));
-      }
-    } catch (error) {
-      if (context.mounted) showPfToast(context, l.exportFailed('$error'));
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -101,7 +78,11 @@ class SettingsScreen extends StatelessWidget {
                     icon: LucideIcons.tags,
                     label: l.settingsCategories,
                     value: l.settingsItemCount(store.categories.length),
-                    onTap: () => pickCategory(context, manageOnly: true),
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const CategoriesScreen(),
+                      ),
+                    ),
                   ),
                   const PfDivider(),
                   _SettingsRow(
@@ -109,6 +90,40 @@ class SettingsScreen extends StatelessWidget {
                     label: l.settingsPaymentModes,
                     value: l.settingsItemCount(store.paymentModes.length),
                     onTap: () => pickPaymentMode(context, manageOnly: true),
+                  ),
+                  const PfDivider(),
+                  _SettingsRow(
+                    icon: LucideIcons.hash,
+                    label: l.tags,
+                    value: l.settingsItemCount(store.allTags.length),
+                    onTap: () => openManageTags(context),
+                  ),
+                  const PfDivider(),
+                  _SettingsRow(
+                    icon: LucideIcons.gauge,
+                    label: l.budgetsTitle,
+                    value: l.settingsItemCount(store.budgets.length),
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const BudgetsScreen()),
+                    ),
+                  ),
+                  const PfDivider(),
+                  _SettingsRow(
+                    icon: LucideIcons.repeat,
+                    label: l.repeatingTitle,
+                    value: l.settingsItemCount(store.recurring.length),
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const RepeatingScreen(),
+                      ),
+                    ),
+                  ),
+                  const PfDivider(),
+                  _SettingsRow(
+                    icon: LucideIcons.star,
+                    label: l.templates,
+                    value: l.settingsItemCount(store.templates.length),
+                    onTap: () => openTemplates(context),
                   ),
                   const PfDivider(),
                   _SettingsRow(
@@ -130,14 +145,28 @@ class SettingsScreen extends StatelessWidget {
                   const PfDivider(),
                   _SettingsRow(
                     icon: LucideIcons.hardDriveDownload,
-                    label: l.settingsExportAll,
-                    onTap: () => _exportAll(context, store),
+                    label: l.backupTitle,
+                    value: store.lastBackupAt == null
+                        ? l.backupNever
+                        : l.backupDaysAgo(
+                            DateUtils.dateOnly(DateTime.now())
+                                .difference(
+                                  DateUtils.dateOnly(store.lastBackupAt!),
+                                )
+                                .inDays,
+                          ),
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const BackupScreen()),
+                    ),
                   ),
                   const PfDivider(),
                   _SettingsRow(
                     icon: LucideIcons.scanFace,
                     label: l.settingsAppLock,
-                    badge: l.settingsSoon,
+                    value: store.appLockEnabled ? l.settingsOn : l.settingsOff,
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const AppLockScreen()),
+                    ),
                   ),
                 ],
               ),
@@ -152,7 +181,7 @@ class SettingsScreen extends StatelessWidget {
             const SizedBox(height: 16),
             Center(
               child: Text(
-                '${l.appName} 1.0.0',
+                '${l.appName} $appVersion',
                 style: pfText(12, color: c.mute),
               ),
             ),
@@ -169,7 +198,6 @@ class _SettingsRow extends StatelessWidget {
     required this.icon,
     required this.label,
     this.value,
-    this.badge,
     this.onTap,
     this.chevron = true,
   });
@@ -177,7 +205,6 @@ class _SettingsRow extends StatelessWidget {
   final IconData icon;
   final String label;
   final String? value;
-  final String? badge;
   final VoidCallback? onTap;
   final bool chevron;
 
@@ -198,7 +225,6 @@ class _SettingsRow extends StatelessWidget {
                 value!,
                 style: pfText(13, weight: w700, color: c.sub),
               ),
-            if (badge != null) PfBadge(label: badge!, fontSize: 11),
             if (onTap != null && chevron) ...[
               const SizedBox(width: 8),
               Icon(LucideIcons.chevronRight, size: 16, color: c.mute),

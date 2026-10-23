@@ -9,6 +9,7 @@ import '../../data/models.dart';
 import '../../l10n/l10n.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/pf.dart';
+import '../../widgets/tags.dart';
 import '../split/group_screen.dart';
 import '../split/split_bill_screen.dart';
 
@@ -17,15 +18,22 @@ class EntryDetailScreen extends StatelessWidget {
 
   final String entryId;
 
-  Future<void> _delete(BuildContext context, AppStore store) async {
+  Future<void> _delete(
+    BuildContext context,
+    AppStore store, {
+    bool transfer = false,
+  }) async {
     final c = context.pf;
     final l = context.l10n;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(l.entryDeleteTitle, style: pfText(19, weight: w900)),
+        title: Text(
+          transfer ? l.transferDeleteTitle : l.entryDeleteTitle,
+          style: pfText(19, weight: w900),
+        ),
         content: Text(
-          l.entryDeleteBody,
+          transfer ? l.transferDeleteNote : l.entryDeleteBody,
           style: pfText(14, weight: w600, color: c.sub),
         ),
         actions: [
@@ -42,9 +50,52 @@ class EntryDetailScreen extends StatelessWidget {
     );
     if (confirmed != true || !context.mounted) return;
     final navigator = Navigator.of(context);
-    showPfToast(context, l.entryDeletedToast);
+    showPfToast(
+      context,
+      transfer ? l.transferDeletedToast : l.entryDeletedToast,
+    );
     navigator.pop();
     await store.deleteTransaction(entryId);
+  }
+
+  List<(String, String)> _entryFields(
+    AppLocalizations l,
+    LedgerTransaction entry,
+    LedgerBook? book,
+    SavingsGoal? goal,
+    (String, String) when,
+  ) => [
+    (l.category, entry.categoryLabel),
+    if (entry.paymentMode.isNotEmpty) (l.paymentMode, entry.paymentMode),
+    when,
+    (l.book, book?.name ?? ''),
+    if (entry.externalReference.isNotEmpty)
+      (l.entryReference, entry.externalReference),
+    if (entry.importSource.isNotEmpty)
+      (l.entryImportedFromLabel, entry.importSource),
+    if (goal != null) (l.entryGoal, goal.name),
+    if (entry.notes.isNotEmpty) (l.entryNotes, entry.notes),
+  ];
+
+  List<(String, String)> _transferFields(
+    AppLocalizations l,
+    AppStore store,
+    TransferLegs legs,
+    String Function(String id) nameOf,
+    (String, String) when,
+  ) {
+    final fromCurrency = store.bookById(legs.fromId)?.currency ?? 'NPR';
+    final toCurrency = store.bookById(legs.toId)?.currency ?? fromCurrency;
+    return [
+      (l.transferFrom, nameOf(legs.fromId)),
+      (l.transferTo, nameOf(legs.toId)),
+      if (toCurrency != fromCurrency)
+        (l.transferReceivedShort, money(legs.into.amount, toCurrency)),
+      if (legs.fee != null)
+        (l.transferFee, money(legs.fee!.amount, fromCurrency)),
+      when,
+      if (legs.out.notes.isNotEmpty) (l.entryNotes, legs.out.notes),
+    ];
   }
 
   @override
@@ -57,26 +108,31 @@ class EntryDetailScreen extends StatelessWidget {
     final book = store.bookById(entry.bookId);
     final currency = book?.currency ?? 'NPR';
     final isIn = entry.type == TransactionType.cashIn;
-    final color = c.amount(isIn);
+    final legs = entry.transferId == null
+        ? null
+        : store.transferLegs(entry.transferId!);
+    final transfer = entry.isTransferLeg && legs != null;
+    final color = transfer ? c.blue : c.amount(isIn);
     final goal = entry.goalId == null || entry.goalId!.isEmpty
         ? null
         : store.goals.where((g) => g.id == entry.goalId).firstOrNull;
-    final fields = <(String, String)>[
-      (l.category, entry.category),
-      if (entry.paymentMode.isNotEmpty) (l.paymentMode, entry.paymentMode),
-      (
-        l.entryDateTime,
-        '${DateFormat('d MMM y').format(entry.occurredAt)} · ${timeLabel(entry.occurredAt)}',
-      ),
-      (l.book, book?.name ?? ''),
-      if (entry.externalReference.isNotEmpty)
-        (l.entryReference, entry.externalReference),
-      if (entry.importSource.isNotEmpty)
-        (l.entryImportedFromLabel, entry.importSource),
-      if (goal != null) (l.entryGoal, goal.name),
-      if (entry.notes.isNotEmpty) (l.entryNotes, entry.notes),
-    ];
+    String nameOf(String id) =>
+        store.bookById(id)?.name ?? l.transferDeletedAccount;
+    final when = (
+      l.entryDateTime,
+      '${DateFormat('d MMM y').format(entry.occurredAt)} · ${timeLabel(entry.occurredAt)}',
+    );
+    final fields = transfer
+        ? _transferFields(l, store, legs, nameOf, when)
+        : _entryFields(l, entry, book, goal, when);
     final history = store.logsFor(entry.id);
+    final title = transfer
+        ? l.transferRowTitle(nameOf(legs.fromId), nameOf(legs.toId))
+        : entry.title;
+    final feeOf = entry.transferFee && legs != null ? legs : null;
+    final fromCurrency = transfer
+        ? store.bookById(legs.fromId)?.currency ?? currency
+        : currency;
 
     return Scaffold(
       body: SafeArea(
@@ -101,10 +157,14 @@ class EntryDetailScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   PfBadge(
-                    label: isIn ? l.entryBadgeCashIn : l.entryBadgeCashOut,
+                    label: transfer
+                        ? l.transfer
+                        : isIn
+                        ? l.entryBadgeCashIn
+                        : l.entryBadgeCashOut,
                     pill: true,
                     fontSize: 12,
-                    background: c.amountSoft(isIn),
+                    background: transfer ? c.blueSoft : c.amountSoft(isIn),
                     foreground: color,
                   ),
                   const SizedBox(height: 8),
@@ -112,7 +172,9 @@ class EntryDetailScreen extends StatelessWidget {
                     fit: BoxFit.scaleDown,
                     alignment: Alignment.centerLeft,
                     child: Text(
-                      signedMoney(entry.signedAmount, currency),
+                      transfer
+                          ? money(legs.out.amount, fromCurrency)
+                          : signedMoney(entry.signedAmount, currency),
                       style: pfText(
                         42,
                         weight: w900,
@@ -122,7 +184,18 @@ class EntryDetailScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Text(entry.title, style: pfText(19)),
+                  Text(title, style: pfText(19)),
+                  if (entry.tags.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: [
+                        for (final tag in entry.tags)
+                          TagChip(tag: tag, onTap: () => openTag(context, tag)),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -131,21 +204,78 @@ class EntryDetailScreen extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 4),
               child: Column(
                 children: [
-                  for (final (label, value) in fields) ...[
-                    _FieldLine(label: label, value: value),
-                    const PfDivider(),
+                  for (var i = 0; i < fields.length; i++) ...[
+                    if (i > 0) const PfDivider(),
+                    _FieldLine(label: fields[i].$1, value: fields[i].$2),
                   ],
-                  _FieldLine(
-                    label: l.entryRunningBalance,
-                    value: balanceMoney(entry.runningBalance, currency),
-                    strong: true,
-                  ),
+                  if (!transfer) ...[
+                    const PfDivider(),
+                    _FieldLine(
+                      label: l.entryRunningBalance,
+                      value: balanceMoney(entry.runningBalance, currency),
+                      strong: true,
+                    ),
+                  ],
+                  if (transfer || feeOf != null) ...[
+                    const PfDivider(),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 13),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(LucideIcons.info, size: 16, color: c.blue),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              feeOf != null
+                                  ? l.transferFeePart(
+                                      nameOf(feeOf.fromId),
+                                      nameOf(feeOf.toId),
+                                    )
+                                  : l.transferExplain,
+                              style: pfText(
+                                13,
+                                weight: w700,
+                                color: c.blue,
+                                height: 1.4,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
+            // An entry without a subcategory (often imported) can get one in
+            // a tap.
+            if (entry.transferId == null &&
+                entry.subcategory.isEmpty &&
+                store.subcategoriesOf(entry.category).isNotEmpty) ...[
+              const SizedBox(height: 16),
+              PfSectionLabel(l.subPickOne, optional: true),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final sub in store.subcategoriesOf(entry.category))
+                    PfChoiceChip(
+                      label: sub,
+                      icon: LucideIcons.cornerDownRight,
+                      selected: false,
+                      onTap: () => store.saveTransaction(
+                        entry.copyWith(subcategory: sub),
+                      ),
+                    ),
+                ],
+              ),
+            ],
             // Split a cash-out once; entries a split created (expenses,
             // settlements) can't be split again.
             if (!isIn &&
+                entry.transferId == null &&
                 currency == store.defaultCurrency &&
                 !store.isSplitEntry(entry.id)) ...[
               const SizedBox(height: 16),
@@ -224,14 +354,22 @@ class EntryDetailScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             PfButton(
-              label: l.entryDelete,
+              label: transfer ? l.transferDelete : l.entryDelete,
               icon: LucideIcons.trash2,
               style: PfButtonStyle.outlineDanger,
               height: 50,
               radius: 18,
               fontSize: 15,
-              onPressed: () => _delete(context, store),
+              onPressed: () => _delete(context, store, transfer: transfer),
             ),
+            if (transfer) ...[
+              const SizedBox(height: 8),
+              Text(
+                l.transferDeleteNote,
+                textAlign: TextAlign.center,
+                style: pfText(12.5, weight: w700, color: c.sub, height: 1.4),
+              ),
+            ],
             const SizedBox(height: 30),
           ],
         ),
@@ -337,6 +475,9 @@ String _historyText(AppLocalizations l, TransactionLog log) {
   String arg(int i) => i < log.args.length ? log.args[i] : '';
   return switch (log.code) {
     'created' => l.entryCreated,
+    'repeated' => l.historyRepeated,
+    'transferCreated' => l.historyTransferCreated,
+    'transferUpdated' => l.historyTransferUpdated,
     'imported' => l.entryImportedFrom(arg(0)),
     'amount' => l.historyAmount(arg(0), arg(1)),
     'title' => l.historyTitle(arg(0)),
@@ -347,6 +488,7 @@ String _historyText(AppLocalizations l, TransactionLog log) {
     'date' => l.historyDate(arg(0)),
     'notes' => l.historyNotes,
     'goal' => l.historyGoal,
+    'tags' => l.historyTags,
     'deleted' => l.historyDeleted,
     'splitGroup' => l.historySplitGroup(arg(0)),
     'splitBill' => l.historySplitBill,

@@ -25,7 +25,7 @@ void main() {
 
     await tester.pump(const Duration(seconds: 2));
     await tester.pumpAndSettle();
-    expect(find.text('All your books, one pocket'), findsOneWidget);
+    expect(find.text('All your accounts, one pocket'), findsOneWidget);
 
     await tester.tap(find.text('Next'));
     await tester.pumpAndSettle();
@@ -76,7 +76,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // Step 2: first book.
-    expect(find.text("Let's set up your first book"), findsOneWidget);
+    expect(find.text("Let's set up your first account"), findsOneWidget);
     await tester.enterText(
       find.widgetWithText(TextField, 'Personal'),
       'Ghar Kharcha',
@@ -86,7 +86,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Aarav Shrestha'), findsOneWidget);
-    expect(find.text('Ghar Kharcha'), findsOneWidget);
+    // Recent activity shows the opening balance of the new account.
+    expect(find.text('Opening balance'), findsOneWidget);
     expect(find.text('Rs 5,000'), findsWidgets);
 
     final saved =
@@ -122,8 +123,8 @@ void main() {
     await tester.pumpAndSettle();
     await tester.pump(const Duration(seconds: 2));
 
-    expect(find.text('Recently updated'), findsOneWidget);
-    expect(find.text('All your books, one pocket'), findsNothing);
+    expect(find.textContaining('Net worth'), findsOneWidget);
+    expect(find.text('All your accounts, one pocket'), findsNothing);
   });
 
   testWidgets('intro cards fit a small phone at double text size', (
@@ -140,7 +141,7 @@ void main() {
     await tester.pump(const Duration(seconds: 2));
     await tester.pumpAndSettle();
 
-    expect(find.text('All your books, one pocket'), findsOneWidget);
+    expect(find.text('All your accounts, one pocket'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

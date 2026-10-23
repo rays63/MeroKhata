@@ -32,6 +32,7 @@ Map<String, Object?> _seed() {
     String notes = '',
     String? goal,
     String ref = '',
+    List<String> tags = const [],
   }) => {
     'id': 't${n++}',
     'bookId': book,
@@ -46,14 +47,16 @@ Map<String, Object?> _seed() {
     'notes': notes,
     'goalId': goal,
     'externalReference': ref,
+    'tags': tags,
   };
   Map<String, Object?> book(
     String id,
     String name,
     String cur,
     int color,
-    int days,
-  ) => {
+    int days, {
+    String type = 'bank',
+  }) => {
     'id': id,
     'name': name,
     'description': '',
@@ -61,14 +64,42 @@ Map<String, Object?> _seed() {
     'updatedAt': at(days, 9),
     'currency': cur,
     'color': color,
+    'type': type,
   };
   return {
     'books': [
       book('personal', 'Personal', 'NPR', 0xFF10A65A, 0),
-      book('shop', 'Kirana Pasal', 'NPR', 0xFF3B7DD8, 1),
+      book('shop', 'Kirana Pasal', 'NPR', 0xFF3B7DD8, 1, type: 'other'),
+      book('esewa', 'eSewa', 'NPR', 0xFF0E9AA7, 1, type: 'wallet'),
+      book('visa', 'Nabil Visa', 'NPR', 0xFFE5484D, 2, type: 'card'),
       book('freelance', 'Freelance', 'USD', 0xFF8B5CF6, 3),
-      book('trip', 'Japan Trip', 'JPY', 0xFFE39A2E, 8),
+      book('trip', 'Japan Trip', 'JPY', 0xFFE39A2E, 8, type: 'cash'),
     ],
+    'subcategories': {
+      'Food': ['Lunch', 'Momo'],
+    },
+    'budgets': [
+      {'id': 'bo', 'scope': 'currency:NPR', 'amount': 40000},
+      {
+        'id': 'bg',
+        'scope': 'currency:NPR',
+        'category': 'Groceries',
+        'amount': 3000,
+      },
+    ],
+    'templates': [
+      {
+        'id': 'tp1',
+        'title': 'Momo',
+        'type': 'cashOut',
+        'amount': 450,
+        'category': 'Food',
+        'paymentMode': 'Cash',
+        'bookId': 'personal',
+        'subcategory': 'Momo',
+      },
+    ],
+    'tags': ['dashain', 'japan-trip'],
     'transactions': [
       txn(
         'personal',
@@ -135,6 +166,7 @@ Map<String, Object?> _seed() {
         5,
         16,
         goal: 'dashain',
+        tags: ['dashain'],
       ),
       txn(
         'personal',
@@ -374,8 +406,25 @@ void main() {
     await tap(find.byTooltip('फर्कनुहोस्'));
 
     await tap(find.text('गृह').last);
+    await tap(find.text('ट्रान्सफर').first);
+    await shot('transfer');
+    await tap(find.byTooltip('बन्द गर्नुहोस्'));
     await tap(find.text('AS'));
     await shot('settings');
+    for (final (label, name) in [
+      ('बजेट', 'budgets'),
+      ('ब्याकअप र रिस्टोर', 'backup'),
+      ('एप लक', 'app_lock'),
+    ]) {
+      await tester.scrollUntilVisible(
+        find.text(label),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tap(find.text(label));
+      await shot(name);
+      await tap(find.byTooltip('फर्कनुहोस्'));
+    }
   }, skip: _lang != 'ne');
 
   testWidgets('design tour ($_theme)', (tester) async {
@@ -391,7 +440,42 @@ void main() {
       await tester.runAsync(() => Future.delayed(const Duration(seconds: 2)));
     }
 
+    bool found(Finder finder) {
+      try {
+        return finder.evaluate().isNotEmpty;
+      } catch (_) {
+        return false;
+      }
+    }
+
+    // At large text sizes a target can be outside a lazy list and not built
+    // yet: scroll the page down, then up, until it is.
+    Future<void> reveal(Finder finder) async {
+      final page = find
+          .byWidgetPredicate(
+            (w) =>
+                w is Scrollable &&
+                axisDirectionToAxis(w.axisDirection) == Axis.vertical,
+          )
+          .hitTestable();
+      for (final dy in const [-300.0, 300.0]) {
+        for (var i = 0; i < 25 && !found(finder) && found(page); i++) {
+          await tester.drag(page.first, Offset(0, dy));
+          await tester.pumpAndSettle();
+        }
+      }
+    }
+
     Future<void> tap(Finder finder) async {
+      if (!found(finder)) await reveal(finder);
+      // At large text sizes the target may be scrolled off-screen, where a
+      // tap would land on whatever is drawn there instead.
+      final screen = Offset.zero & tester.view.physicalSize;
+      final at = tester.getCenter(finder.first) * tester.view.devicePixelRatio;
+      if (!screen.deflate(60).contains(at)) {
+        await tester.ensureVisible(finder);
+        await tester.pumpAndSettle();
+      }
       await tester.tap(finder);
       await tester.pumpAndSettle();
     }
@@ -407,13 +491,37 @@ void main() {
       await tester.pumpAndSettle();
     }
 
+    Future<void> scrollTo(Finder finder) async {
+      await tester.scrollUntilVisible(
+        finder,
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+    }
+
     await tester.pumpWidget(const PaisaFlowBootstrap());
     await tester.pumpAndSettle();
     await shot('home');
 
-    await tap(find.text('Books').last);
-    await tap(find.byTooltip('Book actions').at(1));
-    await shot('books_menu');
+    await tap(find.byTooltip('Search'));
+    await tester.enterText(find.byType(TextField), 'momo');
+    await shot('search');
+    await back();
+
+    await tap(find.text('Accounts').last);
+    await shot('accounts');
+    await tap(find.byTooltip('Account actions').first);
+    await shot('accounts_menu');
+    await tester.fling(
+      find.byType(Scrollable).first,
+      const Offset(0, 2000),
+      3000,
+    );
+    await tester.pumpAndSettle();
+    await tap(find.byTooltip('Tags'));
+    await shot('tags');
+    await back();
 
     await tap(find.text('Personal').first);
     await shot('detail');
@@ -428,11 +536,7 @@ void main() {
 
     await tap(find.text('Bhatbhateni groceries'));
     await shot('entry_detail');
-    await tester.scrollUntilVisible(
-      find.text('Split this bill with friends'),
-      200,
-      scrollable: find.byType(Scrollable).first,
-    );
+    await scrollTo(find.text('Split this bill with friends'));
     await tap(find.text('Split this bill with friends'));
     await shot('split_from_entry');
     await tap(find.byTooltip('Close'));
@@ -442,12 +546,15 @@ void main() {
     await shot('add_out');
     await tap(find.text('Groceries'));
     await shot('category_sheet');
-    await tap(find.text('Edit list'));
-    await shot('category_manage');
-    await tester.tapAt(const Offset(200, 60));
-    await tester.pumpAndSettle();
-    await tap(find.text('Cash in').first);
-    await shot('add_in');
+    await tap(find.text('Food'));
+    await shot('subcategory_sheet');
+    await tap(find.text('Lunch'));
+    await scrollTo(find.text('Add tag'));
+    await tap(find.text('Add tag'));
+    await shot('tag_picker');
+    await tap(find.text('Done'));
+    await tap(find.text('Transfer').first);
+    await shot('transfer');
     await tap(find.byTooltip('Close'));
 
     await tap(find.byTooltip('Import statement'));
@@ -455,14 +562,29 @@ void main() {
     await back();
     await back();
 
+    await tap(find.text('Home').last);
+    await scrollTo(find.text('See all'));
+    await tap(find.text('See all'));
+    await shot('all_entries');
+    await back();
+
     await tap(find.text('Insights').last);
-    await shot('insights');
+    await shot('insights_flow');
+    await tap(find.text('Pace'));
+    await shot('insights_pace');
+    await tap(find.text('Calendar').last);
+    await shot('insights_calendar');
+    await tap(find.text('Flow'));
+    await scrollTo(find.text('Where it went'));
+    await shot('insights_boxes');
     await tester.scrollUntilVisible(
-      find.text('Where it went'),
-      400,
+      find.text('Customize'),
+      -300,
       scrollable: find.byType(Scrollable).first,
     );
-    await shot('insights_trends');
+    await tap(find.text('Customize'));
+    await shot('customize');
+    await back();
 
     await tap(find.text('Split').last);
     await shot('split_groups');
@@ -471,36 +593,33 @@ void main() {
     await tap(find.text('Groups'));
     await tap(find.text('Pokhara Trip'));
     await shot('group');
-    await tap(find.text('Settle').first);
-    await shot('settle_sheet');
-    await tester.tapAt(const Offset(200, 80));
-    await tester.pumpAndSettle();
     await back();
-    await tap(find.text('Split a bill').first);
-    await tap(find.text('Sita'));
-    await tap(find.text('Bikash'));
-    await tap(find.text('Anu'));
-    await tester.enterText(find.widgetWithText(TextField, '0'), '3600');
-    await tap(find.text('Shares'));
-    await tester.tap(find.bySemanticsLabel('More shares for Sita'));
-    await tester.pumpAndSettle();
-    FocusManager.instance.primaryFocus?.unfocus();
-    await shot('split_bill');
-    await tap(find.byTooltip('Close'));
 
     await tap(find.text('Home').last);
     await tap(find.text('Goals'));
     await shot('goals');
-    await tap(find.text('New goal'));
-    await shot('goal_new');
-    await tap(find.byTooltip('Close'));
     await back();
 
-    await tap(find.byTooltip('Calendar'));
-    await shot('calendar');
-    await back();
-
+    await tester.scrollUntilVisible(
+      find.text('AS'),
+      -300,
+      scrollable: find.byType(Scrollable).first,
+    );
     await tap(find.text('AS'));
     await shot('settings');
+    for (final (label, name) in [
+      ('Categories', 'categories'),
+      ('Tags', 'settings_tags'),
+      ('Templates', 'templates'),
+      ('Budgets', 'budgets'),
+      ('Repeating entries', 'repeating'),
+      ('Backup & restore', 'backup'),
+      ('App lock', 'app_lock'),
+    ]) {
+      await scrollTo(find.text(label));
+      await tap(find.text(label));
+      await shot(name);
+      await back();
+    }
   }, skip: _lang == 'ne');
 }

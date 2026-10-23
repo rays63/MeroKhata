@@ -44,7 +44,7 @@ void main() {
 
     expect(find.text('Add as cash in to Personal'), findsOneWidget);
     expect(find.text('Add as cash in to Nic'), findsOneWidget);
-    expect(find.text('Don’t record in a book'), findsOneWidget);
+    expect(find.text('Don’t record in an account'), findsOneWidget);
     await tester.tap(find.text('Add as cash in to Nic'));
     await tester.pumpAndSettle();
     expect((await choice)?.bookId, 'n');
@@ -60,10 +60,10 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('You don’t have a GBP book yet.'), findsOneWidget);
-    expect(find.text('Create a GBP book'), findsOneWidget);
+    expect(find.text('You don’t have a GBP account yet.'), findsOneWidget);
+    expect(find.text('Create a GBP account'), findsOneWidget);
     expect(find.text('Add as cash out to Personal'), findsNothing);
-    await tester.tap(find.text('Don’t record in a book'));
+    await tester.tap(find.text('Don’t record in an account'));
     await tester.pumpAndSettle();
     final picked = await choice;
     expect(picked, isNotNull);

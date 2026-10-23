@@ -2,7 +2,7 @@
   "@@locale": "en",
   "appName": "Paisa Flow",
   "tabHome": "Home",
-  "tabBooks": "Books",
+  "tabBooks": "Accounts",
   "tabInsights": "Insights",
   "tabSplit": "Split",
   "newEntry": "New entry",
@@ -54,7 +54,7 @@
       }
     }
   },
-  "bookCount": "{count, plural, =1{1 book} other{{count} books}}",
+  "bookCount": "{count, plural, =1{1 account} other{{count} accounts}}",
   "@bookCount": {
     "placeholders": {
       "count": {
@@ -118,8 +118,8 @@
   "settings": "Settings",
   "category": "Category",
   "paymentMode": "Payment mode",
-  "bookCurrency": "Book currency",
-  "book": "Book",
+  "bookCurrency": "Account currency",
+  "book": "Account",
   "editListTitle": "Edit {title} list",
   "@editListTitle": {
     "placeholders": {
@@ -278,7 +278,7 @@
       }
     }
   },
-  "splitNoBookForCurrency": "Add a book in this currency to record settlements.",
+  "splitNoBookForCurrency": "Add an account in this currency to record settlements.",
   "splitAddAsCashIn": "Add as cash in to {book}",
   "@splitAddAsCashIn": {
     "placeholders": {
@@ -396,7 +396,7 @@
   "splitBillHint": "e.g. Thakali dinner",
   "splitTotalPaidByYou": "Total · paid by you",
   "splitBetween": "Split between",
-  "splitLinkedNote": "Linked to the entry you split, so nothing new is recorded in your book.",
+  "splitLinkedNote": "Linked to the entry you split, so nothing new is recorded in your account.",
   "splitDeleteTitle": "Delete “{name}”?",
   "@splitDeleteTitle": {
     "placeholders": {
@@ -405,11 +405,11 @@
       }
     }
   },
-  "splitEntriesStay": "Entries already recorded in your books stay.",
+  "splitEntriesStay": "Entries already recorded in your accounts stay.",
   "splitAllSettled": "All settled",
   "splitSettle": "Settle",
   "splitRecordTitle": "Record this payment",
-  "splitRecordPaidMessage": "You paid {amount}. Pick the book to record it in.",
+  "splitRecordPaidMessage": "You paid {amount}. Pick the account to record it in.",
   "@splitRecordPaidMessage": {
     "placeholders": {
       "amount": {
@@ -417,8 +417,8 @@
       }
     }
   },
-  "splitDontRecord": "Don’t record in a book",
-  "splitNoBookInCurrency": "You don’t have a {currency} book yet.",
+  "splitDontRecord": "Don’t record in an account",
+  "splitNoBookInCurrency": "You don’t have a {currency} account yet.",
   "@splitNoBookInCurrency": {
     "placeholders": {
       "currency": {
@@ -426,7 +426,7 @@
       }
     }
   },
-  "splitCreateBookIn": "Create a {currency} book",
+  "splitCreateBookIn": "Create a {currency} account",
   "@splitCreateBookIn": {
     "placeholders": {
       "currency": {
@@ -445,7 +445,7 @@
       }
     }
   },
-  "splitYourBook": "your book",
+  "splitYourBook": "your account",
   "splitReceivedToast": "{amount} from {name} recorded in {book}",
   "@splitReceivedToast": {
     "placeholders": {
@@ -485,7 +485,7 @@
       }
     }
   },
-  "groupDeleteOpenBody": "Some balances aren’t settled yet. Entries already recorded in your books stay.",
+  "groupDeleteOpenBody": "Some balances aren’t settled yet. Entries already recorded in your accounts stay.",
   "groupDeleted": "Group deleted",
   "groupEdit": "Edit group",
   "groupNameLabel": "Group name",
@@ -533,7 +533,7 @@
     }
   },
   "expenseDeleted": "Expense deleted",
-  "expenseDeletedEntryStays": "Expense deleted · its book entry stays",
+  "expenseDeletedEntryStays": "Expense deleted · its account entry stays",
   "expenseAmountRequired": "Enter an amount greater than zero",
   "expensePickSharers": "Pick who shares this expense",
   "expenseNeedOther": "Add someone besides the payer to split with",
@@ -558,10 +558,10 @@
       }
     }
   },
-  "bookListTitle": "Books",
-  "bookNew": "New book",
-  "bookSearchHint": "Search books",
-  "bookSearchNoMatch": "No books match “{query}”",
+  "bookListTitle": "Accounts",
+  "bookNew": "New account",
+  "bookSearchHint": "Search accounts",
+  "bookSearchNoMatch": "No accounts match “{query}”",
   "@bookSearchNoMatch": {
     "placeholders": {
       "query": {
@@ -577,7 +577,7 @@
       }
     }
   },
-  "bookDeleteEmpty": "This book has no entries.",
+  "bookDeleteEmpty": "This account has no entries.",
   "bookDeleteWithEntries": "{count, plural, =1{Its 1 entry will be deleted too. This can’t be undone.} other{Its {count} entries will be deleted too. This can’t be undone.}}",
   "@bookDeleteWithEntries": {
     "placeholders": {
@@ -594,14 +594,14 @@
       }
     }
   },
-  "bookActions": "Book actions",
-  "bookRename": "Rename",
-  "bookEmptyTitle": "Start your first book",
-  "bookEmptyBody": "One book per purpose — daily spending, your shop, a trip abroad. It takes under a minute.",
+  "bookActions": "Account actions",
+  "bookRename": "Edit account",
+  "bookEmptyTitle": "Add your first account",
+  "bookEmptyBody": "Cash in hand, a NIC Asia account, eSewa or a card. Each one keeps its own balance and currency.",
   "bookEmptyImport": "or import a statement",
-  "bookCurrencyLocked": "Currency is fixed once a book has entries",
-  "bookUntitled": "Untitled book",
-  "bookRenamed": "Book renamed",
+  "bookCurrencyLocked": "Currency is fixed once an account has entries",
+  "bookUntitled": "Untitled account",
+  "bookRenamed": "Account updated",
   "bookCreated": "“{name}” created in {currency}",
   "@bookCreated": {
     "placeholders": {
@@ -613,13 +613,13 @@
       }
     }
   },
-  "bookRenameTitle": "Rename book",
-  "bookNameLabel": "Book name",
-  "bookNameHint": "e.g. Kirana Pasal",
+  "bookRenameTitle": "Edit account",
+  "bookNameLabel": "Account name",
+  "bookNameHint": "e.g. eSewa",
   "bookCurrencyLabel": "Currency",
   "bookOpeningBalance": "Opening balance",
-  "bookCurrencyNote": "A book's currency is fixed once it has entries. Use a separate book for each currency.",
-  "bookCreate": "Create book",
+  "bookCurrencyNote": "An account's currency is fixed once it has entries. Use a separate account for each currency.",
+  "bookCreate": "Create account",
   "ledgerRangeWeek": "Last 7 days",
   "ledgerRangeMonth": "This month",
   "ledgerRangeAll": "All time",
@@ -662,7 +662,7 @@
     }
   },
   "entryDeleteTitle": "Delete this entry?",
-  "entryDeleteBody": "The book balance will be recalculated. This can’t be undone.",
+  "entryDeleteBody": "The account balance will be recalculated. This can’t be undone.",
   "entryDeletedToast": "Entry deleted · balance recalculated",
   "entryReference": "Reference",
   "entryImportedFromLabel": "Imported from",
@@ -702,6 +702,14 @@
   },
   "importNoEntriesXls": "No entries found in {file}. Check it has date, debit and credit columns.",
   "@importNoEntriesXls": {
+    "placeholders": {
+      "file": {
+        "type": "String"
+      }
+    }
+  },
+  "importSummaryReport": "{file} is a summary report (day, category or payment mode totals) with no individual entries. Export an \"All entries\" report to import it.",
+  "@importSummaryReport": {
     "placeholders": {
       "file": {
         "type": "String"
@@ -799,7 +807,7 @@
       }
     }
   },
-  "importOpeningWillSet": "This book is empty, so an opening balance of {opening} will be added. After import it matches the statement’s closing balance of {closing}.",
+  "importOpeningWillSet": "This account is empty, so an opening balance of {opening} will be added. After import it matches the statement’s closing balance of {closing}.",
   "@importOpeningWillSet": {
     "placeholders": {
       "opening": {
@@ -810,7 +818,7 @@
       }
     }
   },
-  "importOpeningWillSetFiles": "This book is empty, so an opening balance of {opening} (from {file}) will be added. Its balance after import will be {balance}.",
+  "importOpeningWillSetFiles": "This account is empty, so an opening balance of {opening} (from {file}) will be added. Its balance after import will be {balance}.",
   "@importOpeningWillSetFiles": {
     "placeholders": {
       "opening": {
@@ -824,7 +832,7 @@
       }
     }
   },
-  "importOpeningInfo": "The statement opens at {opening}. This book already has entries, so its balance isn’t changed.",
+  "importOpeningInfo": "The statement opens at {opening}. This account already has entries, so its balance isn’t changed.",
   "@importOpeningInfo": {
     "placeholders": {
       "opening": {
@@ -857,7 +865,7 @@
       }
     }
   },
-  "importWarnMixedSources": "These files come from different sources ({sources}). All of them will go into this book.",
+  "importWarnMixedSources": "These files come from different sources ({sources}). All of them will go into this account.",
   "@importWarnMixedSources": {
     "placeholders": {
       "sources": {
@@ -898,8 +906,8 @@
       }
     }
   },
-  "importThisBook": "this book",
-  "importBackToBook": "Back to book",
+  "importThisBook": "this account",
+  "importBackToBook": "Back to account",
   "importButton": "{count, plural, =1{Import 1 entry} other{Import {count} entries}}",
   "@importButton": {
     "placeholders": {
@@ -919,8 +927,8 @@
   "importDuplicateBadge": "DUPLICATE",
   "calNoEntries": "No entries on this day.",
   "splashOffline": "Offline-first · your data stays on this phone",
-  "onboardBooksTitle": "All your books, one pocket",
-  "onboardBooksBody": "Keep personal spending, your shop and that trip abroad apart — each book in its own currency.",
+  "onboardBooksTitle": "All your accounts, one pocket",
+  "onboardBooksBody": "Cash, bank, eSewa, a card or a loan — each account in its own currency.",
   "onboardImportTitle": "Import statements, skip the typing",
   "onboardImportBody": "Drop in a PDF or XLS statement. Review it first — duplicates are caught automatically.",
   "onboardGoalsTitle": "Goals and splits that add up",
@@ -991,14 +999,14 @@
       }
     }
   },
-  "setupTitle": "Let's set up your first book",
-  "setupBody": "Books keep money separate — personal, shop, a trip. Each book keeps its own currency.",
+  "setupTitle": "Let's set up your first account",
+  "setupBody": "Accounts keep money separate — cash, bank, eSewa. Each account keeps its own currency.",
   "setupLanguage": "Language",
-  "setupBookName": "Book name",
+  "setupBookName": "Account name",
   "setupBookNameHint": "e.g. Personal",
   "setupCurrency": "Currency",
   "setupOpeningBalance": "Opening balance",
-  "setupSaveFailed": "Couldn’t save your book: {error}",
+  "setupSaveFailed": "Couldn’t save your account: {error}",
   "@setupSaveFailed": {
     "placeholders": {
       "error": {
@@ -1022,13 +1030,13 @@
       }
     }
   },
-  "settingsDefaultCurrency": "Default currency for new books",
+  "settingsDefaultCurrency": "Default currency for new accounts",
   "settingsDefaultCurrencyTitle": "Default currency",
   "settingsExportAll": "Export all data",
   "settingsAppLock": "App lock",
   "settingsSoon": "SOON",
   "settingsStoredTitle": "Stored only on this phone",
-  "settingsStoredBody": "No account, no cloud. Export regularly to keep a backup.",
+  "settingsStoredBody": "No sign-in, no cloud. Make a backup and keep a copy somewhere safe.",
   "goalNoDeadline": "No deadline",
   "goalDeadlineBy": "By {date}",
   "@goalDeadlineBy": {
@@ -1040,7 +1048,7 @@
   },
   "goalNew": "New goal",
   "goalEdit": "Edit goal",
-  "goalSavedAcross": "Saved across all books",
+  "goalSavedAcross": "Saved across all accounts",
   "goalOfTarget": "of {amount}",
   "@goalOfTarget": {
     "placeholders": {
@@ -1099,7 +1107,7 @@
       }
     }
   },
-  "goalDeleteBody": "Linked entries stay in their books; they just stop counting toward this goal.",
+  "goalDeleteBody": "Linked entries stay in their accounts; they just stop counting toward this goal.",
   "goalDeleted": "Goal deleted",
   "goalName": "Goal name",
   "goalNameHint": "e.g. New scooter",
@@ -1145,7 +1153,7 @@
   },
   "reportNet": "Net",
   "insightsTitle": "Insights",
-  "insightsAllBooks": "All {currency} books",
+  "insightsAllBooks": "All {currency} accounts",
   "@insightsAllBooks": {
     "placeholders": {
       "currency": {
@@ -1308,5 +1316,1304 @@
       }
     }
   },
-  "weekdaysTwo": "Su,Mo,Tu,We,Th,Fr,Sa"
+  "weekdaysTwo": "Su,Mo,Tu,We,Th,Fr,Sa",
+  "accountTypeLabel": "Account type",
+  "accountTypeCash": "Cash",
+  "accountTypeBank": "Bank",
+  "accountTypeWallet": "Wallet",
+  "accountTypeCard": "Card",
+  "accountTypeLoan": "Loan",
+  "accountTypeSavings": "Savings",
+  "accountTypeOther": "Other",
+  "accountSetType": "Set type",
+  "accountTypePrompt": "Set a type to group your accounts",
+  "accountTypePromptBody": "{count, plural, =1{1 account is still “Other”.} other{{count} accounts are still “Other”.}} Pick Bank, Wallet, Card… so assets and liabilities add up right.",
+  "@accountTypePromptBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "accountLegacyNote": "This account was made before types existed, so it is “Other” for now.",
+  "accountLiabilityNote": "Counted as a liability. Its balance shows what you owe, and it is taken off your net worth.",
+  "accountAmountOwed": "Amount owed",
+  "accountBalance": "Balance",
+  "accountOutstanding": "Outstanding",
+  "accountCredit": "Credit {amount}",
+  "@accountCredit": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "accountAssets": "Assets",
+  "accountLiabilities": "Liabilities",
+  "accountTotal": "Total",
+  "accountOwed": "Owed",
+  "accountOwedAmount": "Owed {amount}",
+  "@accountOwedAmount": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "homeNetWorth": "Net worth · {currency}",
+  "@homeNetWorth": {
+    "placeholders": {
+      "currency": {
+        "type": "String"
+      }
+    }
+  },
+  "homeAssetsOwed": "Assets {assets} − Owed {owed}",
+  "@homeAssetsOwed": {
+    "placeholders": {
+      "assets": {
+        "type": "String"
+      },
+      "owed": {
+        "type": "String"
+      }
+    }
+  },
+  "homeOtherCurrencies": "Other currencies",
+  "later": "Later",
+  "homeRecentActivity": "Recent activity",
+  "allEntriesTitle": "All entries",
+  "feedIncome": "Income",
+  "feedExpenses": "Expenses",
+  "feedEmptyTitle": "No entries yet",
+  "feedEmptyBody": "Add your first cash in or cash out, or import a bank statement. Everything from every account will show up here.",
+  "feedAddEntry": "Add an entry",
+  "feedMonthEmptyTitle": "Nothing in {month}",
+  "@feedMonthEmptyTitle": {
+    "placeholders": {
+      "month": {
+        "type": "String"
+      }
+    }
+  },
+  "feedMonthEmptyBody": "No entries were recorded in any account this month.",
+  "feedGoToThisMonth": "Go to this month",
+  "feedPreviousMonth": "Previous month",
+  "feedNextMonth": "Next month",
+  "transfer": "Transfer",
+  "transferEditTitle": "Edit transfer",
+  "transferFrom": "From",
+  "transferTo": "To",
+  "transferSwap": "Swap accounts",
+  "transferAmountIn": "Amount · {currency}",
+  "@transferAmountIn": {
+    "placeholders": {
+      "currency": {
+        "type": "String"
+      }
+    }
+  },
+  "transferFee": "Fee",
+  "transferFeeHint": "Recorded as cash out in the From account",
+  "transferNotesHint": "e.g. Load eSewa",
+  "transferExplain": "Transfers move money between your own accounts. They are not counted as income or spending.",
+  "transferCardPay": "Card bill payment",
+  "transferWalletLoad": "Wallet top-up",
+  "transferCashWithdrawal": "Cash withdrawal",
+  "transferLoanRepayment": "Loan repayment",
+  "transferBalanceChange": "{account} {before} → {after}",
+  "@transferBalanceChange": {
+    "placeholders": {
+      "account": {
+        "type": "String"
+      },
+      "before": {
+        "type": "String"
+      },
+      "after": {
+        "type": "String"
+      }
+    }
+  },
+  "transferOwedChange": "{account} · Outstanding {before} → {after}",
+  "@transferOwedChange": {
+    "placeholders": {
+      "account": {
+        "type": "String"
+      },
+      "before": {
+        "type": "String"
+      },
+      "after": {
+        "type": "String"
+      }
+    }
+  },
+  "transferCrossTitle": "Different currencies · {from} → {to}",
+  "@transferCrossTitle": {
+    "placeholders": {
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      }
+    }
+  },
+  "transferCrossBody": "Enter what left one account and what arrived in the other. Nothing is converted for you.",
+  "transferReceived": "Amount received · {currency}",
+  "@transferReceived": {
+    "placeholders": {
+      "currency": {
+        "type": "String"
+      }
+    }
+  },
+  "transferRate": "1 {from} = {rate} {to} · worked out from your amounts",
+  "@transferRate": {
+    "placeholders": {
+      "from": {
+        "type": "String"
+      },
+      "rate": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      }
+    }
+  },
+  "transferRateNeeded": "Both amounts are needed. The rate is worked out for you.",
+  "transferErrorSame": "Pick two different accounts",
+  "transferErrorReceived": "Enter the amount that arrived",
+  "transferNeedTwo": "Add a second account to move money between them.",
+  "transferSaved": "Transfer saved · balances updated",
+  "transferRowTitle": "{from} → {to}",
+  "@transferRowTitle": {
+    "placeholders": {
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      }
+    }
+  },
+  "transferDeletedAccount": "Deleted account",
+  "transferDelete": "Delete transfer",
+  "transferDeleteNote": "Removes it from both accounts, and its fee entry.",
+  "transferDeleteTitle": "Delete this transfer?",
+  "transferDeletedToast": "Transfer deleted · balances recalculated",
+  "transferFeePart": "Part of the transfer {from} → {to}. Deleting this fee keeps the transfer.",
+  "@transferFeePart": {
+    "placeholders": {
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      }
+    }
+  },
+  "transferReceivedShort": "Received",
+  "ledgerTransfers": "TRANSFERS",
+  "historyTransferCreated": "Transfer created",
+  "historyTransferUpdated": "Transfer updated",
+  "importLooksTransferTo": "Looks like a transfer to {account}",
+  "@importLooksTransferTo": {
+    "placeholders": {
+      "account": {
+        "type": "String"
+      }
+    }
+  },
+  "importLooksTransferFrom": "Looks like a transfer from {account}",
+  "@importLooksTransferFrom": {
+    "placeholders": {
+      "account": {
+        "type": "String"
+      }
+    }
+  },
+  "importMakeTransfer": "Make transfer",
+  "importWillTransfer": "Will be saved as a transfer · not income or spending",
+  "importUndo": "Undo",
+  "importAsTransfers": "As transfers",
+  "tags": "Tags",
+  "tagAdd": "Add tag",
+  "tagSearchHint": "Search or create a tag",
+  "tagCreate": "Create #{tag}",
+  "@tagCreate": {
+    "placeholders": {
+      "tag": {
+        "type": "String"
+      }
+    }
+  },
+  "tagUsedBefore": "Used before",
+  "tagNoneYet": "No tags yet. Type one above, like #wedding or #japan-trip.",
+  "tagRemove": "Remove #{tag}",
+  "@tagRemove": {
+    "placeholders": {
+      "tag": {
+        "type": "String"
+      }
+    }
+  },
+  "tagsHint": "A tag says what money was for, across any account. Renaming updates every entry; merging moves entries into another tag.",
+  "tagsEmpty": "No tags yet. Add one here or from the entry form — try #wedding or #japan-trip.",
+  "tagNew": "New tag",
+  "tagOpenSummary": "Open #{tag}",
+  "@tagOpenSummary": {
+    "placeholders": {
+      "tag": {
+        "type": "String"
+      }
+    }
+  },
+  "tagMerge": "Merge #{tag}",
+  "@tagMerge": {
+    "placeholders": {
+      "tag": {
+        "type": "String"
+      }
+    }
+  },
+  "tagDeleteAction": "Delete #{tag}",
+  "@tagDeleteAction": {
+    "placeholders": {
+      "tag": {
+        "type": "String"
+      }
+    }
+  },
+  "tagMergeTitle": "Merge #{tag} into…",
+  "@tagMergeTitle": {
+    "placeholders": {
+      "tag": {
+        "type": "String"
+      }
+    }
+  },
+  "tagMergeBody": "Entries tagged #{tag} move to the tag you pick, and #{tag} is removed.",
+  "@tagMergeBody": {
+    "placeholders": {
+      "tag": {
+        "type": "String"
+      }
+    }
+  },
+  "tagMerged": "#{from} merged into #{to}",
+  "@tagMerged": {
+    "placeholders": {
+      "from": {
+        "type": "String"
+      },
+      "to": {
+        "type": "String"
+      }
+    }
+  },
+  "tagRenamed": "Renamed to #{tag}",
+  "@tagRenamed": {
+    "placeholders": {
+      "tag": {
+        "type": "String"
+      }
+    }
+  },
+  "tagDeleteTitle": "Delete #{tag}?",
+  "@tagDeleteTitle": {
+    "placeholders": {
+      "tag": {
+        "type": "String"
+      }
+    }
+  },
+  "tagDeleteBody": "{count, plural, =0{No entries use it.} =1{It is removed from 1 entry; the entry stays.} other{It is removed from {count} entries; the entries stay.}}",
+  "@tagDeleteBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "tagDeleted": "#{tag} deleted",
+  "@tagDeleted": {
+    "placeholders": {
+      "tag": {
+        "type": "String"
+      }
+    }
+  },
+  "tagSpent": "Spent",
+  "tagReceived": "Received",
+  "tagEmpty": "No entries use this tag yet.",
+  "tagRenameTitle": "Rename #{tag}",
+  "@tagRenameTitle": {
+    "placeholders": {
+      "tag": {
+        "type": "String"
+      }
+    }
+  },
+  "importTagAll": "Tag all {count} rows…",
+  "@importTagAll": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "importTaggedAll": "All rows tagged {tags}",
+  "@importTaggedAll": {
+    "placeholders": {
+      "tags": {
+        "type": "String"
+      }
+    }
+  },
+  "insightsTagsTitle": "Tags",
+  "insightsTagsEmpty": "Tag entries (#wedding, #japan-trip) to see what each plan or event cost.",
+  "insightsTransfersNote": "Transfers between your accounts are left out.",
+  "historyTags": "Tags updated",
+  "clear": "Clear",
+  "search": "Search",
+  "searchHint": "Title, note, amount, reference",
+  "searchRecent": "Recent searches",
+  "searchTip": "Searches every account. Try a shop name, a note, an amount like 5000, or a reference like NEFT-88213.",
+  "searchResults": "{count, plural, =1{1 result} other{{count} results}}",
+  "@searchResults": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "searchNoneTitle": "No results for “{query}”",
+  "@searchNoneTitle": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "searchNoneBody": "Nothing in any account matches. Check the spelling, or search an amount without commas.",
+  "searchClear": "Clear search",
+  "searchClearRecent": "Clear recent searches",
+  "feedFilterAccount": "Account",
+  "feedFilterAccountType": "Account type",
+  "feedFilterKind": "In / out",
+  "feedAllAccounts": "All accounts",
+  "feedAllTypes": "All account types",
+  "feedAllTags": "All tags",
+  "feedEverything": "In, out and transfers",
+  "feedNoMatchBody": "Try another account or category, or clear the filters.",
+  "entrySaveAnother": "Save & add another",
+  "entrySavedKeepGoing": "Saved · fields kept for the next one",
+  "templateStar": "Template",
+  "templateStarHint": "Save as a template",
+  "templateSaved": "Saved as template · {title} · {amount}",
+  "@templateSaved": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      },
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "templateNeedsFields": "Add an amount and a title first",
+  "templates": "Templates",
+  "templatesHint": "Tap ★ on the entry form to save an entry you repeat. Templates appear at the top of the form, one tap to fill.",
+  "templatesManage": "Manage",
+  "templateUse": "Use",
+  "templateDelete": "Delete template {title}",
+  "@templateDelete": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "templateDeleted": "Template deleted",
+  "templatesEmptyTitle": "No templates yet",
+  "templatesEmptyBody": "Fill in an entry like “Momo · Rs 450 · Cafe · Cash” and tap ★ to keep it.",
+  "templatesNewCashOut": "New cash out",
+  "entrySuggestion": "Use “{title}”",
+  "@entrySuggestion": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "backupTitle": "Backup & restore",
+  "backupLast": "Last backup",
+  "backupCreate": "Create backup",
+  "backupRestore": "Restore from backup",
+  "backupIncludes": "Backups include accounts, entries, tags, templates, goals and splits. Keep a copy off this phone — Drive, email or a computer.",
+  "restoreMerge": "Merge (skip duplicates)",
+  "restoreMergeBody": "Adds what is missing. Entries already on this phone stay, duplicates are skipped.",
+  "restoreReplace": "Replace everything",
+  "restoreReplaceBody": "Deletes all data on this phone, then restores the file.",
+  "restoreReplaceWarnTitle": "This cannot be undone",
+  "restoreReplaceWarnBody": "Everything on this phone will be deleted and replaced by the backup.",
+  "restoreUnderstand": "I understand. Delete and replace my data.",
+  "restoreRunning": "Restoring…",
+  "restoreDone": "Restore complete",
+  "restoreContinue": "Continue",
+  "backupNudgeBody": "Your data lives only on this phone. A backup takes 5 seconds.",
+  "backupNow": "Back up now",
+  "restoreFileHas": "What's in this file",
+  "restoreHow": "How should we restore?",
+  "restoreRecommended": "Recommended",
+  "restoreGoHome": "Go to Home",
+  "restoreTryOther": "Pick another file",
+  "restoreRange": "Date range",
+  "restoreCreated": "Created",
+  "restoreVersion": "App version",
+  "restoreErrWrongTitle": "This isn't a Paisa Flow backup",
+  "restoreErrWrongBody": "Pick a file named like “Paisa Flow 2026-10-11.pfbak”, made in Settings → Backup & restore. To add a bank statement, use Import on an account instead.",
+  "restoreErrBadTitle": "This backup is damaged",
+  "restoreErrBadBody": "The file ends early, so nothing was restored. Try another copy of the backup.",
+  "restoreErrNewTitle": "Made with a newer version",
+  "restoreUnchanged": "Your data on this phone was not changed.",
+  "backupProtect": "Protect with password (recommended)",
+  "backupProtectBody": "Anyone who gets the file would need this password to restore it.",
+  "backupPassword": "Backup password",
+  "backupPasswordAgain": "Type it again",
+  "backupPasswordLost": "A forgotten password can’t be recovered — not by us, not by anyone. Write it down somewhere safe.",
+  "backupNoPasswordTitle": "Without a password, the backup is hidden but not truly secure",
+  "backupNoPasswordBody": "The file is encrypted so other apps can’t read it, but anyone with Paisa Flow could restore it.",
+  "backupEncrypted": "Backups are compressed and always encrypted. They can only be opened in Paisa Flow.",
+  "backupPasswordsMatch": "Passwords match",
+  "restoreLockedTitle": "This backup is password-protected",
+  "restoreLockedBody": "Enter the password you set when you made it.",
+  "restoreWrongPassword": "Wrong password. Check caps and try again.",
+  "restoreUnlock": "Unlock backup",
+  "restoreForgotPassword": "Forgot it? Passwords can’t be recovered — try a different backup file.",
+  "backupOnPhone": "On this phone now",
+  "restoreKeepOpen": "Keep Paisa Flow open. This takes a few seconds.",
+  "restoreNotSure": "Not sure? Go back and pick Merge — it never deletes anything.",
+  "backupNudgeTitle": "No backup in {days} days",
+  "@backupNudgeTitle": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "backupNever": "Never",
+  "backupDaysAgo": "{days, plural, =0{Today} =1{Yesterday} other{{days} days ago}}",
+  "@backupDaysAgo": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "tagCount": "{count, plural, =1{1 tag} other{{count} tags}}",
+  "@tagCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "backupCreateProtected": "Create protected backup",
+  "backupSaved": "Backup saved · {file}",
+  "@backupSaved": {
+    "placeholders": {
+      "file": {
+        "type": "String"
+      }
+    }
+  },
+  "backupSaveFailed": "Couldn’t save the backup: {error}",
+  "@backupSaveFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "backupPasswordTooShort": "Use at least 6 characters",
+  "backupPasswordsDiffer": "The passwords don’t match",
+  "backupStrengthWeak": "Weak",
+  "backupStrengthOkay": "Okay",
+  "backupStrengthStrong": "Strong",
+  "backupShowPassword": "Show password",
+  "backupHidePassword": "Hide password",
+  "restoreErrNewBody": "This backup is from Paisa Flow {version}. Update the app from Play Store, then restore again.",
+  "@restoreErrNewBody": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "restoreMergeStat": "Adds {added} · {existing} already here",
+  "@restoreMergeStat": {
+    "placeholders": {
+      "added": {
+        "type": "String"
+      },
+      "existing": {
+        "type": "String"
+      }
+    }
+  },
+  "restoreReplaceStat": "{count, plural, =0{Nothing on this phone is deleted} =1{1 entry on this phone will be deleted} other{{count} entries on this phone will be deleted}}",
+  "@restoreReplaceStat": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "restoreDoneMerge": "{count, plural, =0{Everything in the backup was already here. Nothing was removed.} =1{1 entry added. Nothing on this phone was removed.} other{{count} entries added. Nothing on this phone was removed.}}",
+  "@restoreDoneMerge": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "restoreDoneReplace": "Your data now matches the backup from {date}.",
+  "@restoreDoneReplace": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "restoreStepCheck": "Checking the file",
+  "restoreStepData": "Restoring accounts and entries",
+  "restoreStepBalances": "Recalculating balances",
+  "restoreReading": "Reading the backup…",
+  "restoreAccountsLabel": "Accounts",
+  "restoreEntriesLabel": "Entries",
+  "lockTitle": "App lock",
+  "lockSetPin": "Set a 4-digit PIN",
+  "lockEnterPin": "Enter your PIN",
+  "lockConfirmPin": "Confirm your PIN",
+  "lockBiometrics": "Unlock with fingerprint or face",
+  "lockAfterLabel": "Lock when the app is in the background",
+  "lockImmediately": "Immediately",
+  "lockAfter1": "After 1 minute",
+  "lockAfter5": "After 5 minutes",
+  "lockChangePin": "Change PIN",
+  "lockTurnOff": "Turn off app lock",
+  "lockNoRecoveryTitle": "There is no PIN recovery",
+  "lockNoRecoveryBody": "Your data lives only on this phone. If you forget your PIN you must reinstall Paisa Flow, and only a backup can bring your data back.",
+  "lockIntro": "Keep your accounts private with a PIN, fingerprint or face.",
+  "lockOn": "App lock is on",
+  "lockPinsDiffer": "PINs don't match. Try again.",
+  "lockForgot": "Forgot PIN?",
+  "lockGoToBackup": "Go to Backup & restore",
+  "lockFeaturePin": "4-digit PIN",
+  "lockFeatureBiometrics": "Fingerprint or face unlock",
+  "lockFeatureSwitcher": "Hidden in the app switcher",
+  "lockNow": "Lock now",
+  "lockOffNeedsPin": "There is no PIN recovery. Turning the lock off needs your PIN.",
+  "lockWrongPin": "{left, plural, =1{Wrong PIN · 1 attempt left} other{Wrong PIN · {left} attempts left}}",
+  "@lockWrongPin": {
+    "placeholders": {
+      "left": {
+        "type": "int"
+      }
+    }
+  },
+  "lockTooMany": "Too many attempts · Try again in {seconds}s",
+  "@lockTooMany": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "lockStep": "STEP {step} OF 2",
+  "@lockStep": {
+    "placeholders": {
+      "step": {
+        "type": "int"
+      }
+    }
+  },
+  "lockNewPin": "Enter a new PIN",
+  "lockCurrentPin": "Enter your current PIN",
+  "lockOnToast": "App lock is on",
+  "lockOffToast": "App lock turned off",
+  "lockChangedToast": "PIN changed",
+  "lockBiometricReason": "Unlock Paisa Flow",
+  "lockUseBiometrics": "Use fingerprint or face",
+  "lockDeleteDigit": "Delete digit",
+  "lockStatus": "{method} · {after}",
+  "@lockStatus": {
+    "placeholders": {
+      "method": {
+        "type": "String"
+      },
+      "after": {
+        "type": "String"
+      }
+    }
+  },
+  "lockMethodPin": "PIN",
+  "lockMethodPinBio": "PIN and fingerprint or face",
+  "lockHidden": "Content hidden",
+  "settingsOn": "On",
+  "settingsOff": "Off",
+  "emiTitle": "EMI calculator",
+  "emiEntryBody": "Work out the monthly payment and set a reminder",
+  "emiPrincipal": "Loan amount (principal)",
+  "emiRate": "Interest rate · per year",
+  "emiTenure": "Tenure",
+  "emiTotalInterest": "Total interest",
+  "emiTotalPayable": "Total payable",
+  "emiRepeat": "Repeat as a monthly transfer",
+  "emiRepeatBody": "You’ll get a popup to confirm each EMI. Nothing is added on its own.",
+  "emiNote": "Estimate using the reducing-balance method. Your bank’s figure may differ slightly because of processing fees and rounding.",
+  "repeatLabel": "Repeat",
+  "repeatConfirmEach": "You’ll be asked to confirm each one",
+  "repeatNever": "Never",
+  "repeatDaily": "Every day",
+  "repeatWeekly": "Every week",
+  "repeatMonthly": "Every month",
+  "repeatYearly": "Every year",
+  "repeatSaved": "Saved · repeats {when}",
+  "@repeatSaved": {
+    "placeholders": {
+      "when": {
+        "type": "String"
+      }
+    }
+  },
+  "repeatingTitle": "Repeating entries",
+  "repeatingHint": "These are never added on their own. When one is due, Paisa Flow asks you to confirm it.",
+  "repeatingEmpty": "Nothing repeats yet. Pick Repeat on the entry form, or set up a loan EMI.",
+  "repeatingNext": "Next: {date}",
+  "@repeatingNext": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "repeatingStop": "Stop repeating {title}",
+  "@repeatingStop": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "repeatingStopped": "Stopped repeating",
+  "dueTitle": "{count, plural, =1{1 entry is due} other{{count} entries are due}}",
+  "@dueTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "dueBody": "Ticked ones will be added. Untick anything you didn’t pay.",
+  "dueToday": "Due today",
+  "dueDaysAgo": "{days, plural, =1{Due yesterday} other{Due {days} days ago}}",
+  "@dueDaysAgo": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "dueAdd": "{count, plural, =0{Add nothing} =1{Add 1 entry} other{Add {count} entries}}",
+  "@dueAdd": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "dueSkip": "Skip these",
+  "dueLater": "Ask me later",
+  "dueAdded": "{count, plural, =0{Skipped · they come back next time} =1{1 entry added} other{{count} entries added}}",
+  "@dueAdded": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "dueEdit": "Edit {title} before adding",
+  "@dueEdit": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "dueTick": "Add {title}",
+  "@dueTick": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "emiOutstanding": "{loan} · Outstanding {amount}",
+  "@emiOutstanding": {
+    "placeholders": {
+      "loan": {
+        "type": "String"
+      },
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "emiUseOutstanding": "Use outstanding {amount}",
+  "@emiUseOutstanding": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "emiYears": "years · {months} months",
+  "@emiYears": {
+    "placeholders": {
+      "months": {
+        "type": "int"
+      }
+    }
+  },
+  "emiYearsChip": "{years, plural, =1{1 yr} other{{years} yrs}}",
+  "@emiYearsChip": {
+    "placeholders": {
+      "years": {
+        "type": "int"
+      }
+    }
+  },
+  "emiMonthly": "Monthly EMI · {months} months",
+  "@emiMonthly": {
+    "placeholders": {
+      "months": {
+        "type": "int"
+      }
+    }
+  },
+  "emiMonth": "MONTH",
+  "emiPrincipalCol": "PRINCIPAL",
+  "emiInterestCol": "INTEREST",
+  "emiBalanceCol": "BALANCE",
+  "emiPayFrom": "Pay from · day {day} of each month",
+  "@emiPayFrom": {
+    "placeholders": {
+      "day": {
+        "type": "int"
+      }
+    }
+  },
+  "emiSetUp": "Set up monthly EMI · {amount}",
+  "@emiSetUp": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "emiDone": "Done",
+  "emiSaved": "EMI set up · you’ll confirm each one",
+  "emiErrAmount": "Enter the loan amount",
+  "emiErrTenure": "Enter a tenure of at least 1 month",
+  "emiErrRate": "Enter a yearly rate between 0 and 60%",
+  "emiNoFrom": "Add a bank, cash or wallet account to pay the EMI from.",
+  "historyRepeated": "Added from a repeating entry",
+  "insightsCustomize": "Customize",
+  "chartFlow": "Flow",
+  "chartCalendar": "Calendar",
+  "chartPace": "Pace",
+  "chartShowList": "Show as a list",
+  "chartShowChart": "Show as a chart",
+  "chartsRule": "One currency per chart. Transfers and opening balances are left out.",
+  "flowTitle": "{month} flow",
+  "@flowTitle": {
+    "placeholders": {
+      "month": {
+        "type": "String"
+      }
+    }
+  },
+  "flowSub": "{income} in · {spent} out",
+  "@flowSub": {
+    "placeholders": {
+      "income": {
+        "type": "String"
+      },
+      "spent": {
+        "type": "String"
+      }
+    }
+  },
+  "flowSaved": "You kept {amount} · {percent}% of what came in",
+  "@flowSaved": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "flowOver": "You spent {amount} more than came in, from your balance",
+  "@flowOver": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "flowEmpty": "Nothing came in or went out in {month}.",
+  "@flowEmpty": {
+    "placeholders": {
+      "month": {
+        "type": "String"
+      }
+    }
+  },
+  "flowIncome": "Income",
+  "flowSpending": "Spending",
+  "flowSavedNode": "Saved",
+  "flowFromBalance": "From balance",
+  "flowOthers": "Others",
+  "paceTitle": "Spending pace",
+  "paceSpentBy": "Spent by {date}",
+  "@paceSpentBy": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "paceProjected": "On track for {amount} this month",
+  "@paceProjected": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "paceThisMonth": "This month",
+  "paceLastMonth": "Last month",
+  "paceProjection": "Projection",
+  "paceBudget": "Budget",
+  "paceMore": "{amount} more than by this day last month",
+  "@paceMore": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "paceLess": "{amount} less than by this day last month",
+  "@paceLess": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "paceSame": "About the same as last month by this day",
+  "paceNoBudget": "No budget set yet. Budgets are coming soon.",
+  "paceEmpty": "No spending in {month} or the month before.",
+  "@paceEmpty": {
+    "placeholders": {
+      "month": {
+        "type": "String"
+      }
+    }
+  },
+  "paceDay": "Day",
+  "calListTitle": "{month} by day",
+  "@calListTitle": {
+    "placeholders": {
+      "month": {
+        "type": "String"
+      }
+    }
+  },
+  "boxesTap": "Tap a box to see that category",
+  "placesTitle": "Top places",
+  "placesSub": "Where you spent most in {month}",
+  "@placesSub": {
+    "placeholders": {
+      "month": {
+        "type": "String"
+      }
+    }
+  },
+  "placesMeta": "{count, plural, =1{1 payment} other{{count} payments}} · {category}",
+  "@placesMeta": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "category": {
+        "type": "String"
+      }
+    }
+  },
+  "placesEmpty": "No spending in {month} yet.",
+  "@placesEmpty": {
+    "placeholders": {
+      "month": {
+        "type": "String"
+      }
+    }
+  },
+  "layoutTitle": "Customize Insights",
+  "layoutIntro": "Reorder the cards with the arrows and hide any you don’t need.",
+  "layoutPinned": "Account and month always stay on top",
+  "layoutReset": "Reset to default",
+  "layoutHidden": "{count, plural, =1{1 card hidden · Customize} other{{count} cards hidden · Customize}}",
+  "@layoutHidden": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "layoutAllHiddenTitle": "All cards are hidden",
+  "layoutAllHiddenBody": "Turn some back on in Customize.",
+  "layoutUp": "Move {card} up",
+  "@layoutUp": {
+    "placeholders": {
+      "card": {
+        "type": "String"
+      }
+    }
+  },
+  "layoutDown": "Move {card} down",
+  "@layoutDown": {
+    "placeholders": {
+      "card": {
+        "type": "String"
+      }
+    }
+  },
+  "layoutShow": "Show {card}",
+  "@layoutShow": {
+    "placeholders": {
+      "card": {
+        "type": "String"
+      }
+    }
+  },
+  "cardCharts": "Flow, calendar and pace",
+  "cardTrends": "Trends",
+  "cardModes": "By payment mode",
+  "catLast6": "Last 6 months",
+  "catAverage": "Average",
+  "catMore": "{amount} more than usual",
+  "@catMore": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "catLess": "{amount} less than usual",
+  "@catLess": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "catUsual": "About usual",
+  "catEntries": "Entries in {month}",
+  "@catEntries": {
+    "placeholders": {
+      "month": {
+        "type": "String"
+      }
+    }
+  },
+  "catNone": "Nothing spent on {category} in {month}.",
+  "@catNone": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      },
+      "month": {
+        "type": "String"
+      }
+    }
+  },
+  "budgetsTitle": "Budgets",
+  "budgetScope": "Budget for",
+  "budgetScopeAll": "All {currency} accounts",
+  "@budgetScopeAll": {
+    "placeholders": {
+      "currency": {
+        "type": "String"
+      }
+    }
+  },
+  "budgetMonth": "{month} · resets on the 1st",
+  "@budgetMonth": {
+    "placeholders": {
+      "month": {
+        "type": "String"
+      }
+    }
+  },
+  "budgetEmptyTitle": "No budgets yet",
+  "budgetEmptyBody": "Set a monthly limit for a category or for everything. You’ll see how much is left as you spend.",
+  "budgetExample": "For example",
+  "budgetFirst": "Set a category budget",
+  "budgetAddOverall": "Set an overall budget",
+  "budgetOverall": "Overall budget",
+  "budgetByCategory": "By category",
+  "budgetAddCategory": "Add a category budget",
+  "budgetLeft": "{amount} left",
+  "@budgetLeft": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "budgetOver": "{amount} over",
+  "@budgetOver": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "budgetOf": "{spent} of {limit}",
+  "@budgetOf": {
+    "placeholders": {
+      "spent": {
+        "type": "String"
+      },
+      "limit": {
+        "type": "String"
+      }
+    }
+  },
+  "budgetAllOk": "Everything is within budget this month.",
+  "budgetNear": "{category} is at {percent}% of its budget",
+  "@budgetNear": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      },
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "budgetOverNote": "{category} is {amount} over budget",
+  "@budgetOverNote": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      },
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "budgetRule": "One currency per budget, never converted. Transfers and opening balances never count. No notifications.",
+  "budgetNoAccountsTitle": "No {currency} accounts",
+  "@budgetNoAccountsTitle": {
+    "placeholders": {
+      "currency": {
+        "type": "String"
+      }
+    }
+  },
+  "budgetNoAccountsBody": "Budgets count spending in accounts of this currency. Add one, or pick another scope.",
+  "budgetAddAccount": "Add an account",
+  "budgetOtherScope": "Pick another",
+  "budgetNew": "New budget",
+  "budgetEdit": "Edit budget",
+  "budgetCategoryLabel": "What it covers",
+  "budgetHas": "Has one",
+  "budgetLimit": "Monthly limit",
+  "budgetErrAmount": "Enter a limit greater than zero",
+  "budgetHint": "You usually spend about {amount}",
+  "@budgetHint": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "budgetHintSub": "Average of the last 3 months",
+  "budgetUseIt": "Use it",
+  "budgetSpentSoFar": "{amount} spent so far this month",
+  "@budgetSpentSoFar": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "budgetNoCarry": "Unused budget doesn’t carry over; each month starts fresh.",
+  "budgetSaved": "Budget saved",
+  "budgetDeleted": "Budget deleted",
+  "budgetDelete": "Delete budget",
+  "budgetBadgeOver": "Over",
+  "paceSetBudget": "Set a budget",
+  "paceWithin": "Within budget · {amount} left",
+  "@paceWithin": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "paceGoingOver": "At this pace you’ll go {amount} over budget",
+  "@paceGoingOver": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "paceOverBudget": "{amount} over budget",
+  "@paceOverBudget": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "paceNoBudgetSet": "No budget set for this scope.",
+  "catBudgetLine": "Budget {amount}",
+  "@catBudgetLine": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "catNoBudget": "No budget for this category.",
+  "subJust": "Just {category}",
+  "@subJust": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      }
+    }
+  },
+  "subNone": "{category} (no subcategory)",
+  "@subNone": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      }
+    }
+  },
+  "subcategories": "Subcategories",
+  "subAdd": "Add a subcategory",
+  "subTitle": "Categories",
+  "subIntro": "Tap a category to manage its subcategories. Renaming updates every entry.",
+  "subCount": "{count, plural, =0{No subcategories} =1{1 subcategory} other{{count} subcategories}}",
+  "@subCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "subNoneTitle": "No subcategories yet",
+  "subNoneBody": "Add one below, like Lunch or Groceries under Food.",
+  "subNewHint": "New subcategory under {category}",
+  "@subNewHint": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      }
+    }
+  },
+  "subDeleteNote": "Deleting a subcategory moves its entries up to {category}.",
+  "@subDeleteNote": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      }
+    }
+  },
+  "subDeleteTitle": "Delete {name}?",
+  "@subDeleteTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "subDeleteBody": "{count, plural, =0{No entries use it.} =1{Its 1 entry moves up to {category}.} other{Its {count} entries move up to {category}.}}",
+  "@subDeleteBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "category": {
+        "type": "String"
+      }
+    }
+  },
+  "subRename": "Rename {name}",
+  "@subRename": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "subMoveUp": "Move {name} up",
+  "@subMoveUp": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "subMoveDown": "Move {name} down",
+  "@subMoveDown": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "subAddFor": "Add a subcategory",
+  "subPickOne": "Pick a subcategory",
+  "subEntryUses": "{count, plural, =1{1 entry} other{{count} entries}}",
+  "@subEntryUses": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "subManageCategories": "Manage categories",
+  "amountInvalid": "Enter a number like 1250 or 1250.50 (one decimal point, up to 2 decimals).",
+  "amountTooLarge": "Amounts can be up to {max}.",
+  "@amountTooLarge": {
+    "placeholders": {
+      "max": {
+        "type": "String"
+      }
+    }
+  }
 }

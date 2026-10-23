@@ -4,6 +4,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../core/format.dart';
 import '../data/app_store.dart';
 import 'category_icons.dart';
+import 'account_type.dart';
 import 'option_sheet.dart';
 import '../l10n/l10n.dart';
 
@@ -16,9 +17,13 @@ Future<String?> pickCategory(
   BuildContext context, {
   String? selected,
   bool manageOnly = false,
+  bool markSubcategories = false,
 }) {
   final store = AppScope.read(context);
   return _pickEditable(
+    hasMore: markSubcategories
+        ? (c) => store.subcategoriesOf(c).isNotEmpty
+        : null,
     context,
     title: context.l10n.category,
     selected: selected,
@@ -29,6 +34,45 @@ Future<String?> pickCategory(
     add: store.addCategory,
     remove: store.removeCategory,
   );
+}
+
+/// Category, then (for one with subcategories) "Just Food" or a
+/// subcategory. Returns (category, subcategory or ''), or null if dismissed.
+Future<(String, String)?> pickCategoryAndSub(
+  BuildContext context, {
+  String? category,
+  String subcategory = '',
+}) async {
+  final store = AppScope.read(context);
+  final l = context.l10n;
+  final picked = await pickCategory(
+    context,
+    selected: category,
+    markSubcategories: true,
+  );
+  if (picked == null || !context.mounted) return null;
+  if (store.subcategoriesOf(picked).isEmpty) return (picked, '');
+  const just = '\u0000just';
+  final sub = await showOptionSheet<String>(
+    context,
+    title: picked,
+    selected: picked == category
+        ? (subcategory.isEmpty ? just : subcategory)
+        : null,
+    options: () => [
+      SheetOption(just, l.subJust(picked), categoryIcon(picked)),
+      for (final s in store.subcategoriesOf(picked))
+        SheetOption(s, s, LucideIcons.cornerDownRight),
+    ],
+    editable: EditableList(
+      items: () => store.subcategoriesOf(picked),
+      onRename: (from, to) => store.renameSubcategory(picked, from, to),
+      onAdd: (name) => store.addSubcategory(picked, name),
+      onRemove: (name) => store.deleteSubcategory(picked, name),
+    ),
+  );
+  if (sub == null) return null;
+  return (picked, sub == just ? '' : sub);
 }
 
 Future<String?> pickPaymentMode(
@@ -60,6 +104,7 @@ Future<String?> _pickEditable(
   required Future<void> Function(String, String) rename,
   required Future<void> Function(String) add,
   required Future<void> Function(String) remove,
+  bool Function(String)? hasMore,
 }) async {
   var current = selected;
   final picked = await showOptionSheet<String>(
@@ -68,7 +113,8 @@ Future<String?> _pickEditable(
     selected: selected,
     startInManage: manageOnly,
     options: () => [
-      for (final item in items()) SheetOption(item, item, icon(item)),
+      for (final item in items())
+        SheetOption(item, item, icon(item), more: hasMore?.call(item) ?? false),
     ],
     editable: EditableList(
       items: items,
@@ -99,7 +145,7 @@ Future<String?> pickCurrency(
   );
 }
 
-/// Book picker; [onlyCurrency] limits it to books in that currency.
+/// Account picker; [onlyCurrency] limits it to books in that currency.
 Future<String?> pickBook(
   BuildContext context, {
   required String selected,
@@ -116,7 +162,7 @@ Future<String?> pickBook(
           SheetOption(
             book.id,
             '${book.name} · ${book.currency}',
-            LucideIcons.bookOpen,
+            accountTypeIcon(book.accountType),
           ),
     ],
   );

@@ -14,6 +14,8 @@ const _categoryIcons = <String, IconData>{
   'Health': LucideIcons.heartPulse,
   'Cellular topup': LucideIcons.smartphone,
   'Cafe': LucideIcons.coffee,
+  'Bank fees': LucideIcons.receiptText,
+  'Transfer': LucideIcons.arrowLeftRight,
   'Opening balance': LucideIcons.wallet,
   'Sales': LucideIcons.store,
   'Stock': LucideIcons.package,

@@ -19,6 +19,46 @@ const itemColors = [
   0xFFE5484D,
 ];
 
+/// What kind of money an account holds. Card and Loan are liabilities: their
+/// balance is what you owe and is taken off net worth.
+enum AccountType {
+  cash,
+  bank,
+  wallet,
+  card,
+  loan,
+  savings,
+  other;
+
+  bool get isLiability => this == card || this == loan;
+
+  static AccountType? fromName(String? name) {
+    for (final type in values) {
+      if (type.name == name) return type;
+    }
+    return null;
+  }
+}
+
+/// A tag as stored: no "#", lower case, words joined by "-"
+/// ("#Japan Trip" → "japan-trip").
+String normalizeTag(String raw) => raw
+    .trim()
+    .replaceFirst(RegExp(r'^#+'), '')
+    .trim()
+    .toLowerCase()
+    .replaceAll(RegExp(r'\s+'), '-');
+
+/// Per-currency account totals. [owed] is positive when money is owed.
+class AccountTotals {
+  const AccountTotals({required this.assets, required this.owed});
+
+  final double assets;
+  final double owed;
+
+  double get net => assets - owed;
+}
+
 class LedgerBook {
   const LedgerBook({
     required this.id,
@@ -28,6 +68,7 @@ class LedgerBook {
     required this.updatedAt,
     this.currency = 'NPR',
     this.colorValue = 0xFF10A65A,
+    this.type,
   });
 
   final String id;
@@ -40,11 +81,19 @@ class LedgerBook {
   final String currency;
   final int colorValue;
 
+  /// Null for accounts made before types existed; they count as Other until
+  /// the user picks one.
+  final AccountType? type;
+
+  AccountType get accountType => type ?? AccountType.other;
+  bool get isLiability => accountType.isLiability;
+
   LedgerBook copyWith({
     String? name,
     String? description,
     DateTime? updatedAt,
     String? currency,
+    AccountType? type,
   }) {
     return LedgerBook(
       id: id,
@@ -54,6 +103,7 @@ class LedgerBook {
       updatedAt: updatedAt ?? this.updatedAt,
       currency: currency ?? this.currency,
       colorValue: colorValue,
+      type: type ?? this.type,
     );
   }
 
@@ -65,6 +115,7 @@ class LedgerBook {
     'updatedAt': updatedAt.toIso8601String(),
     'currency': currency,
     'color': colorValue,
+    if (type != null) 'type': type!.name,
   };
 
   factory LedgerBook.fromJson(Map<String, Object?> json, {int index = 0}) =>
@@ -77,6 +128,7 @@ class LedgerBook {
         currency: json['currency'] as String? ?? 'NPR',
         colorValue:
             json['color'] as int? ?? itemColors[index % itemColors.length],
+        type: AccountType.fromName(json['type'] as String?),
       );
 }
 
@@ -99,6 +151,10 @@ class LedgerTransaction {
     required this.statementBalance,
     required this.sequence,
     required this.importSource,
+    this.transferId,
+    this.transferFee = false,
+    this.tags = const [],
+    this.subcategory = '',
   });
 
   final String id;
@@ -119,7 +175,38 @@ class LedgerTransaction {
   final int sequence;
   final String importSource;
 
+  /// Shared by the two legs of a transfer (cash out of the From account, cash
+  /// in to the To account) and by its fee entry.
+  final String? transferId;
+
+  /// The transfer's fee: a real expense in the From account.
+  final bool transferFee;
+
+  /// What the money was for (#japan-trip), across any account. Stored
+  /// without the "#", as normalized by [normalizeTag].
+  final List<String> tags;
+
+  /// Optional second level under [category] ("Lunch" in Food › Lunch).
+  final String subcategory;
+
+  /// "Food › Lunch", or just "Food".
+  String get categoryLabel => subcategoryLabel(category, subcategory);
+
+  /// One side of a transfer (not its fee).
+  bool get isTransferLeg => transferId != null && !transferFee;
+
+  /// The To side of a transfer; lists that span accounts show only the From
+  /// side so each transfer appears once.
+  bool get isTransferMirror => isTransferLeg && type == TransactionType.cashIn;
+
   double get signedAmount => type == TransactionType.cashIn ? amount : -amount;
+
+  /// Opening balances move a balance but aren't income or spending.
+  bool get isOpeningBalance => category == 'Opening balance';
+
+  /// Whether the entry counts as income or spending in totals and charts.
+  /// Transfers only move money between your own accounts.
+  bool get countsAsFlow => !isOpeningBalance && !isTransferLeg;
 
   LedgerTransaction copyWith({
     String? title,
@@ -136,6 +223,8 @@ class LedgerTransaction {
     double? statementBalance,
     int? sequence,
     String? importSource,
+    List<String>? tags,
+    String? subcategory,
   }) {
     return LedgerTransaction(
       id: id,
@@ -155,6 +244,10 @@ class LedgerTransaction {
       statementBalance: statementBalance ?? this.statementBalance,
       sequence: sequence ?? this.sequence,
       importSource: importSource ?? this.importSource,
+      transferId: transferId,
+      transferFee: transferFee,
+      tags: tags ?? this.tags,
+      subcategory: subcategory ?? this.subcategory,
     );
   }
 
@@ -176,6 +269,10 @@ class LedgerTransaction {
     'statementBalance': statementBalance,
     'sequence': sequence,
     'importSource': importSource,
+    if (transferId != null) 'transferId': transferId,
+    if (transferFee) 'transferFee': true,
+    if (tags.isNotEmpty) 'tags': tags,
+    if (subcategory.isNotEmpty) 'subcategory': subcategory,
   };
 
   factory LedgerTransaction.fromJson(Map<String, Object?> json) {
@@ -200,8 +297,294 @@ class LedgerTransaction {
       statementBalance: (json['statementBalance'] as num?)?.toDouble(),
       sequence: json['sequence'] as int? ?? 0,
       importSource: json['importSource'] as String? ?? '',
+      transferId: json['transferId'] as String?,
+      transferFee: json['transferFee'] as bool? ?? false,
+      tags: [
+        for (final tag in json['tags'] as List? ?? const [])
+          if (normalizeTag(tag.toString()) case final name when name.isNotEmpty)
+            name,
+      ],
+      subcategory: json['subcategory'] as String? ?? '',
     );
   }
+}
+
+/// "Food › Lunch" (U+203A with a space each side), or just "Food".
+String subcategoryLabel(String category, String subcategory) =>
+    subcategory.isEmpty ? category : '$category › $subcategory';
+
+/// A monthly spending limit: overall (no [category]) or for one category,
+/// over all accounts in a currency or one account. Never converted.
+class Budget {
+  const Budget({
+    required this.id,
+    required this.scope,
+    required this.amount,
+    this.category,
+  });
+
+  final String id;
+
+  /// `currency:NPR` (every NPR account) or `account:<id>`.
+  final String scope;
+
+  /// Null for the overall budget.
+  final String? category;
+  final double amount;
+
+  Budget copyWith({double? amount, String? scope}) => Budget(
+    id: id,
+    scope: scope ?? this.scope,
+    amount: amount ?? this.amount,
+    category: category,
+  );
+
+  Map<String, Object?> toJson() => {
+    'id': id,
+    'scope': scope,
+    'amount': amount,
+    'category': ?category,
+  };
+
+  factory Budget.fromJson(Map<String, Object?> json) => Budget(
+    id: json['id'] as String,
+    scope: json['scope'] as String? ?? 'currency:NPR',
+    amount: (json['amount'] as num? ?? 0).toDouble(),
+    category: json['category'] as String?,
+  );
+}
+
+/// The result of entering an app-lock PIN.
+enum PinCheck { ok, wrong, lockedOut }
+
+/// How often a repeating entry comes due.
+enum Repeat { daily, weekly, monthly, yearly }
+
+/// An entry (or a transfer, e.g. a loan EMI) that comes due on a schedule.
+/// Never added on its own: when it's due the app asks the user to confirm.
+class RecurringEntry {
+  const RecurringEntry({
+    required this.id,
+    required this.repeat,
+    required this.nextDue,
+    required this.title,
+    required this.type,
+    required this.amount,
+    required this.category,
+    required this.paymentMode,
+    required this.bookId,
+    this.toBookId,
+    this.notes = '',
+    this.tags = const [],
+    this.anchorDay,
+    this.subcategory = '',
+  });
+
+  final String id;
+  final Repeat repeat;
+
+  /// The next date it's due (the time of day is kept for the entry).
+  final DateTime nextDue;
+  final String title;
+  final TransactionType type;
+  final double amount;
+  final String category;
+  final String paymentMode;
+
+  /// The account it's recorded in; the From account for a transfer.
+  final String bookId;
+
+  /// Set for a repeating transfer (e.g. NIC → Loan for an EMI).
+  final String? toBookId;
+  final String notes;
+  final List<String> tags;
+
+  /// Day of the month a monthly or yearly repeat keeps to (31 → the last day
+  /// of shorter months).
+  final int? anchorDay;
+  final String subcategory;
+
+  bool get isTransfer => toBookId != null;
+
+  /// The due date after [from].
+  DateTime following(DateTime from) {
+    DateTime monthly(int months) {
+      final first = DateTime(from.year, from.month + months);
+      final last = DateTime(first.year, first.month + 1, 0).day;
+      final day = (anchorDay ?? from.day).clamp(1, last);
+      return DateTime(first.year, first.month, day, from.hour, from.minute);
+    }
+
+    return switch (repeat) {
+      Repeat.daily => DateTime(
+        from.year,
+        from.month,
+        from.day + 1,
+        from.hour,
+        from.minute,
+      ),
+      Repeat.weekly => DateTime(
+        from.year,
+        from.month,
+        from.day + 7,
+        from.hour,
+        from.minute,
+      ),
+      Repeat.monthly => monthly(1),
+      Repeat.yearly => monthly(12),
+    };
+  }
+
+  /// Due dates on or before [now], oldest first (at most [limit]).
+  List<DateTime> dueBy(DateTime now, {int limit = 12}) {
+    final out = <DateTime>[];
+    var at = nextDue;
+    while (!at.isAfter(now) && out.length < limit) {
+      out.add(at);
+      at = following(at);
+    }
+    return out;
+  }
+
+  RecurringEntry copyWith({DateTime? nextDue}) => RecurringEntry(
+    id: id,
+    repeat: repeat,
+    nextDue: nextDue ?? this.nextDue,
+    title: title,
+    type: type,
+    amount: amount,
+    category: category,
+    paymentMode: paymentMode,
+    bookId: bookId,
+    toBookId: toBookId,
+    notes: notes,
+    tags: tags,
+    anchorDay: anchorDay,
+    subcategory: subcategory,
+  );
+
+  Map<String, Object?> toJson() => {
+    'id': id,
+    'repeat': repeat.name,
+    'nextDue': nextDue.toIso8601String(),
+    'title': title,
+    'type': type.name,
+    'amount': amount,
+    'category': category,
+    'paymentMode': paymentMode,
+    'bookId': bookId,
+    'toBookId': ?toBookId,
+    if (notes.isNotEmpty) 'notes': notes,
+    if (tags.isNotEmpty) 'tags': tags,
+    'anchorDay': ?anchorDay,
+    if (subcategory.isNotEmpty) 'subcategory': subcategory,
+  };
+
+  factory RecurringEntry.fromJson(Map<String, Object?> json) => RecurringEntry(
+    id: json['id'] as String,
+    repeat: Repeat.values.asNameMap()[json['repeat']] ?? Repeat.monthly,
+    nextDue: DateTime.parse(json['nextDue'] as String),
+    title: json['title'] as String? ?? '',
+    type: json['type'] == 'cashIn'
+        ? TransactionType.cashIn
+        : TransactionType.cashOut,
+    amount: (json['amount'] as num? ?? 0).toDouble(),
+    category: json['category'] as String? ?? '',
+    paymentMode: json['paymentMode'] as String? ?? '',
+    bookId: json['bookId'] as String? ?? '',
+    toBookId: json['toBookId'] as String?,
+    notes: json['notes'] as String? ?? '',
+    tags: [for (final tag in json['tags'] as List? ?? const []) '$tag'],
+    anchorDay: json['anchorDay'] as int?,
+    subcategory: json['subcategory'] as String? ?? '',
+  );
+}
+
+/// One due date of a [RecurringEntry], shown in the "due" popup.
+class DueEntry {
+  const DueEntry(this.recurring, this.due);
+
+  final RecurringEntry recurring;
+  final DateTime due;
+}
+
+/// A saved entry the user repeats ("Momo · Rs 450 · Cafe · Cash"); one tap
+/// fills the entry form.
+class EntryTemplate {
+  const EntryTemplate({
+    required this.id,
+    required this.title,
+    required this.type,
+    required this.amount,
+    required this.category,
+    required this.paymentMode,
+    required this.bookId,
+    this.tags = const [],
+    this.subcategory = '',
+  });
+
+  final String id;
+  final String title;
+  final TransactionType type;
+  final double amount;
+  final String category;
+  final String paymentMode;
+  final String bookId;
+  final List<String> tags;
+  final String subcategory;
+
+  EntryTemplate copyWith({String? title}) => EntryTemplate(
+    id: id,
+    title: title ?? this.title,
+    type: type,
+    amount: amount,
+    category: category,
+    paymentMode: paymentMode,
+    bookId: bookId,
+    tags: tags,
+    subcategory: subcategory,
+  );
+
+  Map<String, Object?> toJson() => {
+    'id': id,
+    'title': title,
+    'type': type.name,
+    'amount': amount,
+    'category': category,
+    'paymentMode': paymentMode,
+    'bookId': bookId,
+    if (tags.isNotEmpty) 'tags': tags,
+    if (subcategory.isNotEmpty) 'subcategory': subcategory,
+  };
+
+  factory EntryTemplate.fromJson(Map<String, Object?> json) => EntryTemplate(
+    id: json['id'] as String,
+    title: json['title'] as String? ?? '',
+    type: json['type'] == 'cashIn'
+        ? TransactionType.cashIn
+        : TransactionType.cashOut,
+    amount: (json['amount'] as num? ?? 0).toDouble(),
+    category: json['category'] as String? ?? '',
+    paymentMode: json['paymentMode'] as String? ?? '',
+    bookId: json['bookId'] as String? ?? '',
+    tags: [for (final tag in json['tags'] as List? ?? const []) '$tag'],
+    subcategory: json['subcategory'] as String? ?? '',
+  );
+}
+
+/// The entries behind one transfer.
+class TransferLegs {
+  const TransferLegs({required this.out, required this.into, this.fee});
+
+  /// Cash out of the From account.
+  final LedgerTransaction out;
+
+  /// Cash in to the To account.
+  final LedgerTransaction into;
+  final LedgerTransaction? fee;
+
+  String get fromId => out.bookId;
+  String get toId => into.bookId;
 }
 
 class SavingsGoal {

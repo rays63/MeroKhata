@@ -182,7 +182,7 @@ class Report {
     final name = book.name
         .replaceAll(RegExp(r'[^\p{L}\p{M}\p{N}_-]+', unicode: true), '_')
         .replaceAll(RegExp(r'^_+|_+$'), '');
-    return '${name.isEmpty ? 'Book' : name}_${type.fileTag}';
+    return '${name.isEmpty ? 'Account' : name}_${type.fileTag}';
   }
 
   String formatAmount(num value) => money(value, currency);

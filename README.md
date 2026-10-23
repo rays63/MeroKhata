@@ -1,6 +1,6 @@
 # Paisa Flow
 
-An offline cashbook and bill-splitting app for Android and iOS, built with Flutter. Track cash in and cash out across books, import bank and wallet statements, split expenses with friends, and see where your money goes. Everything stays on the device: no account, no server, no analytics.
+An offline money app for Android and iOS, built with Flutter. Track cash in, cash out and transfers across your accounts (cash, bank, wallet, card, loan), import bank and wallet statements, set budgets, split expenses with friends, and see where your money goes. Everything stays on the device: no sign-in, no server, no analytics.
 
 Available in English and नेपाली.
 
@@ -9,8 +9,16 @@ Available in English and नेपाली.
 
 ## Features
 
-- **Books:** separate ledgers (personal, business, …), each with its own currency and opening balance, plus a running balance on every entry.
-- **Entries:** cash in and cash out entries with category, payment mode, date, notes and an edit history. Categories and payment modes can be added, renamed and deleted.
+- **Accounts:** Cash, Bank, Wallet, Card, Loan, Savings or Other, each with its own currency, opening balance and a running balance on every entry.
+  - The Accounts tab shows assets, liabilities and total per currency (never converted), grouped by type.
+  - Card and Loan accounts show what is owed.
+  - Home shows net worth.
+- **Entries:**
+  - Cash in, cash out and **transfers** between accounts, with an optional fee and both amounts when the currencies differ.
+  - Each entry has a category and optional subcategory (Food › Lunch), payment mode, date, notes, **tags** (#japan-trip) and an edit history.
+  - Faster entry: title suggestions from past entries, templates (★), and "Save & add another".
+  - **Repeating entries** and a loan **EMI calculator**. Due entries are listed for you to confirm when the app opens; nothing is added on its own.
+- **All entries and search:** one feed across accounts with month totals and filters, and search over titles, notes, amounts, references, tags and subcategories.
 - **Statement import:**
   - Text-based PDF bank statements (NIC Asia, Nabil, Standard Chartered and similar), including password-protected PDFs.
   - Legacy `.xls` / `.xlsx` / `.csv` wallet exports (eSewa).
@@ -21,7 +29,14 @@ Available in English and नेपाली.
   - Bank codes in descriptions become readable titles, such as `QR · Mega Mart Nagaun` or `IPS · Name · Loan Paid` (`lib/data/description_cleaner.dart`). The bank's original text is kept in the entry's notes.
   - Importing into an empty book adds the statement's opening balance, so the book ends at the bank's closing balance.
 - **Split:** groups, shared expenses and one-off bills, with balances per friend and settle-up.
-- **Insights and reports:** spending trends and category breakdowns, and PDF / Excel reports for any date range.
+- **Insights:**
+  - A money **Flow** chart (income → month → categories → saved), a spending calendar, and a **Pace** chart against last month and your budget.
+  - Category boxes with drill-down into 6 months of history, top places, trends and tags.
+  - Cards can be reordered and hidden.
+- **Budgets:** monthly limits overall and per category, for all accounts in a currency or for one account.
+- **Reports:** PDF / Excel reports for any date range.
+- **Backup & restore:** an encrypted `.pfbak` file (AES-256-GCM, with an optional password), restored by merging or replacing.
+- **App lock:** a 4-digit PIN with fingerprint or face unlock, and the app hidden in the app switcher.
 - **Goals:** savings targets with progress.
 - **Personalisation:** light and dark themes, English and Nepali.
 
@@ -33,6 +48,8 @@ Available in English and नेपाली.
 | State | `ChangeNotifier` store exposed through an `InheritedNotifier` (`AppScope`) |
 | Storage | JSON in `shared_preferences` |
 | PDF | `syncfusion_flutter_pdf` (reading), `pdf` + `printing` (export) |
+| Security | `cryptography` (AES-GCM backups, PBKDF2, PIN hash), `local_auth` (biometrics) |
+| Charts | Hand-drawn with `CustomPainter` (Sankey flow, pace line, treemap, bars) |
 | Spreadsheets | `spreadsheet_decoder`, a built-in BIFF8 reader for legacy `.xls`, and a hand-written `.xlsx` writer (`archive`) |
 | Localisation | `flutter_localizations` + gen-l10n (ARB files) |
 | UI | Bundled Nunito and Mukta fonts, Lucide icons |
@@ -45,8 +62,9 @@ lib/
 ├── core/         Formatting (money, dates)
 ├── data/         AppStore, models, statement parsers, reports, export
 ├── features/     One folder per feature
-│   ├── books/  calendar/  entries/  goals/  home/  import/
-│   └── insights/  onboarding/  reports/  settings/  split/
+│   ├── backup/  books/  budgets/  calendar/  emi/  entries/  goals/
+│   ├── home/  import/  insights/  lock/  onboarding/  repeating/
+│   └── reports/  search/  settings/  split/  tags/
 ├── l10n/         app_en.arb, app_ne.arb and generated localisations
 ├── theme/        Design tokens (PfColors) and ThemeData
 └── widgets/      Shared UI (buttons, cards, sheets, entry rows)

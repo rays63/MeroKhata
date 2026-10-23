@@ -124,7 +124,7 @@ class _TabBar extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           item(ShellTab.home, LucideIcons.house, context.l10n.tabHome),
-          item(ShellTab.books, LucideIcons.bookOpen, context.l10n.tabBooks),
+          item(ShellTab.books, LucideIcons.walletCards, context.l10n.tabBooks),
           const Spacer(),
           item(
             ShellTab.insights,

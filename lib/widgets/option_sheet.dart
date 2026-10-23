@@ -7,11 +7,14 @@ import '../l10n/l10n.dart';
 
 /// One choice in an [showOptionSheet].
 class SheetOption<T> {
-  const SheetOption(this.value, this.label, this.icon);
+  const SheetOption(this.value, this.label, this.icon, {this.more = false});
 
   final T value;
   final String label;
   final IconData icon;
+
+  /// Shows a "›": picking it opens a further list (e.g. subcategories).
+  final bool more;
 }
 
 /// Callbacks that make a sheet's list editable ("Edit list").
@@ -152,6 +155,7 @@ class _OptionSheetState<T> extends State<_OptionSheet<T>> {
                   _OptionRow(
                     label: option.label,
                     icon: option.icon,
+                    more: option.more,
                     selected: option.value == widget.selected,
                     onTap: () => Navigator.pop(context, option.value),
                   )
@@ -236,11 +240,13 @@ class _OptionRow extends StatelessWidget {
     required this.icon,
     required this.selected,
     required this.onTap,
+    this.more = false,
   });
 
   final String label;
   final IconData icon;
   final bool selected;
+  final bool more;
   final VoidCallback onTap;
 
   @override
@@ -272,6 +278,10 @@ class _OptionRow extends StatelessWidget {
                     ),
                   ),
                   if (selected) Icon(LucideIcons.check, size: 19, color: fg),
+                  if (more) ...[
+                    const SizedBox(width: 4),
+                    Icon(LucideIcons.chevronRight, size: 18, color: fg),
+                  ],
                 ],
               ),
             ),

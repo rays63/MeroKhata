@@ -89,6 +89,8 @@ class _ImportPickScreenState extends State<ImportPickScreen> {
           } else {
             statements.add(statement);
           }
+        } on SummaryReportException {
+          problems.add(l.importSummaryReport(file.name));
         } catch (exception) {
           problems.add(l.importReadError(file.name, exception.toString()));
         }

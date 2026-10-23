@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../core/amount_input.dart';
 import '../../core/format.dart';
 import '../../data/app_store.dart';
 import '../../data/split.dart';
@@ -160,11 +160,7 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
                             keyboardType: const TextInputType.numberWithOptions(
                               decimal: true,
                             ),
-                            inputFormatters: [
-                              FilteringTextInputFormatter.allow(
-                                RegExp(r'[\d.]'),
-                              ),
-                            ],
+                            inputFormatters: [const AmountInputFormatter()],
                             onChanged: (_) => setState(() {}),
                             style: pfText(30, weight: w900, color: c.ink),
                             decoration: InputDecoration(

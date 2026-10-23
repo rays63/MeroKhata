@@ -10,6 +10,14 @@ import 'package:syncfusion_flutter_pdf/pdf.dart' as sfpdf;
 /// them are skipped when the folder is absent.
 final _statements = Directory('.claude/test statement');
 
+/// Statements from sources without a parser yet (Khalti: build 6) are kept
+/// in the folder for later but left out of these checks.
+const _notSupportedYet = {'khalti.xls'};
+
+bool _isSupportedStatement(File file) =>
+    RegExp(r'\.(pdf|xls)$').hasMatch(file.path) &&
+    !_notSupportedYet.contains(file.uri.pathSegments.last);
+
 File _file(String name) => File('${_statements.path}/$name');
 
 /// Passwords for locked statements, keyed by file name, in
@@ -87,7 +95,7 @@ void main() {
         ? (_statements
               .listSync(recursive: true)
               .whereType<File>()
-              .where((file) => RegExp(r'\.(pdf|xls)$').hasMatch(file.path))
+              .where(_isSupportedStatement)
               .toList()
             ..sort((a, b) => a.path.compareTo(b.path)))
         : <File>[];
@@ -206,7 +214,7 @@ void main() {
       final files = _statements
           .listSync(recursive: true)
           .whereType<File>()
-          .where((file) => RegExp(r'\.(pdf|xls)$').hasMatch(file.path))
+          .where(_isSupportedStatement)
           .where((file) => !_isLocked(file) || _hasPassword(file));
       for (final file in files) {
         final name = file.path.split('test statement/').last;
@@ -245,7 +253,7 @@ void main() {
         _statements
             .listSync(recursive: true)
             .whereType<File>()
-            .where((file) => RegExp(r'\.(pdf|xls)$').hasMatch(file.path))
+            .where(_isSupportedStatement)
             .where((file) => !_isLocked(file) || _hasPassword(file))
             .toList()
           ..sort((a, b) => a.path.compareTo(b.path));

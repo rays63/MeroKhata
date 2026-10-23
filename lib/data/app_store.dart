@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:math';
 
+import 'package:cryptography/cryptography.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -34,6 +35,12 @@ class AppStore extends ChangeNotifier {
   static const _themeKey = 'hissabkitab_theme_mode';
   static const _languageKey = 'paisaflow_language';
   static const _bookFiltersKey = 'paisaflow_book_filters';
+  static const _typePromptLaterKey = 'paisaflow_type_prompt_later';
+  static const _recentSearchesKey = 'paisaflow_recent_searches';
+  static const _lastBackupKey = 'paisaflow_last_backup';
+  static const _backupSnoozeKey = 'paisaflow_backup_snooze';
+  static const _appLockKey = 'paisaflow_app_lock';
+  static const _insightsLayoutKey = 'paisaflow_insights_layout';
 
   /// UI languages: English and Nepali.
   static const languages = ['en', 'ne'];
@@ -63,6 +70,22 @@ class AppStore extends ChangeNotifier {
   final List<SavingsGoal> goals = [];
   final List<TransactionLog> logs = [];
   final List<String> categories = [...defaultCategories];
+
+  /// Entries the user saved with ★ to fill the form in one tap.
+  final List<EntryTemplate> templates = [];
+
+  /// Entries that come due on a schedule (never added without asking).
+  final List<RecurringEntry> recurring = [];
+
+  /// Second-level names under each category (Food → Lunch, Groceries…).
+  final Map<String, List<String>> subcategories = {};
+
+  /// Monthly spending limits.
+  final List<Budget> budgets = [];
+
+  /// Tags the user created, including ones no entry uses yet. Tags on entries
+  /// are always listed too (see [allTags]).
+  final List<String> tags = [];
   final List<String> paymentModes = [...defaultPaymentModes];
   UserProfile profile = const UserProfile();
   final List<Friend> friends = [];
@@ -91,6 +114,18 @@ class AppStore extends ChangeNotifier {
     );
     final savedLanguage = preferences.getString(_languageKey);
     language = languages.contains(savedLanguage) ? savedLanguage! : 'en';
+    typePromptLater = preferences.getBool(_typePromptLaterKey) ?? false;
+    recentSearches
+      ..clear()
+      ..addAll(preferences.getStringList(_recentSearchesKey) ?? const []);
+    lastBackupAt = DateTime.tryParse(
+      preferences.getString(_lastBackupKey) ?? '',
+    );
+    backupSnoozedUntil = DateTime.tryParse(
+      preferences.getString(_backupSnoozeKey) ?? '',
+    );
+    _loadAppLock(preferences.getString(_appLockKey));
+    _loadInsightsLayout(preferences.getString(_insightsLayoutKey));
     _bookFilters.clear();
     try {
       final saved = jsonDecode(preferences.getString(_bookFiltersKey) ?? '{}');
@@ -192,6 +227,22 @@ class AppStore extends ChangeNotifier {
         ..clear()
         ..addAll(list('bills').map(SplitBill.fromJson));
       lastSplitBookId = data['lastSplitBookId'] as String?;
+      templates
+        ..clear()
+        ..addAll(list('templates').map(EntryTemplate.fromJson));
+      recurring
+        ..clear()
+        ..addAll(list('recurring').map(RecurringEntry.fromJson));
+      budgets
+        ..clear()
+        ..addAll(list('budgets').map(Budget.fromJson));
+      subcategories
+        ..clear()
+        ..addAll({
+          for (final MapEntry(:key, :value)
+              in (data['subcategories'] as Map? ?? const {}).entries)
+            key as String: [for (final v in value as List) '$v'],
+        });
       onboarded = data['onboarded'] as bool? ?? true;
       if (books.isEmpty) _seed();
     }
@@ -216,29 +267,42 @@ class AppStore extends ChangeNotifier {
     paymentModes
       ..clear()
       ..addAll(merge('paymentModes', defaultPaymentModes));
+    tags
+      ..clear()
+      ..addAll([
+        for (final tag in data['tags'] as List? ?? const [])
+          if (normalizeTag(tag.toString()) case final name when name.isNotEmpty)
+            name,
+      ]);
   }
 
   Future<void> persist() async {
     final preferences = await SharedPreferences.getInstance();
-    await preferences.setString(
-      _storageKey,
-      jsonEncode({
-        'books': books.map((item) => item.toJson()).toList(),
-        'transactions': transactions.map((item) => item.toJson()).toList(),
-        'goals': goals.map((item) => item.toJson()).toList(),
-        'logs': logs.map((item) => item.toJson()).toList(),
-        'categories': categories,
-        'paymentModes': paymentModes,
-        'profile': profile.toJson(),
-        'defaultCurrency': defaultCurrency,
-        'onboarded': onboarded,
-        'friends': friends.map((item) => item.toJson()).toList(),
-        'groups': groups.map((item) => item.toJson()).toList(),
-        'bills': bills.map((item) => item.toJson()).toList(),
-        'lastSplitBookId': lastSplitBookId,
-      }),
-    );
+    await preferences.setString(_storageKey, jsonEncode(snapshot()));
   }
+
+  /// Everything the app keeps about the user's money, as saved on the phone
+  /// and in backups.
+  Map<String, Object?> snapshot() => {
+    'books': books.map((item) => item.toJson()).toList(),
+    'transactions': transactions.map((item) => item.toJson()).toList(),
+    'goals': goals.map((item) => item.toJson()).toList(),
+    'logs': logs.map((item) => item.toJson()).toList(),
+    'categories': categories,
+    'paymentModes': paymentModes,
+    'tags': tags,
+    'templates': templates.map((item) => item.toJson()).toList(),
+    'recurring': recurring.map((item) => item.toJson()).toList(),
+    'subcategories': subcategories,
+    'budgets': budgets.map((item) => item.toJson()).toList(),
+    'profile': profile.toJson(),
+    'defaultCurrency': defaultCurrency,
+    'onboarded': onboarded,
+    'friends': friends.map((item) => item.toJson()).toList(),
+    'groups': groups.map((item) => item.toJson()).toList(),
+    'bills': bills.map((item) => item.toJson()).toList(),
+    'lastSplitBookId': lastSplitBookId,
+  };
 
   Future<void> _commit() async {
     await persist();
@@ -313,6 +377,7 @@ class AppStore extends ChangeNotifier {
       name: name,
       currency: currency,
       openingBalance: openingBalance,
+      type: AccountType.cash,
     );
   }
 
@@ -330,6 +395,48 @@ class AppStore extends ChangeNotifier {
       if (book.id == id) return book;
     }
     return null;
+  }
+
+  /// Accounts made before types existed (still counted as Other).
+  List<LedgerBook> get untypedBooks =>
+      books.where((book) => book.type == null).toList();
+
+  /// The user tapped "Later" on Home's set-a-type prompt.
+  bool typePromptLater = false;
+
+  Future<void> dismissTypePrompt() async {
+    typePromptLater = true;
+    notifyListeners();
+    final preferences = await SharedPreferences.getInstance();
+    await preferences.setBool(_typePromptLaterKey, true);
+  }
+
+  /// Currencies in use, the default currency first.
+  List<String> get accountCurrencies {
+    final seen = <String>{};
+    for (final book in books) {
+      seen.add(book.currency);
+    }
+    return [
+      if (seen.remove(defaultCurrency)) defaultCurrency,
+      ...seen.toList()..sort(),
+    ];
+  }
+
+  /// Assets, what is owed on Card and Loan accounts, and net worth for one
+  /// currency. Never converted across currencies.
+  AccountTotals totalsFor(String currency) {
+    var assets = 0.0, owed = 0.0;
+    for (final book in books) {
+      if (book.currency != currency) continue;
+      final balance = balanceFor(book.id);
+      if (book.isLiability) {
+        owed -= balance;
+      } else {
+        assets += balance;
+      }
+    }
+    return AccountTotals(assets: assets, owed: owed);
   }
 
   /// Books ordered by most recent activity, as shown on Home and Books.
@@ -354,6 +461,63 @@ class AppStore extends ChangeNotifier {
       });
   }
 
+  /// Searches the user ran, newest first (kept on this phone only).
+  final List<String> recentSearches = [];
+
+  Future<void> addRecentSearch(String query) async {
+    final value = query.trim();
+    if (value.isEmpty) return;
+    recentSearches
+      ..remove(value)
+      ..insert(0, value);
+    if (recentSearches.length > 6) recentSearches.removeLast();
+    notifyListeners();
+    final preferences = await SharedPreferences.getInstance();
+    await preferences.setStringList(_recentSearchesKey, recentSearches);
+  }
+
+  Future<void> clearRecentSearches() async {
+    recentSearches.clear();
+    notifyListeners();
+    final preferences = await SharedPreferences.getInstance();
+    await preferences.remove(_recentSearchesKey);
+  }
+
+  /// Entries across every account matching [query] in the title, notes,
+  /// category, payment mode, reference, tags ("#wedding") or amount
+  /// ("5000"), newest first. A transfer appears once.
+  List<LedgerTransaction> search(String query) {
+    final q = query.trim().toLowerCase();
+    if (q.isEmpty) return const [];
+    final tagQuery = q.startsWith('#') ? normalizeTag(q) : null;
+    final number = double.tryParse(q.replaceAll(',', ''));
+    bool matches(LedgerTransaction e) {
+      if (tagQuery != null) return e.tags.any((t) => t.contains(tagQuery));
+      if (number != null && e.amount == number) return true;
+      return [
+        e.title,
+        e.notes,
+        e.category,
+        e.subcategory,
+        e.paymentMode,
+        e.externalReference,
+        ...e.tags,
+      ].any((field) => field.toLowerCase().contains(q));
+    }
+
+    return [
+      for (final entry in entriesNewestFirst)
+        if (!entry.isTransferMirror && matches(entry)) entry,
+    ];
+  }
+
+  /// Every account's entries, newest first.
+  List<LedgerTransaction> get entriesNewestFirst =>
+      [...transactions]..sort((a, b) {
+        final date = b.occurredAt.compareTo(a.occurredAt);
+        return date == 0 ? b.createdAt.compareTo(a.createdAt) : date;
+      });
+
   LedgerTransaction? transactionById(String id) {
     for (final transaction in transactions) {
       if (transaction.id == id) return transaction;
@@ -375,10 +539,11 @@ class AppStore extends ChangeNotifier {
     String? description,
     String? currency,
     double openingBalance = 0,
+    AccountType? type,
   }) async {
     final now = DateTime.now();
     final index = id == null ? -1 : books.indexWhere((book) => book.id == id);
-    final trimmed = name.trim().isEmpty ? 'Untitled book' : name.trim();
+    final trimmed = name.trim().isEmpty ? 'Untitled account' : name.trim();
     if (index == -1) {
       final book = LedgerBook(
         id: newId('book'),
@@ -388,15 +553,19 @@ class AppStore extends ChangeNotifier {
         updatedAt: now,
         currency: currency ?? defaultCurrency,
         colorValue: itemColors[books.length % itemColors.length],
+        type: type ?? AccountType.other,
       );
       books.add(book);
       if (openingBalance > 0) {
+        // On a Card or Loan the opening amount is what is already owed.
         final opening = LedgerTransaction(
           id: newId('txn'),
           bookId: book.id,
           title: 'Opening balance',
           amount: openingBalance,
-          type: TransactionType.cashIn,
+          type: book.isLiability
+              ? TransactionType.cashOut
+              : TransactionType.cashIn,
           occurredAt: now,
           createdAt: now,
           updatedAt: now,
@@ -423,6 +592,7 @@ class AppStore extends ChangeNotifier {
       description: description?.trim(),
       currency: entryCount(existing.id) == 0 ? currency : null,
       updatedAt: now,
+      type: type,
     );
     await _commit();
     return existing.id;
@@ -431,6 +601,9 @@ class AppStore extends ChangeNotifier {
   Future<void> deleteBook(String id) async {
     books.removeWhere((book) => book.id == id);
     transactions.removeWhere((transaction) => transaction.bookId == id);
+    templates.removeWhere((template) => template.bookId == id);
+    budgets.removeWhere((b) => b.scope == 'account:$id');
+    recurring.removeWhere((r) => r.bookId == id || r.toBookId == id);
     _recalculateGoalProgress();
     await _commit();
     if (_bookFilters.containsKey(id)) await saveBookFilters(id, const {});
@@ -483,6 +656,23 @@ class AppStore extends ChangeNotifier {
     } else {
       list[index] = value;
     }
+    if (category) {
+      final subs = subcategories.remove(from);
+      if (subs != null) {
+        final into = subcategories[value] ??= [];
+        into.addAll(subs.where((s) => !into.contains(s)));
+      }
+      for (var i = 0; i < budgets.length; i++) {
+        if (budgets[i].category == from) {
+          budgets[i] = Budget(
+            id: budgets[i].id,
+            scope: budgets[i].scope,
+            amount: budgets[i].amount,
+            category: value,
+          );
+        }
+      }
+    }
     for (var i = 0; i < transactions.length; i++) {
       final transaction = transactions[i];
       if (category && transaction.category == from) {
@@ -499,6 +689,7 @@ class AppStore extends ChangeNotifier {
   // ---------------------------------------------------------------------------
 
   Future<void> saveTransaction(LedgerTransaction transaction) async {
+    _rememberTags(transaction.tags);
     final index = transactions.indexWhere((item) => item.id == transaction.id);
     if (index == -1) {
       transactions.add(transaction);
@@ -564,12 +755,859 @@ class AppStore extends ChangeNotifier {
       if (a.notes != b.notes) ('Notes updated', 'notes', const <String>[]),
       if ((a.goalId ?? '') != (b.goalId ?? ''))
         ('Goal link updated', 'goal', const <String>[]),
+      if (a.tags.join(',') != b.tags.join(','))
+        ('Tags updated', 'tags', const <String>[]),
     ];
+  }
+
+  // ---------------------------------------------------------------------------
+  // Insights layout
+  // ---------------------------------------------------------------------------
+
+  /// Insights cards in the default order.
+  static const insightsCards = [
+    'charts',
+    'boxes',
+    'places',
+    'trends',
+    'modes',
+    'tags',
+  ];
+
+  /// The user's order of the Insights cards (kept on this phone).
+  List<String> insightsOrder = [...insightsCards];
+  final Set<String> insightsHidden = {};
+
+  void _loadInsightsLayout(String? raw) {
+    insightsOrder = [...insightsCards];
+    insightsHidden.clear();
+    if (raw == null) return;
+    try {
+      final json = (jsonDecode(raw) as Map).cast<String, Object?>();
+      final order = [
+        for (final id in json['order'] as List? ?? const [])
+          if (insightsCards.contains(id)) id as String,
+      ];
+      // Cards added in a later version go at the end.
+      insightsOrder = [
+        ...order,
+        for (final id in insightsCards)
+          if (!order.contains(id)) id,
+      ];
+      insightsHidden.addAll([
+        for (final id in json['hidden'] as List? ?? const [])
+          if (insightsCards.contains(id)) id as String,
+      ]);
+    } catch (_) {}
+  }
+
+  Future<void> saveInsightsLayout(
+    List<String> order,
+    Set<String> hidden,
+  ) async {
+    insightsOrder = [...order];
+    insightsHidden
+      ..clear()
+      ..addAll(hidden);
+    notifyListeners();
+    final preferences = await SharedPreferences.getInstance();
+    await preferences.setString(
+      _insightsLayoutKey,
+      jsonEncode({
+        'order': insightsOrder,
+        'hidden': [...insightsHidden],
+      }),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // App lock
+  // ---------------------------------------------------------------------------
+
+  /// Wrong PINs allowed before a 30-second wait.
+  static const maxPinAttempts = 5;
+  static const pinLockout = Duration(seconds: 30);
+
+  String? _pinSalt;
+  String? _pinHash;
+
+  bool get appLockEnabled => _pinHash != null;
+
+  /// Fingerprint or face unlock, on top of the PIN.
+  bool lockBiometrics = false;
+
+  /// How long the app may sit in the background before it locks again.
+  Duration lockAfter = Duration.zero;
+
+  int failedPinAttempts = 0;
+  DateTime? pinLockedUntil;
+
+  void _loadAppLock(String? raw) {
+    _pinSalt = _pinHash = null;
+    lockBiometrics = false;
+    lockAfter = Duration.zero;
+    failedPinAttempts = 0;
+    pinLockedUntil = null;
+    if (raw == null) return;
+    try {
+      final json = (jsonDecode(raw) as Map).cast<String, Object?>();
+      _pinSalt = json['salt'] as String?;
+      _pinHash = json['hash'] as String?;
+      lockBiometrics = json['biometrics'] == true;
+      lockAfter = Duration(seconds: json['after'] as int? ?? 0);
+      failedPinAttempts = json['failed'] as int? ?? 0;
+      pinLockedUntil = DateTime.tryParse(json['lockedUntil'] as String? ?? '');
+    } catch (_) {
+      // Unreadable settings: stay locked out of nothing, but don't crash.
+    }
+  }
+
+  Future<void> _saveAppLock() async {
+    notifyListeners();
+    final preferences = await SharedPreferences.getInstance();
+    if (_pinHash == null) {
+      await preferences.remove(_appLockKey);
+      return;
+    }
+    await preferences.setString(
+      _appLockKey,
+      jsonEncode({
+        'salt': _pinSalt,
+        'hash': _pinHash,
+        'biometrics': lockBiometrics,
+        'after': lockAfter.inSeconds,
+        'failed': failedPinAttempts,
+        if (pinLockedUntil != null)
+          'lockedUntil': pinLockedUntil!.toIso8601String(),
+      }),
+    );
+  }
+
+  static Future<String> _hashPin(String pin, String salt) async {
+    final hash = await Sha256().hash(utf8.encode('$salt:$pin'));
+    return base64Encode(hash.bytes);
+  }
+
+  /// Turns the lock on (or changes the PIN). Only a salted hash is kept.
+  Future<void> setPin(String pin) async {
+    _pinSalt = base64Encode(SecretKeyData.random(length: 16).bytes);
+    _pinHash = await _hashPin(pin, _pinSalt!);
+    failedPinAttempts = 0;
+    pinLockedUntil = null;
+    await _saveAppLock();
+  }
+
+  /// Checks [pin], counting wrong tries; after [maxPinAttempts] the keypad
+  /// waits [pinLockout]. The count survives restarts.
+  Future<PinCheck> checkPin(String pin, {DateTime? now}) async {
+    final at = now ?? DateTime.now();
+    if (pinLockedUntil != null && at.isBefore(pinLockedUntil!)) {
+      return PinCheck.lockedOut;
+    }
+    if (_pinHash != null && await _hashPin(pin, _pinSalt!) == _pinHash) {
+      failedPinAttempts = 0;
+      pinLockedUntil = null;
+      await _saveAppLock();
+      return PinCheck.ok;
+    }
+    failedPinAttempts++;
+    if (failedPinAttempts >= maxPinAttempts) {
+      failedPinAttempts = 0;
+      pinLockedUntil = at.add(pinLockout);
+      await _saveAppLock();
+      return PinCheck.lockedOut;
+    }
+    await _saveAppLock();
+    return PinCheck.wrong;
+  }
+
+  /// A successful fingerprint or face unlock also clears wrong PIN tries.
+  Future<void> resetPinAttempts() async {
+    failedPinAttempts = 0;
+    pinLockedUntil = null;
+    await _saveAppLock();
+  }
+
+  Future<void> disableAppLock() async {
+    _pinSalt = _pinHash = null;
+    lockBiometrics = false;
+    lockAfter = Duration.zero;
+    await _saveAppLock();
+  }
+
+  Future<void> setLockBiometrics(bool value) async {
+    lockBiometrics = value;
+    await _saveAppLock();
+  }
+
+  Future<void> setLockAfter(Duration value) async {
+    lockAfter = value;
+    await _saveAppLock();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Backup & restore
+  // ---------------------------------------------------------------------------
+
+  /// When the user last made a backup on this phone.
+  DateTime? lastBackupAt;
+
+  /// "Later" on the backup reminder hides it until then.
+  DateTime? backupSnoozedUntil;
+
+  Future<void> recordBackup({DateTime? at}) async {
+    lastBackupAt = at ?? DateTime.now();
+    notifyListeners();
+    final preferences = await SharedPreferences.getInstance();
+    await preferences.setString(
+      _lastBackupKey,
+      lastBackupAt!.toIso8601String(),
+    );
+  }
+
+  Future<void> snoozeBackupReminder({DateTime? now}) async {
+    backupSnoozedUntil = (now ?? DateTime.now()).add(const Duration(days: 7));
+    notifyListeners();
+    final preferences = await SharedPreferences.getInstance();
+    await preferences.setString(
+      _backupSnoozeKey,
+      backupSnoozedUntil!.toIso8601String(),
+    );
+  }
+
+  /// Days without a backup once that reaches 30 (counting from the oldest
+  /// entry when there has never been one), or null when no reminder is due.
+  int? backupReminderDays({DateTime? now}) {
+    final today = now ?? DateTime.now();
+    if (backupSnoozedUntil != null && today.isBefore(backupSnoozedUntil!)) {
+      return null;
+    }
+    final since =
+        lastBackupAt ??
+        transactions
+            .map((e) => e.createdAt)
+            .fold<DateTime?>(
+              null,
+              (oldest, d) => oldest == null || d.isBefore(oldest) ? d : oldest,
+            );
+    if (since == null) return null;
+    final days = today.difference(since).inDays;
+    return days >= 30 ? days : null;
+  }
+
+  /// Reads backup [data] into a scratch store so a bad file can't leave this
+  /// one half-restored. Throws if the data can't be read.
+  static AppStore readBackupData(Map<String, Object?> data) =>
+      AppStore().._decode(jsonEncode(data));
+
+  /// What [other] would add to this phone when merged.
+  ({int entries, int alreadyHere}) mergePreview(AppStore other) {
+    final ids = {for (final e in transactions) e.id};
+    final fresh = other.transactions.where((e) => !ids.contains(e.id)).length;
+    return (entries: fresh, alreadyHere: other.transactions.length - fresh);
+  }
+
+  /// Replaces everything on this phone with [other] (a read backup).
+  Future<void> restoreReplace(AppStore other) async {
+    _decode(jsonEncode(other.snapshot()));
+    onboarded = true;
+    _recalculateAll();
+    await _commit();
+  }
+
+  /// Adds what [other] has that this phone doesn't (matched by id); nothing
+  /// here is changed or removed. Returns how many entries were added.
+  Future<int> restoreMerge(AppStore other) async {
+    void addMissing<T>(List<T> into, List<T> from, String Function(T) id) {
+      final have = {for (final item in into) id(item)};
+      into.addAll(from.where((item) => have.add(id(item))));
+    }
+
+    final before = transactions.length;
+    addMissing(books, other.books, (b) => b.id);
+    addMissing(transactions, other.transactions, (e) => e.id);
+    addMissing(goals, other.goals, (g) => g.id);
+    addMissing(logs, other.logs, (g) => g.id);
+    addMissing(templates, other.templates, (t) => t.id);
+    addMissing(recurring, other.recurring, (r) => r.id);
+    addMissing(budgets, other.budgets, (b) => b.id);
+    for (final MapEntry(:key, :value) in other.subcategories.entries) {
+      final into = subcategories[key] ??= [];
+      for (final name in value) {
+        if (!into.contains(name)) into.add(name);
+      }
+    }
+    addMissing(friends, other.friends, (f) => f.id);
+    addMissing(groups, other.groups, (g) => g.id);
+    addMissing(bills, other.bills, (b) => b.id);
+    for (final (into, from) in [
+      (categories, other.categories),
+      (paymentModes, other.paymentModes),
+      (tags, other.tags),
+    ]) {
+      for (final value in from) {
+        if (!into.contains(value)) into.add(value);
+      }
+    }
+    _recalculateAll();
+    await _commit();
+    return transactions.length - before;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Subcategories
+  // ---------------------------------------------------------------------------
+
+  List<String> subcategoriesOf(String category) =>
+      List.unmodifiable(subcategories[category] ?? const []);
+
+  Future<void> addSubcategory(String category, String name) async {
+    final value = name.trim();
+    final list = subcategories[category] ??= [];
+    if (value.isEmpty || list.contains(value)) return;
+    list.add(value);
+    await _commit();
+  }
+
+  /// Renames a subcategory and every entry, template and repeat using it.
+  Future<void> renameSubcategory(
+    String category,
+    String from,
+    String to,
+  ) async {
+    final value = to.trim();
+    final list = subcategories[category];
+    final index = list?.indexOf(from) ?? -1;
+    if (list == null || index == -1 || value.isEmpty || value == from) return;
+    if (list.contains(value)) {
+      list.removeAt(index);
+    } else {
+      list[index] = value;
+    }
+    _replaceSubcategory(category, from, value);
+    await _commit();
+  }
+
+  /// Removes a subcategory; its entries move up to the parent category.
+  Future<void> deleteSubcategory(String category, String name) async {
+    subcategories[category]?.remove(name);
+    _replaceSubcategory(category, name, '');
+    await _commit();
+  }
+
+  Future<void> moveSubcategory(String category, int from, int to) async {
+    final list = subcategories[category];
+    if (list == null || to < 0 || to >= list.length) return;
+    list.insert(to, list.removeAt(from));
+    await _commit();
+  }
+
+  /// How many entries use [category] › [name].
+  int subcategoryCount(String category, String name) => transactions
+      .where((e) => e.category == category && e.subcategory == name)
+      .length;
+
+  void _replaceSubcategory(String category, String from, String to) {
+    for (var i = 0; i < transactions.length; i++) {
+      final e = transactions[i];
+      if (e.category == category && e.subcategory == from) {
+        transactions[i] = e.copyWith(subcategory: to);
+      }
+    }
+    for (var i = 0; i < templates.length; i++) {
+      final t = templates[i];
+      if (t.category == category && t.subcategory == from) {
+        templates[i] = EntryTemplate.fromJson({
+          ...t.toJson(),
+          'subcategory': to,
+        });
+      }
+    }
+    for (var i = 0; i < recurring.length; i++) {
+      final r = recurring[i];
+      if (r.category == category && r.subcategory == from) {
+        recurring[i] = RecurringEntry.fromJson({
+          ...r.toJson(),
+          'subcategory': to,
+        });
+      }
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Budgets
+  // ---------------------------------------------------------------------------
+
+  /// Accounts a budget scope covers.
+  Set<String> scopeAccounts(String scope) {
+    if (scope.startsWith('account:')) {
+      final id = scope.substring('account:'.length);
+      return {if (bookById(id) != null) id};
+    }
+    final currency = scope.substring('currency:'.length);
+    return {
+      for (final b in books)
+        if (b.currency == currency) b.id,
+    };
+  }
+
+  String scopeCurrency(String scope) => scope.startsWith('account:')
+      ? bookById(scope.substring('account:'.length))?.currency ??
+            defaultCurrency
+      : scope.substring('currency:'.length);
+
+  List<Budget> budgetsFor(String scope) =>
+      budgets.where((b) => b.scope == scope).toList();
+
+  Budget? budgetFor(String scope, String? category) => budgets
+      .where((b) => b.scope == scope && b.category == category)
+      .firstOrNull;
+
+  /// Spending against a budget in [month]: cash out in the scope's
+  /// accounts, without transfers or opening balances.
+  double budgetSpent(String scope, String? category, DateTime month) {
+    final ids = scopeAccounts(scope);
+    return transactions
+        .where(
+          (e) =>
+              ids.contains(e.bookId) &&
+              e.countsAsFlow &&
+              e.type == TransactionType.cashOut &&
+              (category == null || e.category == category) &&
+              e.occurredAt.year == month.year &&
+              e.occurredAt.month == month.month,
+        )
+        .fold(0.0, (s, e) => s + e.amount);
+  }
+
+  /// Average monthly spending over the 3 months before [month] (months with
+  /// nothing spent count as zero), as a hint when setting a limit.
+  double budgetHint(String scope, String? category, DateTime month) {
+    var total = 0.0;
+    for (var i = 1; i <= 3; i++) {
+      total += budgetSpent(
+        scope,
+        category,
+        DateTime(month.year, month.month - i),
+      );
+    }
+    return total / 3;
+  }
+
+  /// Adds or updates the budget for [scope] + [category].
+  Future<void> saveBudget({
+    required String scope,
+    String? category,
+    required double amount,
+    String? replacing,
+  }) async {
+    budgets.removeWhere(
+      (b) => b.id == replacing || (b.scope == scope && b.category == category),
+    );
+    budgets.add(
+      Budget(
+        id: newId('bud'),
+        scope: scope,
+        amount: amount,
+        category: category,
+      ),
+    );
+    await _commit();
+  }
+
+  Future<void> deleteBudget(String id) async {
+    budgets.removeWhere((b) => b.id == id);
+    await _commit();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Repeating entries
+  // ---------------------------------------------------------------------------
+
+  /// "Ask me later" hides the due popup until the app is opened again.
+  bool dueAskedLater = false;
+
+  Future<RecurringEntry> addRecurring(RecurringEntry entry) async {
+    final saved = RecurringEntry.fromJson({
+      ...entry.toJson(),
+      'id': newId('rec'),
+    });
+    recurring.add(saved);
+    await _commit();
+    return saved;
+  }
+
+  Future<void> deleteRecurring(String id) async {
+    recurring.removeWhere((r) => r.id == id);
+    await _commit();
+  }
+
+  /// Every due date not yet confirmed or skipped, oldest first.
+  List<DueEntry> dueEntries({DateTime? now}) {
+    final at = now ?? DateTime.now();
+    return [
+      for (final r in recurring)
+        if (bookById(r.bookId) != null &&
+            (r.toBookId == null || bookById(r.toBookId!) != null))
+          for (final due in r.dueBy(at)) DueEntry(r, due),
+    ]..sort((a, b) => a.due.compareTo(b.due));
+  }
+
+  /// Adds the [add] items as entries (dated when they were due) and moves
+  /// every listed repeat past its last shown date; unticked ones are
+  /// skipped and come back next cycle. Returns how many were added.
+  Future<int> confirmDue({
+    required List<DueEntry> shown,
+    required List<DueEntry> add,
+  }) async {
+    for (final item in add) {
+      await _addOccurrence(item);
+    }
+    final last = <String, DateTime>{};
+    for (final item in shown) {
+      final seen = last[item.recurring.id];
+      if (seen == null || item.due.isAfter(seen)) {
+        last[item.recurring.id] = item.due;
+      }
+    }
+    for (var i = 0; i < recurring.length; i++) {
+      final through = last[recurring[i].id];
+      if (through != null) {
+        recurring[i] = recurring[i].copyWith(
+          nextDue: recurring[i].following(through),
+        );
+      }
+    }
+    await _commit();
+    return add.length;
+  }
+
+  /// Marks one due date as handled (the user recorded it from the form).
+  Future<void> markDueHandled(DueEntry item) =>
+      confirmDue(shown: [item], add: const []);
+
+  Future<void> _addOccurrence(DueEntry item) async {
+    final r = item.recurring;
+    if (r.isTransfer) {
+      await saveTransfer(
+        fromId: r.bookId,
+        toId: r.toBookId!,
+        amount: r.amount,
+        when: item.due,
+        notes: r.notes.isEmpty ? r.title : r.notes,
+        tags: r.tags,
+      );
+      return;
+    }
+    final now = DateTime.now();
+    final entry = LedgerTransaction(
+      id: newId('txn'),
+      bookId: r.bookId,
+      title: r.title,
+      amount: r.amount,
+      type: r.type,
+      occurredAt: item.due,
+      createdAt: now,
+      updatedAt: now,
+      category: r.category,
+      paymentMode: r.paymentMode,
+      notes: r.notes,
+      goalId: null,
+      runningBalance: 0,
+      externalReference: '',
+      statementBalance: null,
+      sequence: 0,
+      importSource: '',
+      tags: r.tags,
+      subcategory: r.subcategory,
+    );
+    transactions.add(entry);
+    _addLog(entry.id, 'created', 'Entry created', code: 'repeated');
+    _touchBook(entry.bookId);
+    _recalculateRunningBalance(entry.bookId);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Templates & suggestions
+  // ---------------------------------------------------------------------------
+
+  Future<EntryTemplate> addTemplate(EntryTemplate template) async {
+    final saved = EntryTemplate(
+      id: newId('tpl'),
+      title: template.title.trim(),
+      type: template.type,
+      amount: template.amount,
+      category: template.category,
+      paymentMode: template.paymentMode,
+      bookId: template.bookId,
+      tags: template.tags,
+    );
+    templates.add(saved);
+    await _commit();
+    return saved;
+  }
+
+  Future<void> renameTemplate(String id, String title) async {
+    final index = templates.indexWhere((t) => t.id == id);
+    if (index == -1 || title.trim().isEmpty) return;
+    templates[index] = templates[index].copyWith(title: title.trim());
+    await _commit();
+  }
+
+  Future<void> deleteTemplate(String id) async {
+    templates.removeWhere((t) => t.id == id);
+    await _commit();
+  }
+
+  /// Past entries whose title contains [typed], newest first, one per title:
+  /// picking one fills the form's category, payment mode and tags.
+  List<LedgerTransaction> titleSuggestions(String typed, {int limit = 4}) {
+    final q = typed.trim().toLowerCase();
+    if (q.length < 2) return const [];
+    final seen = <String>{};
+    final found = <LedgerTransaction>[];
+    for (final entry in entriesNewestFirst) {
+      if (entry.transferId != null || !entry.countsAsFlow) continue;
+      final title = entry.title.trim();
+      final key = title.toLowerCase();
+      if (!key.contains(q) || key == q || !seen.add(key)) continue;
+      found.add(entry);
+      if (found.length == limit) break;
+    }
+    return found;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Tags
+  // ---------------------------------------------------------------------------
+
+  /// Every tag, most used first, with how many entries use it. A transfer
+  /// counts once.
+  List<(String, int)> get allTags {
+    final counts = <String, int>{for (final tag in tags) tag: 0};
+    for (final entry in transactions) {
+      if (entry.isTransferMirror) continue;
+      for (final tag in entry.tags) {
+        counts[tag] = (counts[tag] ?? 0) + 1;
+      }
+    }
+    final list = counts.entries.map((e) => (e.key, e.value)).toList()
+      ..sort((a, b) {
+        final byCount = b.$2.compareTo(a.$2);
+        return byCount != 0 ? byCount : a.$1.compareTo(b.$1);
+      });
+    return list;
+  }
+
+  /// Entries with [tag], newest first; a transfer appears once (its From
+  /// side).
+  List<LedgerTransaction> entriesTagged(String tag) => [
+    for (final entry in entriesNewestFirst)
+      if (entry.tags.contains(tag) && !entry.isTransferMirror) entry,
+  ];
+
+  /// Adds a tag to the list; returns its stored name ('' if blank).
+  Future<String> addTag(String raw) async {
+    final name = normalizeTag(raw);
+    if (name.isEmpty || tags.contains(name)) return name;
+    tags.add(name);
+    await _commit();
+    return name;
+  }
+
+  /// Renames [from] everywhere. If [to] already exists the two are merged.
+  Future<void> renameTag(String from, String to) async {
+    final name = normalizeTag(to);
+    if (name.isEmpty || name == from) return;
+    _replaceTag(from, name);
+    await _commit();
+  }
+
+  /// Moves every entry tagged [from] to [into] and removes [from].
+  Future<void> mergeTag(String from, String into) => renameTag(from, into);
+
+  /// Removes [tag] from the list and from every entry; entries stay.
+  Future<void> deleteTag(String tag) async {
+    _replaceTag(tag, null);
+    await _commit();
+  }
+
+  void _replaceTag(String from, String? to) {
+    final index = tags.indexOf(from);
+    tags.remove(from);
+    if (to != null && !tags.contains(to)) {
+      tags.insert(index == -1 ? tags.length : index, to);
+    }
+    for (var i = 0; i < transactions.length; i++) {
+      final entry = transactions[i];
+      if (!entry.tags.contains(from)) continue;
+      transactions[i] = entry.copyWith(
+        tags: {
+          for (final tag in entry.tags) tag == from ? to : tag,
+        }.nonNulls.toList(),
+      );
+    }
+  }
+
+  /// Remembers tags typed on an entry so they're suggested next time.
+  void _rememberTags(Iterable<String> names) {
+    for (final name in names) {
+      if (!tags.contains(name)) tags.add(name);
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Transfers
+  // ---------------------------------------------------------------------------
+
+  /// The entries that make up a transfer, or null if it no longer exists.
+  TransferLegs? transferLegs(String transferId) {
+    LedgerTransaction? out, into, fee;
+    for (final entry in transactions) {
+      if (entry.transferId != transferId) continue;
+      if (entry.transferFee) {
+        fee = entry;
+      } else if (entry.type == TransactionType.cashOut) {
+        out = entry;
+      } else {
+        into = entry;
+      }
+    }
+    if (out == null || into == null) return null;
+    return TransferLegs(out: out, into: into, fee: fee);
+  }
+
+  /// Records (or updates) money moving between two of the user's accounts:
+  /// cash out of [fromId], cash in to [toId] ([toAmount] when the currencies
+  /// differ), and an optional [fee] as a real expense in [fromId].
+  Future<String> saveTransfer({
+    String? transferId,
+    required String fromId,
+    required String toId,
+    required double amount,
+    double? toAmount,
+    double fee = 0,
+    required DateTime when,
+    String notes = '',
+    List<String> tags = const [],
+  }) async {
+    final id = transferId ?? newId('xfer');
+    final previous = transferId == null ? null : transferLegs(transferId);
+    final now = DateTime.now();
+    final from = bookById(fromId);
+    final to = bookById(toId);
+    LedgerTransaction leg(
+      LedgerTransaction? old,
+      String bookId,
+      TransactionType type,
+      double value,
+    ) => LedgerTransaction(
+      id: old?.id ?? newId('txn'),
+      bookId: bookId,
+      title: 'Transfer',
+      amount: value,
+      type: type,
+      occurredAt: when,
+      createdAt: old?.createdAt ?? now,
+      updatedAt: now,
+      category: 'Transfer',
+      paymentMode: '',
+      notes: notes.trim(),
+      goalId: null,
+      runningBalance: 0,
+      externalReference: old?.externalReference ?? '',
+      statementBalance: old?.statementBalance,
+      sequence: old?.sequence ?? 0,
+      importSource: old?.importSource ?? '',
+      transferId: id,
+      tags: tags,
+    );
+    final out = leg(previous?.out, fromId, TransactionType.cashOut, amount);
+    final into = leg(
+      previous?.into,
+      toId,
+      TransactionType.cashIn,
+      toAmount ?? amount,
+    );
+    final touched = {
+      fromId,
+      toId,
+      ?previous?.out.bookId,
+      ?previous?.into.bookId,
+      ?previous?.fee?.bookId,
+    };
+    transactions.removeWhere((entry) => entry.transferId == id);
+    transactions.addAll([out, into]);
+    _rememberTags(tags);
+    if (fee > 0) {
+      // A cash withdrawal's fee is the ATM's; anything else is the transfer's.
+      final atm =
+          from?.accountType == AccountType.bank &&
+          to?.accountType == AccountType.cash;
+      final old = previous?.fee;
+      transactions.add(
+        LedgerTransaction(
+          id: old?.id ?? newId('txn'),
+          bookId: fromId,
+          title: atm ? 'ATM fee' : 'Transfer fee',
+          amount: fee,
+          type: TransactionType.cashOut,
+          occurredAt: when,
+          createdAt: old?.createdAt ?? now,
+          updatedAt: now,
+          category: 'Bank fees',
+          paymentMode: '',
+          notes: '',
+          goalId: null,
+          runningBalance: 0,
+          externalReference: '',
+          statementBalance: null,
+          sequence: 0,
+          importSource: '',
+          transferId: id,
+          transferFee: true,
+        ),
+      );
+      if (!categories.contains('Bank fees')) categories.add('Bank fees');
+    }
+    for (final entry in [out, into]) {
+      _addLog(
+        entry.id,
+        previous == null ? 'created' : 'updated',
+        previous == null ? 'Transfer created' : 'Transfer updated',
+        code: previous == null ? 'transferCreated' : 'transferUpdated',
+      );
+    }
+    for (final bookId in touched) {
+      _touchBook(bookId);
+      _recalculateRunningBalance(bookId);
+    }
+    await _commit();
+    return id;
+  }
+
+  /// Removes both sides of a transfer and its fee.
+  Future<void> deleteTransfer(String transferId) async {
+    final entries = transactions
+        .where((entry) => entry.transferId == transferId)
+        .toList();
+    if (entries.isEmpty) return;
+    transactions.removeWhere((entry) => entry.transferId == transferId);
+    for (final entry in entries) {
+      _addLog(entry.id, 'deleted', 'Entry deleted', code: 'deleted');
+      _touchBook(entry.bookId);
+    }
+    _recalculateAll();
+    await _commit();
   }
 
   Future<void> deleteTransaction(String id) async {
     final transaction = transactionById(id);
     if (transaction == null) return;
+    if (transaction.isTransferLeg) {
+      await deleteTransfer(transaction.transferId!);
+      return;
+    }
     transactions.removeWhere((item) => item.id == id);
     _addLog(id, 'deleted', 'Entry deleted', code: 'deleted');
     _touchBook(transaction.bookId);
@@ -1122,17 +2160,68 @@ class AppStore extends ChangeNotifier {
       preview.importable.isNotEmpty &&
       transactionsForBook(bookId).isEmpty;
 
-  Future<void> commitImport(ImportPreview preview) async {
+  /// Saves an import. [transfers] maps a row's id to the user's other account
+  /// for rows the user turned into transfers in the preview.
+  Future<void> commitImport(
+    ImportPreview preview, {
+    Map<String, String> transfers = const {},
+    List<String> tags = const [],
+  }) async {
+    if (tags.isNotEmpty) {
+      _rememberTags(tags);
+      preview = ImportPreview(
+        source: preview.source,
+        importable: [
+          for (final row in preview.importable)
+            row.copyWith(tags: {...row.tags, ...tags}.toList()),
+        ],
+        duplicates: preview.duplicates,
+        ignored: preview.ignored,
+        openingBalance: preview.openingBalance,
+        closingBalance: preview.closingBalance,
+      );
+    }
     if (preview.importable.isNotEmpty) {
       final bookId = preview.importable.first.bookId;
       if (importSetsOpeningBalance(bookId, preview)) {
         _addImportOpening(bookId, preview);
       }
     }
-    transactions.addAll(preview.importable);
+    final rows = <LedgerTransaction>[];
+    for (final row in preview.importable) {
+      final other = transfers[row.id];
+      if (other == null || bookById(other) == null) {
+        rows.add(row);
+        continue;
+      }
+      // The statement row keeps its reference and balance, so a re-import
+      // still finds it; the other account gets the matching side.
+      final transferId = newId('xfer');
+      rows.add(_asTransferLeg(row, transferId));
+      transactions.add(
+        _asTransferLeg(
+          row,
+          transferId,
+          id: newId('txn'),
+          bookId: other,
+          type: row.type == TransactionType.cashOut
+              ? TransactionType.cashIn
+              : TransactionType.cashOut,
+        ),
+      );
+      _addLog(
+        transactions.last.id,
+        'created',
+        'Transfer created',
+        code: 'transferCreated',
+      );
+      _touchBook(other);
+    }
+    transactions.addAll(rows);
     // Imported rows can name a payment mode (the statement's bank or
     // wallet) the user hasn't added yet; add it so filters can find them.
-    for (final transaction in preview.importable) {
+    for (final transaction in rows) {
+      if (transaction.isTransferLeg) continue;
       final mode = transaction.paymentMode.trim();
       if (mode.isNotEmpty && !paymentModes.contains(mode)) {
         paymentModes.add(mode);
@@ -1143,7 +2232,7 @@ class AppStore extends ChangeNotifier {
         categories.add(category);
       }
     }
-    for (final transaction in preview.importable) {
+    for (final transaction in rows) {
       _addLog(
         transaction.id,
         'imported',
@@ -1156,6 +2245,38 @@ class AppStore extends ChangeNotifier {
     _recalculateAll();
     await persist();
     notifyListeners();
+  }
+
+  LedgerTransaction _asTransferLeg(
+    LedgerTransaction row,
+    String transferId, {
+    String? id,
+    String? bookId,
+    TransactionType? type,
+  }) {
+    final mirror = bookId != null;
+    return LedgerTransaction(
+      id: id ?? row.id,
+      bookId: bookId ?? row.bookId,
+      title: 'Transfer',
+      amount: row.amount,
+      type: type ?? row.type,
+      occurredAt: row.occurredAt,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+      category: 'Transfer',
+      paymentMode: mirror ? '' : row.paymentMode,
+      // The bank's own wording stays on the statement side.
+      notes: mirror ? '' : (row.notes.isEmpty ? row.title : row.notes),
+      goalId: null,
+      runningBalance: 0,
+      externalReference: mirror ? '' : row.externalReference,
+      statementBalance: mirror ? null : row.statementBalance,
+      sequence: mirror ? 0 : row.sequence,
+      importSource: mirror ? '' : row.importSource,
+      transferId: transferId,
+      tags: row.tags,
+    );
   }
 
   /// The statement's opening balance as an "Opening balance" entry (which
@@ -1199,6 +2320,7 @@ class AppStore extends ChangeNotifier {
         description: '',
         createdAt: now,
         updatedAt: now,
+        type: AccountType.cash,
       ),
     );
   }

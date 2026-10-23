@@ -348,9 +348,13 @@ class PfSmallButton extends StatelessWidget {
                 Icon(icon, size: fontSize + 4, color: fg),
                 const SizedBox(width: 6),
               ],
-              Text(
-                label,
-                style: pfText(fontSize, weight: w900, color: fg),
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: pfText(fontSize, weight: w900, color: fg),
+                ),
               ),
             ],
           ),
@@ -612,6 +616,8 @@ class PfBadge extends StatelessWidget {
       ),
       child: Text(
         label,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
         style: pfText(fontSize, weight: w900, color: foreground ?? c.sub),
       ),
     );
@@ -1010,6 +1016,7 @@ class PfPickerRow extends StatelessWidget {
     required this.value,
     required this.onTap,
     this.chevron = true,
+    this.hint,
   });
 
   final IconData icon;
@@ -1017,6 +1024,9 @@ class PfPickerRow extends StatelessWidget {
   final String value;
   final VoidCallback? onTap;
   final bool chevron;
+
+  /// A short green line under the value ("You'll be asked to confirm…").
+  final String? hint;
 
   @override
   Widget build(BuildContext context) {
@@ -1048,6 +1058,11 @@ class PfPickerRow extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
+                  if (hint != null)
+                    Text(
+                      hint!,
+                      style: pfText(11.5, weight: w700, color: c.cashIn),
+                    ),
                 ],
               ),
             ),
@@ -1058,3 +1073,10 @@ class PfPickerRow extends StatelessWidget {
     );
   }
 }
+
+/// A route without a transition, for swapping one form for another in place.
+Route<T> instantRoute<T>(Widget screen) => PageRouteBuilder<T>(
+  pageBuilder: (_, _, _) => screen,
+  transitionDuration: Duration.zero,
+  reverseTransitionDuration: Duration.zero,
+);
