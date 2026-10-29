@@ -6,7 +6,7 @@ import 'package:integration_test/integration_test.dart';
 import 'package:paisa_flow/main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Seeds the sample data used in the Claude Design file and visits each
+/// Seeds the sample data used in the design file and visits each
 /// screen, printing `SHOT:<name>` so a host script can screenshot the
 /// simulator. Run with `--dart-define=THEME=dark` for the dark variants.
 const _theme = String.fromEnvironment('THEME', defaultValue: 'light');

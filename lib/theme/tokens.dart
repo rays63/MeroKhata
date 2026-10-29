@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 /// Paisa Flow design tokens. Values mirror the `TH` table in
-/// "Paisa Flow App.dc.html" (Claude Design), light and dark.
+/// the Paisa Flow design file, light and dark.
 @immutable
 class PfColors extends ThemeExtension<PfColors> {
   const PfColors({
