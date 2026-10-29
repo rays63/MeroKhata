@@ -1,6 +1,6 @@
 # Paisa Flow — store listing assets
 
-Rendered from the Claude Design board ("Paisa Flow Design.dc.html", sections 2 and 11).
+Rendered from the Paisa Flow design board (sections 2 and 11).
 
 ## Icon (`icon/`)
 | File | Use |

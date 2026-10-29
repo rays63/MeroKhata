@@ -8,8 +8,11 @@ import '../../core/format.dart';
 import '../../data/app_store.dart';
 import '../../data/models.dart';
 import '../../theme/tokens.dart';
+import '../../widgets/entry_row.dart';
 import '../../widgets/pf.dart';
 import '../../l10n/l10n.dart';
+import '../backup/backup_screen.dart';
+import '../repeating/due_sheet.dart';
 import '../split/split_bill_screen.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -23,6 +26,8 @@ class HomeScreen extends StatelessWidget {
     return ListView(
       padding: pagePadding,
       children: [
+        // Asks about repeating entries that are due; draws nothing.
+        const DueWatcher(),
         Row(
           children: [
             Expanded(
@@ -43,9 +48,9 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
             PfIconButton(
-              icon: LucideIcons.calendarDays,
-              tooltip: context.l10n.calendar,
-              onPressed: () => openCalendar(context),
+              icon: LucideIcons.search,
+              tooltip: context.l10n.search,
+              onPressed: () => openSearch(context),
             ),
             const SizedBox(width: 10),
             Semantics(
@@ -77,11 +82,19 @@ class HomeScreen extends StatelessWidget {
           const SizedBox(height: 18),
           PfErrorBanner(context.l10n.loadError),
         ],
+        if (store.backupReminderDays() case final days?) ...[
+          const SizedBox(height: 18),
+          _BackupNudge(days: days, store: store),
+        ],
         const SizedBox(height: 18),
         _TotalCard(store: store),
         const SizedBox(height: 18),
         const _QuickActions(),
         const SizedBox(height: 18),
+        if (store.untypedBooks.isNotEmpty && !store.typePromptLater) ...[
+          _TypePrompt(count: store.untypedBooks.length, store: store),
+          const SizedBox(height: 18),
+        ],
         // Same height side by side, whichever card has more content.
         IntrinsicHeight(
           child: Row(
@@ -94,30 +107,7 @@ class HomeScreen extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 18),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.baseline,
-          textBaseline: TextBaseline.alphabetic,
-          children: [
-            Expanded(
-              child: Text(
-                context.l10n.recentlyUpdated,
-                style: pfText(18, weight: w900),
-              ),
-            ),
-            TextButton(
-              onPressed: () => ShellScope.go(context, ShellTab.books),
-              child: Text(
-                context.l10n.seeAll,
-                style: pfText(14, weight: w800, color: c.cashIn),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        for (final book in store.booksByRecent.take(3)) ...[
-          _RecentBookTile(book: book, store: store),
-          const SizedBox(height: 10),
-        ],
+        _RecentActivity(store: store),
         const SizedBox(height: 24),
       ],
     );
@@ -135,12 +125,15 @@ class _TotalCard extends StatelessWidget {
     // Only books in the home currency are summed; others are shown
     // separately and never converted.
     final home = store.defaultCurrency;
-    final nprBooks = store.books.where((book) => book.currency == home);
-    final nprIds = nprBooks.map((book) => book.id).toSet();
+    final nprIds = {
+      for (final book in store.books)
+        if (book.currency == home) book.id,
+    };
     final now = DateTime.now();
     var monthIn = 0.0, monthOut = 0.0;
     for (final entry in store.transactions) {
-      if (!nprIds.contains(entry.bookId) ||
+      if (!entry.countsAsFlow ||
+          !nprIds.contains(entry.bookId) ||
           entry.occurredAt.year != now.year ||
           entry.occurredAt.month != now.month) {
         continue;
@@ -151,9 +144,9 @@ class _TotalCard extends StatelessWidget {
         monthOut += entry.amount;
       }
     }
-    final total = nprIds.fold(0.0, (sum, id) => sum + store.balanceFor(id));
+    final totals = store.totalsFor(home);
     final month = DateFormat('MMM').format(now);
-    final others = store.books.where((book) => book.currency != home);
+    final others = store.accountCurrencies.where((code) => code != home);
     final count = nprIds.length;
 
     return Container(
@@ -182,7 +175,9 @@ class _TotalCard extends StatelessWidget {
                   children: [
                     Expanded(
                       child: Text(
-                        context.l10n.homeTotalBalance(home),
+                        context.l10n.homeNetWorth(home),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: pfText(
                           13,
                           weight: w800,
@@ -190,12 +185,18 @@ class _TotalCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                    PfBadge(
-                      label: context.l10n.bookCount(count),
-                      pill: true,
-                      fontSize: 11,
-                      background: Colors.white.withValues(alpha: .16),
-                      foreground: Colors.white,
+                    Semantics(
+                      button: true,
+                      child: GestureDetector(
+                        onTap: () => ShellScope.go(context, ShellTab.books),
+                        child: PfBadge(
+                          label: context.l10n.bookCount(count),
+                          pill: true,
+                          fontSize: 11,
+                          background: Colors.white.withValues(alpha: .16),
+                          foreground: Colors.white,
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -204,14 +205,23 @@ class _TotalCard extends StatelessWidget {
                   fit: BoxFit.scaleDown,
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    balanceMoney(total, home),
+                    balanceMoney(totals.net, home),
                     style: pfText(
-                      36,
+                      34,
                       weight: w900,
                       color: Colors.white,
                       letterSpacing: -.8,
                     ),
                   ),
+                ),
+                Text(
+                  context.l10n.homeAssetsOwed(
+                    money(totals.assets, home),
+                    money(totals.owed, home),
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: pfText(12.5, weight: w800, color: PfColors.heroLabel),
                 ),
                 const SizedBox(height: 12),
                 Row(
@@ -236,10 +246,19 @@ class _TotalCard extends StatelessWidget {
                 if (others.isNotEmpty) ...[
                   const SizedBox(height: 12),
                   Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
+                    spacing: 6,
+                    runSpacing: 6,
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
-                      for (final book in others)
+                      Text(
+                        context.l10n.homeOtherCurrencies,
+                        style: pfText(
+                          11.5,
+                          weight: w800,
+                          color: PfColors.heroLabel,
+                        ),
+                      ),
+                      for (final code in others)
                         Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 10,
@@ -250,7 +269,7 @@ class _TotalCard extends StatelessWidget {
                             borderRadius: BorderRadius.circular(99),
                           ),
                           child: Text(
-                            '${book.name} · ${balanceMoney(store.balanceFor(book.id), book.currency)}',
+                            balanceMoney(store.totalsFor(code).net, code),
                             style: pfText(
                               12,
                               weight: w800,
@@ -343,11 +362,11 @@ class _QuickActions extends StatelessWidget {
           onTap: () => openNewEntry(context, type: TransactionType.cashOut),
         ),
         _QuickAction(
-          icon: LucideIcons.fileUp,
-          label: context.l10n.import,
+          icon: LucideIcons.arrowLeftRight,
+          label: context.l10n.transfer,
           background: c.blueSoft,
           foreground: c.blue,
-          onTap: () => openImport(context),
+          onTap: () => openNewTransfer(context),
         ),
         _QuickAction(
           icon: LucideIcons.split,
@@ -526,57 +545,214 @@ class _HomeCard extends StatelessWidget {
   }
 }
 
-class _RecentBookTile extends StatelessWidget {
-  const _RecentBookTile({required this.book, required this.store});
+class _TypePrompt extends StatelessWidget {
+  const _TypePrompt({required this.count, required this.store});
 
-  final LedgerBook book;
+  final int count;
   final AppStore store;
 
   @override
   Widget build(BuildContext context) {
     final c = context.pf;
-    final balance = store.balanceFor(book.id);
-    return PfCard(
-      radius: 22,
-      padding: const EdgeInsets.all(14),
-      onTap: () => openBook(context, book.id),
+    final l = context.l10n;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: c.card,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: c.line, width: 1.5),
+      ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          BookAvatar(name: book.name, color: Color(book.colorValue)),
-          const SizedBox(width: 14),
+          PfIconTile(
+            icon: LucideIcons.shapes,
+            background: c.card2,
+            foreground: c.sub,
+            size: 40,
+            iconSize: 19,
+          ),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  book.name,
-                  style: pfText(16, weight: w800),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                  l.accountTypePrompt,
+                  style: pfText(14.5, weight: w900, height: 1.3),
                 ),
+                const SizedBox(height: 3),
                 Text(
-                  context.l10n.updatedLabel(book.updatedAt),
-                  style: pfText(12.5, weight: w700, color: c.sub),
+                  l.accountTypePromptBody(count),
+                  style: pfText(12.5, weight: w700, color: c.sub, height: 1.4),
+                ),
+                const SizedBox(height: 6),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: [
+                    PfSmallButton(
+                      label: l.accountSetType,
+                      height: 36,
+                      radius: 12,
+                      fontSize: 13,
+                      background: c.soft,
+                      foreground: c.cashIn,
+                      onPressed: () => ShellScope.go(context, ShellTab.books),
+                    ),
+                    PfSmallButton(
+                      label: l.later,
+                      height: 36,
+                      radius: 12,
+                      fontSize: 13,
+                      background: Colors.transparent,
+                      foreground: c.sub,
+                      onPressed: store.dismissTypePrompt,
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
+        ],
+      ),
+    );
+  }
+}
+
+/// The latest entries across every account, with "See all".
+class _RecentActivity extends StatelessWidget {
+  const _RecentActivity({required this.store});
+
+  final AppStore store;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.pf;
+    final l = context.l10n;
+    final recent = [
+      for (final entry in store.entriesNewestFirst)
+        if (!entry.isTransferMirror) entry,
+    ].take(6).toList();
+    final manyAccounts = store.books.length > 1;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.baseline,
+          textBaseline: TextBaseline.alphabetic,
+          children: [
+            Expanded(
+              child: Text(
+                l.homeRecentActivity,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: pfText(18, weight: w900),
+              ),
+            ),
+            TextButton(
+              onPressed: () => openAllEntries(context),
+              child: Text(
+                l.seeAll,
+                style: pfText(14, weight: w800, color: c.cashIn),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        if (recent.isEmpty)
+          PfEmptyCard(
+            icon: LucideIcons.notebookPen,
+            title: l.feedEmptyTitle,
+            body: l.feedEmptyBody,
+            actionLabel: l.feedAddEntry,
+            onAction: () =>
+                openNewEntry(context, type: TransactionType.cashOut),
+          )
+        else
+          EntryGroupCard(
             children: [
-              Text(
-                balanceMoney(balance, book.currency),
-                style: pfText(
-                  16,
-                  weight: w900,
-                  color: balance < 0 ? c.cashOut : c.ink,
+              for (final entry in recent)
+                EntryRow(
+                  entry: entry,
+                  currency:
+                      store.bookById(entry.bookId)?.currency ??
+                      store.defaultCurrency,
+                  account: manyAccounts
+                      ? store.bookById(entry.bookId)?.name
+                      : null,
+                  showBalance: false,
+                  onTap: () => openEntry(context, entry.id),
                 ),
-              ),
-              Text(
-                book.currency,
-                style: pfText(11, weight: w800, color: c.sub),
-              ),
             ],
+          ),
+      ],
+    );
+  }
+}
+
+/// Data lives only on this phone; after 30 days without a backup, say so.
+class _BackupNudge extends StatelessWidget {
+  const _BackupNudge({required this.days, required this.store});
+
+  final int days;
+  final AppStore store;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.pf;
+    final l = context.l10n;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: c.goldSoft,
+        borderRadius: BorderRadius.circular(22),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: Icon(LucideIcons.hardDriveDownload, size: 22, color: c.gold),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(l.backupNudgeTitle(days), style: pfText(15, weight: w900)),
+                const SizedBox(height: 4),
+                Text(
+                  l.backupNudgeBody,
+                  style: pfText(13, weight: w700, color: c.sub, height: 1.4),
+                ),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    PfSmallButton(
+                      label: l.backupNow,
+                      height: 38,
+                      radius: 12,
+                      fontSize: 13.5,
+                      onPressed: () => Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const BackupScreen()),
+                      ),
+                    ),
+                    PfSmallButton(
+                      label: l.later,
+                      height: 38,
+                      radius: 12,
+                      fontSize: 13.5,
+                      background: Colors.transparent,
+                      foreground: c.sub,
+                      onPressed: store.snoozeBackupReminder,
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ],
       ),

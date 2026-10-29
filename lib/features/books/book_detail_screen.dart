@@ -8,6 +8,8 @@ import '../../data/models.dart';
 import '../../l10n/l10n.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/category_icons.dart';
+import '../../widgets/entry_kind_toggle.dart';
+import '../emi/emi_screen.dart';
 import '../../widgets/entry_row.dart';
 import '../../widgets/option_sheet.dart';
 import '../../widgets/pf.dart';
@@ -75,7 +77,7 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
   DateRange range = DateRange.all;
   String? category;
   String? mode;
-  TransactionType? type;
+  EntryKind? kind;
 
   @override
   void initState() {
@@ -86,7 +88,8 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
     range = DateRange.values.asNameMap()[saved['range']] ?? DateRange.all;
     category = saved['category'];
     mode = saved['mode'];
-    type = TransactionType.values.asNameMap()[saved['type']];
+    // Saved as 'cashIn' / 'cashOut' before transfers existed; same names.
+    kind = EntryKind.values.asNameMap()[saved['type']];
   }
 
   /// Applies a filter change and remembers it for this book.
@@ -96,15 +99,24 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
       if (range != DateRange.all) 'range': range.name,
       'category': ?category,
       'mode': ?mode,
-      'type': ?type?.name,
+      'type': ?kind?.name,
     });
   }
+
+  bool _matchesKind(LedgerTransaction entry) => switch (kind) {
+    null => true,
+    EntryKind.transfer => entry.isTransferLeg,
+    EntryKind.cashIn =>
+      !entry.isTransferLeg && entry.type == TransactionType.cashIn,
+    EntryKind.cashOut =>
+      !entry.isTransferLeg && entry.type == TransactionType.cashOut,
+  };
 
   void _clearFilters() => _setFilters(() {
     range = DateRange.all;
     category = null;
     mode = null;
-    type = null;
+    kind = null;
   });
 
   Future<void> _pickRange(DateRange current) async {
@@ -205,12 +217,14 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
         if (effectiveRange.contains(entry.occurredAt, now) &&
             (category == null || entry.category == category) &&
             (mode == null || entry.paymentMode == mode) &&
-            (type == null || entry.type == type))
+            _matchesKind(entry))
           entry,
     ];
-    var inflow = 0.0, outflow = 0.0;
+    var inflow = 0.0, outflow = 0.0, transfers = 0.0;
     for (final entry in filtered) {
-      if (entry.type == TransactionType.cashIn) {
+      if (entry.isTransferLeg) {
+        transfers += entry.signedAmount;
+      } else if (entry.type == TransactionType.cashIn) {
         inflow += entry.amount;
       } else {
         outflow += entry.amount;
@@ -260,9 +274,15 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                     balance: balance,
                     inflow: inflow,
                     outflow: outflow,
+                    transfers: transfers,
                     currency: book.currency,
+                    liability: book.isLiability,
                   ),
                   const SizedBox(height: 14),
+                  if (book.accountType == AccountType.loan) ...[
+                    _EmiEntry(bookId: book.id),
+                    const SizedBox(height: 14),
+                  ],
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     clipBehavior: Clip.none,
@@ -292,13 +312,14 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                     ),
                   ),
                   const SizedBox(height: 14),
-                  PfSegment<TransactionType?>(
-                    value: type,
-                    onChanged: (value) => _setFilters(() => type = value),
+                  PfSegment<EntryKind?>(
+                    value: kind,
+                    onChanged: (value) => _setFilters(() => kind = value),
                     items: [
                       (null, l.all, null),
-                      (TransactionType.cashIn, l.cashIn, null),
-                      (TransactionType.cashOut, l.cashOut, null),
+                      (EntryKind.cashIn, l.cashIn, null),
+                      (EntryKind.cashOut, l.cashOut, null),
+                      (EntryKind.transfer, l.transfer, null),
                     ],
                   ),
                   const SizedBox(height: 14),
@@ -384,13 +405,21 @@ class _BalanceHero extends StatelessWidget {
     required this.balance,
     required this.inflow,
     required this.outflow,
+    required this.transfers,
     required this.currency,
+    this.liability = false,
   });
 
   final double balance;
   final double inflow;
   final double outflow;
+
+  /// Net of transfers in and out, kept apart from income and spending.
+  final double transfers;
   final String currency;
+
+  /// Card and Loan accounts show what is owed on a red hero.
+  final bool liability;
 
   @override
   Widget build(BuildContext context) {
@@ -398,7 +427,7 @@ class _BalanceHero extends StatelessWidget {
     final l = context.l10n;
     return Container(
       decoration: BoxDecoration(
-        color: c.hero,
+        color: liability ? PfColors.liabilityHero : c.hero,
         borderRadius: BorderRadius.circular(28),
       ),
       clipBehavior: Clip.antiAlias,
@@ -410,7 +439,12 @@ class _BalanceHero extends StatelessWidget {
             child: Container(
               width: 180,
               height: 180,
-              decoration: BoxDecoration(color: c.hero2, shape: BoxShape.circle),
+              decoration: BoxDecoration(
+                color: liability
+                    ? Colors.white.withValues(alpha: .08)
+                    : c.hero2,
+                shape: BoxShape.circle,
+              ),
             ),
           ),
           Padding(
@@ -419,14 +453,18 @@ class _BalanceHero extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  l.ledgerNetBalance,
+                  liability ? l.accountOutstanding : l.ledgerNetBalance,
                   style: pfText(13, color: PfColors.heroLabel),
                 ),
                 FittedBox(
                   fit: BoxFit.scaleDown,
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    balanceMoney(balance, currency),
+                    !liability
+                        ? balanceMoney(balance, currency)
+                        : balance <= 0
+                        ? money(-balance, currency)
+                        : l.accountCredit(money(balance, currency)),
                     style: pfText(
                       32,
                       weight: w900,
@@ -449,6 +487,11 @@ class _BalanceHero extends StatelessWidget {
                       label: l.ledgerOutflow,
                       labelColor: PfColors.heroOutLabel,
                       value: '− ${money(outflow, currency)}',
+                    ),
+                    _HeroFigure(
+                      label: l.ledgerTransfers,
+                      labelColor: PfColors.heroTransferLabel,
+                      value: signedMoney(transfers, currency),
                     ),
                   ],
                 ),
@@ -594,7 +637,80 @@ class _CashButtons extends StatelessWidget {
               ),
             ),
           ),
+          const SizedBox(width: 10),
+          Tooltip(
+            message: l.transfer,
+            child: Material(
+              color: colors.blueSoft,
+              borderRadius: BorderRadius.circular(18),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(18),
+                onTap: () => openNewTransfer(context, fromId: bookId),
+                child: SizedBox(
+                  width: 54,
+                  height: 54,
+                  child: Icon(
+                    LucideIcons.arrowLeftRight,
+                    size: 20,
+                    color: colors.blue,
+                  ),
+                ),
+              ),
+            ),
+          ),
         ],
+      ),
+    );
+  }
+}
+
+/// "EMI calculator" on a Loan account's ledger.
+class _EmiEntry extends StatelessWidget {
+  const _EmiEntry({required this.bookId});
+
+  final String bookId;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.pf;
+    final l = context.l10n;
+    return Material(
+      color: c.card,
+      borderRadius: BorderRadius.circular(20),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: () => Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => EmiScreen(loanId: bookId))),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          child: Row(
+            children: [
+              PfIconTile(
+                icon: LucideIcons.calculator,
+                background: c.goldSoft,
+                foreground: c.gold,
+                size: 40,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(l.emiTitle, style: pfText(15, weight: w900)),
+                    Text(
+                      l.emiEntryBody,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: pfText(12.5, weight: w700, color: c.sub),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(LucideIcons.chevronRight, color: c.mute),
+            ],
+          ),
+        ),
       ),
     );
   }

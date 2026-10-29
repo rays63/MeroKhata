@@ -6,6 +6,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 
 import '../core/format.dart';
+import 'paisa_report_reader.dart';
 import 'report.dart';
 import 'xlsx_writer.dart';
 
@@ -81,6 +82,11 @@ class ExportService {
     final document = pw.Document(
       title: '${report.book.name} — ${report.type.label}',
       author: report.preparedBy.isEmpty ? 'Paisa Flow' : report.preparedBy,
+      // The entries, readable by Paisa Flow's import (see
+      // PaisaReportReader); summary reports carry none.
+      keywords: report.type == ReportType.all
+          ? PaisaReportReader.encodeForPdf(report.entries.reversed.toList())
+          : null,
       theme: pw.ThemeData.withFont(
         base: regular,
         bold: bold,

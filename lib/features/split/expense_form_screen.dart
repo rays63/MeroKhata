@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
+import '../../core/amount_input.dart';
 import '../../core/format.dart';
 import '../../data/app_store.dart';
 import '../../data/split.dart';
@@ -148,11 +148,7 @@ class _ExpenseFormScreenState extends State<ExpenseFormScreen> {
                             keyboardType: const TextInputType.numberWithOptions(
                               decimal: true,
                             ),
-                            inputFormatters: [
-                              FilteringTextInputFormatter.allow(
-                                RegExp(r'[\d.]'),
-                              ),
-                            ],
+                            inputFormatters: [const AmountInputFormatter()],
                             onChanged: (_) => setState(() => error = null),
                             style: pfText(30, weight: w900, color: c.ink),
                             decoration: InputDecoration(

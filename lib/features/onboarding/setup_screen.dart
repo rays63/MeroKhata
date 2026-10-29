@@ -1,9 +1,9 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../core/amount_input.dart';
 import '../../core/format.dart';
 import '../../data/app_store.dart';
 import '../../l10n/l10n.dart';
@@ -175,9 +175,7 @@ class _SetupScreenState extends State<SetupScreen> {
                                           decimal: true,
                                         ),
                                     inputFormatters: [
-                                      FilteringTextInputFormatter.allow(
-                                        RegExp(r'[\d.]'),
-                                      ),
+                                      const AmountInputFormatter(),
                                     ],
                                     style: pfText(17, color: c.ink),
                                     decoration: InputDecoration(

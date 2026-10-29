@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 import '../data/app_store.dart';
+import '../features/lock/lock_gate.dart';
 import '../features/onboarding/onboarding_screen.dart';
 import '../features/onboarding/splash_screen.dart';
 import '../l10n/l10n.dart';
@@ -76,7 +77,7 @@ class _PaisaFlowBootstrapState extends State<PaisaFlowBootstrap> {
             value: Theme.of(context).brightness == Brightness.dark
                 ? SystemUiOverlayStyle.light
                 : SystemUiOverlayStyle.dark,
-            child: child!,
+            child: LockGate(child: child!),
           ),
           home: AnimatedSwitcher(
             duration: const Duration(milliseconds: 350),

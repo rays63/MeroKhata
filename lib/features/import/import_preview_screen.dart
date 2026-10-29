@@ -5,9 +5,11 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../core/format.dart';
 import '../../data/app_store.dart';
 import '../../data/models.dart';
+import '../../data/transfer_hints.dart';
 import '../../l10n/l10n.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/pf.dart';
+import '../../widgets/tags.dart';
 import '../books/book_detail_screen.dart';
 
 /// Review parsed statements: ready rows, duplicates (dimmed) and ignored
@@ -33,6 +35,22 @@ class ImportPreviewScreen extends StatefulWidget {
 class _ImportPreviewScreenState extends State<ImportPreviewScreen> {
   bool saving = false;
 
+  /// Rows the user turned into transfers: row id → their other account.
+  final Map<String, String> transfers = {};
+
+  /// Tags added to every imported row.
+  List<String> tags = const [];
+
+  /// Rows that look like a transfer to one of the user's accounts.
+  late final Map<String, String> hints = () {
+    final store = AppScope.read(context);
+    final currency = store.bookById(widget.bookId)?.currency ?? 'NPR';
+    return {
+      for (final row in widget.batch.combined.importable)
+        row.id: ?transferCounterpart(row, store.books, currency: currency),
+    };
+  }();
+
   /// Each file's ready and duplicate rows together, in date order.
   late final sections = [
     for (final (statement, preview) in widget.batch.files)
@@ -56,7 +74,9 @@ class _ImportPreviewScreenState extends State<ImportPreviewScreen> {
     if (saving) return;
     setState(() => saving = true);
     final preview = widget.batch.combined;
-    await AppScope.read(context).commitImport(preview);
+    await AppScope.read(
+      context,
+    ).commitImport(preview, transfers: transfers, tags: tags);
     if (!mounted) return;
     final l = context.l10n;
     final dupes = preview.duplicates.length;
@@ -118,14 +138,36 @@ class _ImportPreviewScreenState extends State<ImportPreviewScreen> {
                         color: c.gold,
                       ),
                       const SizedBox(width: 8),
-                      _Count(
-                        value: ignored,
-                        label: l.importIgnoredLines,
-                        color: c.sub,
-                      ),
+                      if (hints.isEmpty)
+                        _Count(
+                          value: ignored,
+                          label: l.importIgnoredLines,
+                          color: c.sub,
+                        )
+                      else
+                        _Count(
+                          value: transfers.length,
+                          label: l.importAsTransfers,
+                          color: c.blue,
+                        ),
                     ],
                   ),
                   const SizedBox(height: 14),
+                  if (ready > 0) ...[
+                    _TagAllButton(
+                      label: tags.isEmpty
+                          ? l.importTagAll(ready)
+                          : l.importTaggedAll(tags.map(tagLabel).join(' ')),
+                      onTap: () async {
+                        final picked = await showTagPicker(
+                          context,
+                          selected: tags,
+                        );
+                        if (picked != null) setState(() => tags = picked);
+                      },
+                    ),
+                    const SizedBox(height: 14),
+                  ],
                   for (final problem in widget.problems) ...[
                     _Note(
                       icon: LucideIcons.fileX,
@@ -258,10 +300,22 @@ class _ImportPreviewScreenState extends State<ImportPreviewScreen> {
                     separatorBuilder: (_, _) => const PfDivider(),
                     itemBuilder: (context, index) {
                       final (entry, duplicate) = rows[index];
+                      final hint = duplicate ? null : hints[entry.id];
                       return _PreviewRow(
                         entry: entry,
                         duplicate: duplicate,
                         currency: currency,
+                        transferTo: hint == null
+                            ? null
+                            : store.bookById(hint)?.name,
+                        isTransfer: transfers.containsKey(entry.id),
+                        onTransfer: hint == null
+                            ? null
+                            : () => setState(() {
+                                if (transfers.remove(entry.id) == null) {
+                                  transfers[entry.id] = hint;
+                                }
+                              }),
                       );
                     },
                   ),
@@ -390,11 +444,21 @@ class _PreviewRow extends StatelessWidget {
     required this.entry,
     required this.duplicate,
     required this.currency,
+    this.transferTo,
+    this.isTransfer = false,
+    this.onTransfer,
   });
 
   final LedgerTransaction entry;
   final bool duplicate;
   final String currency;
+
+  /// The account this row looks like a transfer to (or from).
+  final String? transferTo;
+  final bool isTransfer;
+
+  /// Makes the row a transfer, or undoes that.
+  final VoidCallback? onTransfer;
 
   @override
   Widget build(BuildContext context) {
@@ -407,7 +471,7 @@ class _PreviewRow extends StatelessWidget {
       if (entry.externalReference.isNotEmpty)
         l.importRef(entry.externalReference),
     ].join(' · ');
-    return Opacity(
+    final row = Opacity(
       opacity: duplicate ? .5 : 1,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -462,6 +526,93 @@ class _PreviewRow extends StatelessWidget {
               ],
             ),
           ],
+        ),
+      ),
+    );
+    if (transferTo == null) return row;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        row,
+        Container(
+          margin: const EdgeInsets.fromLTRB(52, 0, 16, 12),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          decoration: BoxDecoration(
+            color: isTransfer ? c.soft : c.blueSoft,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                isTransfer ? LucideIcons.check : LucideIcons.arrowLeftRight,
+                size: 14,
+                color: isTransfer ? c.cashIn : c.blue,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  isTransfer
+                      ? l.importWillTransfer
+                      : isIn
+                      ? l.importLooksTransferFrom(transferTo!)
+                      : l.importLooksTransferTo(transferTo!),
+                  style: pfText(
+                    12,
+                    weight: w800,
+                    color: isTransfer ? c.cashIn : c.blue,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              PfSmallButton(
+                label: isTransfer ? l.importUndo : l.importMakeTransfer,
+                height: 30,
+                radius: 10,
+                fontSize: 12,
+                background: isTransfer ? Colors.transparent : c.blue,
+                foreground: isTransfer ? c.cashIn : Colors.white,
+                onPressed: onTransfer,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _TagAllButton extends StatelessWidget {
+  const _TagAllButton({required this.label, required this.onTap});
+
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.pf;
+    return Material(
+      color: c.tagSoft,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          child: Row(
+            children: [
+              Icon(LucideIcons.hash, size: 18, color: c.tag),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  label,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: pfText(14.5, weight: w900, color: c.tag),
+                ),
+              ),
+              Icon(LucideIcons.chevronRight, size: 18, color: c.tag),
+            ],
+          ),
         ),
       ),
     );

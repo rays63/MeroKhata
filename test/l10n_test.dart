@@ -11,7 +11,10 @@ Map<String, Object?> _arb(String locale) =>
         as Map<String, Object?>;
 
 Set<String> _placeholders(String message) => {
-  for (final m in RegExp(r'\{(\w+)[,}]').allMatches(message)) m.group(1)!,
+  // Plural branches ("=0{Today}", "other{...}") follow a word character;
+  // placeholders don't.
+  for (final m in RegExp(r'(?<!\w)\{(\w+)[,}]').allMatches(message))
+    m.group(1)!,
 };
 
 Future<void> _pumpApp(WidgetTester tester, {required String language}) async {
@@ -68,7 +71,7 @@ void main() {
 
     expect(find.text('गृह'), findsOneWidget);
     expect(find.text('खाताहरू'), findsOneWidget);
-    expect(find.text('भर्खर अपडेट भएका'), findsOneWidget);
+    expect(find.textContaining('खुद सम्पत्ति'), findsOneWidget);
     final context = tester.element(find.text('गृह'));
     expect(Theme.of(context).textTheme.bodyMedium!.fontFamily, 'Mukta');
     expect(Localizations.localeOf(context).languageCode, 'ne');

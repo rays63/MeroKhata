@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../core/amount_input.dart';
 import '../../data/app_store.dart';
 import '../../data/models.dart';
 import '../../l10n/l10n.dart';
@@ -185,7 +185,7 @@ class _GoalFormScreenState extends State<GoalFormScreen> {
                             controller: target,
                             keyboardType: TextInputType.number,
                             inputFormatters: [
-                              FilteringTextInputFormatter.digitsOnly,
+                              const AmountInputFormatter(decimals: false),
                             ],
                             onChanged: (_) => setState(() => error = null),
                             style: pfText(28, weight: w900, color: c.ink),

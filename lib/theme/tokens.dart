@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 /// Paisa Flow design tokens. Values mirror the `TH` table in
-/// "Paisa Flow App.dc.html" (Claude Design), light and dark.
+/// the Paisa Flow design file, light and dark.
 @immutable
 class PfColors extends ThemeExtension<PfColors> {
   const PfColors({
@@ -27,6 +27,9 @@ class PfColors extends ThemeExtension<PfColors> {
     required this.blue,
     required this.blueSoft,
     required this.scrim,
+    required this.tag,
+    required this.tagSoft,
+    required this.highlight,
   });
 
   final Color bg;
@@ -58,6 +61,16 @@ class PfColors extends ThemeExtension<PfColors> {
   final Color blueSoft;
   final Color scrim;
 
+  /// Tag text and chips (#japan-trip).
+  final Color tag;
+  final Color tagSoft;
+
+  /// Search match highlight.
+  final Color highlight;
+
+  /// Ledger hero for Card and Loan accounts (same in both themes).
+  static const liabilityHero = Color(0xFF8A2F35);
+
   /// Toast background (same in both themes).
   static const toast = Color(0xFF122435);
 
@@ -68,6 +81,7 @@ class PfColors extends ThemeExtension<PfColors> {
   static const heroLabel = Color(0xFFD6F5E3);
   static const heroInLabel = Color(0xFFB9EBCF);
   static const heroOutLabel = Color(0xFFFFC9C9);
+  static const heroTransferLabel = Color(0xFFCFE0FA);
   static const toastIcon = Color(0xFF5BE39A);
 
   static const light = PfColors(
@@ -76,7 +90,7 @@ class PfColors extends ThemeExtension<PfColors> {
     card2: Color(0xFFEBF0ED),
     ink: Color(0xFF101418),
     sub: Color(0xFF5B6870),
-    mute: Color(0xFF9AA5AB),
+    mute: Color(0xFF8A969D),
     line: Color(0xFFE3E9E6),
     pri: Color(0xFF10A65A),
     btn: Color(0xFF0F7A4A),
@@ -88,11 +102,14 @@ class PfColors extends ThemeExtension<PfColors> {
     hero: Color(0xFF0F7A4A),
     hero2: Color(0xFF13955C),
     tab: Color(0xFFFFFFFF),
-    gold: Color(0xFFB87412),
+    gold: Color(0xFFA86A0F),
     goldSoft: Color(0xFFFBF0DE),
     blue: Color(0xFF2F6FC9),
     blueSoft: Color(0xFFE4EEFA),
     scrim: Color(0x73101418),
+    tag: Color(0xFF7B4BD6),
+    tagSoft: Color(0xFFEFE8FB),
+    highlight: Color(0xFFFBE3A6),
   );
 
   static const dark = PfColors(
@@ -101,7 +118,7 @@ class PfColors extends ThemeExtension<PfColors> {
     card2: Color(0xFF1D2636),
     ink: Color(0xFFE6EBF1),
     sub: Color(0xFF93A3B6),
-    mute: Color(0xFF5F6E80),
+    mute: Color(0xFF6E7D90),
     line: Color(0xFF252F40),
     pri: Color(0xFF2ECC71),
     btn: Color(0xFF2ECC71),
@@ -118,6 +135,9 @@ class PfColors extends ThemeExtension<PfColors> {
     blue: Color(0xFF7AB0F5),
     blueSoft: Color(0xFF1B2A40),
     scrim: Color(0x99000000),
+    tag: Color(0xFFB79CF5),
+    tagSoft: Color(0xFF2A2140),
+    highlight: Color(0xFF6A5214),
   );
 
   Color amount(bool isIn) => isIn ? cashIn : cashOut;
@@ -153,6 +173,9 @@ class PfColors extends ThemeExtension<PfColors> {
       blue: l(blue, other.blue),
       blueSoft: l(blueSoft, other.blueSoft),
       scrim: l(scrim, other.scrim),
+      tag: l(tag, other.tag),
+      tagSoft: l(tagSoft, other.tagSoft),
+      highlight: l(highlight, other.highlight),
     );
   }
 }

@@ -693,14 +693,14 @@ class AppLocalizationsNe extends AppLocalizations {
   String get bookActions => 'खाताका विकल्पहरू';
 
   @override
-  String get bookRename => 'नाम बदल्नुहोस्';
+  String get bookRename => 'खाता सम्पादन';
 
   @override
-  String get bookEmptyTitle => 'आफ्नो पहिलो खाता सुरु गर्नुहोस्';
+  String get bookEmptyTitle => 'आफ्नो पहिलो खाता थप्नुहोस्';
 
   @override
   String get bookEmptyBody =>
-      'हरेक उद्देश्यका लागि एउटा खाता — दैनिक खर्च, तपाईंको पसल, विदेश यात्रा। एक मिनेट पनि लाग्दैन।';
+      'हातको नगद, NIC Asia खाता, eSewa वा कार्ड। हरेकको आफ्नै मौज्दात र मुद्रा हुन्छ।';
 
   @override
   String get bookEmptyImport => 'वा विवरण आयात गर्नुहोस्';
@@ -713,7 +713,7 @@ class AppLocalizationsNe extends AppLocalizations {
   String get bookUntitled => 'शीर्षकविहीन खाता';
 
   @override
-  String get bookRenamed => 'खाताको नाम बदलियो';
+  String get bookRenamed => 'खाता अपडेट भयो';
 
   @override
   String bookCreated(String name, String currency) {
@@ -721,13 +721,13 @@ class AppLocalizationsNe extends AppLocalizations {
   }
 
   @override
-  String get bookRenameTitle => 'खाताको नाम बदल्नुहोस्';
+  String get bookRenameTitle => 'खाता सम्पादन';
 
   @override
   String get bookNameLabel => 'खाताको नाम';
 
   @override
-  String get bookNameHint => 'जस्तै: किराना पसल';
+  String get bookNameHint => 'जस्तै: eSewa';
 
   @override
   String get bookCurrencyLabel => 'मुद्रा';
@@ -913,6 +913,11 @@ class AppLocalizationsNe extends AppLocalizations {
   @override
   String importNoEntriesXls(String file) {
     return '$file मा कुनै प्रविष्टि भेटिएन। यसमा मिति, डेबिट र क्रेडिट स्तम्भ छन् कि जाँच गर्नुहोस्।';
+  }
+
+  @override
+  String importSummaryReport(String file) {
+    return '$file सारांश रिपोर्ट हो (दिन, श्रेणी वा भुक्तानी माध्यमको जम्मा), यसमा छुट्टाछुट्टै प्रविष्टि छैनन्। आयात गर्न \"सबै प्रविष्टि\" रिपोर्ट निर्यात गर्नुहोस्।';
   }
 
   @override
@@ -1117,7 +1122,7 @@ class AppLocalizationsNe extends AppLocalizations {
 
   @override
   String get onboardBooksBody =>
-      'व्यक्तिगत खर्च, पसल र विदेश यात्राको हिसाब छुट्टाछुट्टै राख्नुहोस् — हरेक खाता आफ्नै मुद्रामा।';
+      'नगद, बैंक, eSewa, कार्ड वा ऋण — हरेक खाता आफ्नै मुद्रामा।';
 
   @override
   String get onboardImportTitle => 'विवरण आयात गर्नुहोस्, टाइप गर्ने झन्झट छैन';
@@ -1223,7 +1228,7 @@ class AppLocalizationsNe extends AppLocalizations {
 
   @override
   String get setupBody =>
-      'खाताले पैसाको हिसाब छुट्टाछुट्टै राख्छ — व्यक्तिगत, पसल, यात्रा। हरेक खाताको आफ्नै मुद्रा हुन्छ।';
+      'खाताले पैसाको हिसाब छुट्टाछुट्टै राख्छ — नगद, बैंक, eSewa। हरेक खाताको आफ्नै मुद्रा हुन्छ।';
 
   @override
   String get setupLanguage => 'भाषा';
@@ -1299,7 +1304,7 @@ class AppLocalizationsNe extends AppLocalizations {
 
   @override
   String get settingsStoredBody =>
-      'न अकाउन्ट, न क्लाउड। ब्याकअपका लागि नियमित निर्यात गर्नुहोस्।';
+      'लगइन छैन, क्लाउड छैन। ब्याकअप बनाएर एउटा प्रति सुरक्षित ठाउँमा राख्नुहोस्।';
 
   @override
   String get goalNoDeadline => 'समय सीमा छैन';
@@ -1650,4 +1655,1613 @@ class AppLocalizationsNe extends AppLocalizations {
 
   @override
   String get weekdaysTwo => 'आइ,सोम,मंगल,बुध,बिही,शुक्र,शनि';
+
+  @override
+  String get accountTypeLabel => 'खाताको प्रकार';
+
+  @override
+  String get accountTypeCash => 'नगद';
+
+  @override
+  String get accountTypeBank => 'बैंक';
+
+  @override
+  String get accountTypeWallet => 'वालेट';
+
+  @override
+  String get accountTypeCard => 'कार्ड';
+
+  @override
+  String get accountTypeLoan => 'ऋण';
+
+  @override
+  String get accountTypeSavings => 'बचत';
+
+  @override
+  String get accountTypeOther => 'अन्य';
+
+  @override
+  String get accountSetType => 'प्रकार तोक्नुहोस्';
+
+  @override
+  String get accountTypePrompt => 'खाताहरू समूहमा राख्न प्रकार तोक्नुहोस्';
+
+  @override
+  String accountTypePromptBody(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count खाता अझै “अन्य” मा छन्।',
+      one: '1 खाता अझै “अन्य” मा छ।',
+    );
+    return '$_temp0 बैंक, वालेट, कार्ड छान्नुहोस्, ताकि सम्पत्ति र दायित्व सही जोडियोस्।';
+  }
+
+  @override
+  String get accountLegacyNote =>
+      'यो खाता प्रकारहरू आउनुअघि बनाइएको हो, त्यसैले अहिलेलाई “अन्य” मा छ।';
+
+  @override
+  String get accountLiabilityNote =>
+      'यसलाई दायित्व मानिन्छ। यसको मौज्दातले तपाईंले तिर्न बाँकी रकम देखाउँछ र खुद सम्पत्तिबाट घटाइन्छ।';
+
+  @override
+  String get accountAmountOwed => 'तिर्न बाँकी रकम';
+
+  @override
+  String get accountBalance => 'मौज्दात';
+
+  @override
+  String get accountOutstanding => 'तिर्न बाँकी';
+
+  @override
+  String accountCredit(String amount) {
+    return 'क्रेडिट $amount';
+  }
+
+  @override
+  String get accountAssets => 'सम्पत्ति';
+
+  @override
+  String get accountLiabilities => 'दायित्व';
+
+  @override
+  String get accountTotal => 'जम्मा';
+
+  @override
+  String get accountOwed => 'तिर्न बाँकी';
+
+  @override
+  String accountOwedAmount(String amount) {
+    return 'तिर्न बाँकी $amount';
+  }
+
+  @override
+  String homeNetWorth(String currency) {
+    return 'खुद सम्पत्ति · $currency';
+  }
+
+  @override
+  String homeAssetsOwed(String assets, String owed) {
+    return 'सम्पत्ति $assets − तिर्न बाँकी $owed';
+  }
+
+  @override
+  String get homeOtherCurrencies => 'अन्य मुद्रा';
+
+  @override
+  String get later => 'पछि';
+
+  @override
+  String get homeRecentActivity => 'हालैका कारोबार';
+
+  @override
+  String get allEntriesTitle => 'सबै कारोबार';
+
+  @override
+  String get feedIncome => 'आम्दानी';
+
+  @override
+  String get feedExpenses => 'खर्च';
+
+  @override
+  String get feedEmptyTitle => 'अहिलेसम्म कुनै कारोबार छैन';
+
+  @override
+  String get feedEmptyBody =>
+      'पहिलो आम्दानी वा खर्च थप्नुहोस्, वा बैंक स्टेटमेन्ट आयात गर्नुहोस्। सबै खाताका कारोबार यहाँ देखिन्छन्।';
+
+  @override
+  String get feedAddEntry => 'कारोबार थप्नुहोस्';
+
+  @override
+  String feedMonthEmptyTitle(String month) {
+    return '$month मा केही छैन';
+  }
+
+  @override
+  String get feedMonthEmptyBody => 'यो महिना कुनै पनि खातामा कारोबार भएन।';
+
+  @override
+  String get feedGoToThisMonth => 'यो महिनामा जानुहोस्';
+
+  @override
+  String get feedPreviousMonth => 'अघिल्लो महिना';
+
+  @override
+  String get feedNextMonth => 'अर्को महिना';
+
+  @override
+  String get transfer => 'ट्रान्सफर';
+
+  @override
+  String get transferEditTitle => 'ट्रान्सफर सम्पादन';
+
+  @override
+  String get transferFrom => 'पठाउने खाता';
+
+  @override
+  String get transferTo => 'पाउने खाता';
+
+  @override
+  String get transferSwap => 'खाता साटफेर गर्नुहोस्';
+
+  @override
+  String transferAmountIn(String currency) {
+    return 'रकम · $currency';
+  }
+
+  @override
+  String get transferFee => 'शुल्क';
+
+  @override
+  String get transferFeeHint => 'शुल्क पठाउने खातामा खर्चको रूपमा लेखिन्छ';
+
+  @override
+  String get transferNotesHint => 'जस्तै: eSewa लोड';
+
+  @override
+  String get transferExplain =>
+      'ट्रान्सफरले तपाईंकै खाताहरूबीच पैसा सार्छ। यसलाई आम्दानी वा खर्चमा गनिँदैन।';
+
+  @override
+  String get transferCardPay => 'कार्डको बिल भुक्तानी';
+
+  @override
+  String get transferWalletLoad => 'वालेट लोड';
+
+  @override
+  String get transferCashWithdrawal => 'नगद निकासी';
+
+  @override
+  String get transferLoanRepayment => 'ऋण भुक्तानी';
+
+  @override
+  String transferBalanceChange(String account, String before, String after) {
+    return '$account $before → $after';
+  }
+
+  @override
+  String transferOwedChange(String account, String before, String after) {
+    return '$account · तिर्न बाँकी $before → $after';
+  }
+
+  @override
+  String transferCrossTitle(String from, String to) {
+    return 'फरक मुद्रा · $from → $to';
+  }
+
+  @override
+  String get transferCrossBody =>
+      'एउटा खाताबाट गएको र अर्कोमा आएको रकम दुवै लेख्नुहोस्। एपले आफैं रूपान्तरण गर्दैन।';
+
+  @override
+  String transferReceived(String currency) {
+    return 'प्राप्त रकम · $currency';
+  }
+
+  @override
+  String transferRate(String from, String rate, String to) {
+    return '1 $from = $rate $to · तपाईंका रकमबाट निकालिएको';
+  }
+
+  @override
+  String get transferRateNeeded => 'दुवै रकम चाहिन्छ। दर आफैं निकालिन्छ।';
+
+  @override
+  String get transferErrorSame => 'दुई फरक खाता छान्नुहोस्';
+
+  @override
+  String get transferErrorReceived => 'आइपुगेको रकम लेख्नुहोस्';
+
+  @override
+  String get transferNeedTwo => 'पैसा सार्न अर्को खाता थप्नुहोस्।';
+
+  @override
+  String get transferSaved => 'ट्रान्सफर सेभ भयो · मौज्दात अपडेट भयो';
+
+  @override
+  String transferRowTitle(String from, String to) {
+    return '$from → $to';
+  }
+
+  @override
+  String get transferDeletedAccount => 'मेटिएको खाता';
+
+  @override
+  String get transferDelete => 'ट्रान्सफर मेटाउनुहोस्';
+
+  @override
+  String get transferDeleteNote =>
+      'दुवै खाताबाट र यसको शुल्कको कारोबारबाट पनि हटाउँछ।';
+
+  @override
+  String get transferDeleteTitle => 'यो ट्रान्सफर मेटाउने?';
+
+  @override
+  String get transferDeletedToast =>
+      'ट्रान्सफर मेटियो · मौज्दात फेरि हिसाब भयो';
+
+  @override
+  String transferFeePart(String from, String to) {
+    return 'ट्रान्सफर $from → $to को अंश। यो शुल्क मेटाउँदा ट्रान्सफर रहन्छ।';
+  }
+
+  @override
+  String get transferReceivedShort => 'प्राप्त';
+
+  @override
+  String get ledgerTransfers => 'ट्रान्सफर';
+
+  @override
+  String get historyTransferCreated => 'ट्रान्सफर बनाइयो';
+
+  @override
+  String get historyTransferUpdated => 'ट्रान्सफर अपडेट भयो';
+
+  @override
+  String importLooksTransferTo(String account) {
+    return '$account मा ट्रान्सफर जस्तो देखिन्छ';
+  }
+
+  @override
+  String importLooksTransferFrom(String account) {
+    return '$account बाट ट्रान्सफर जस्तो देखिन्छ';
+  }
+
+  @override
+  String get importMakeTransfer => 'ट्रान्सफर बनाउनुहोस्';
+
+  @override
+  String get importWillTransfer =>
+      'ट्रान्सफरको रूपमा सेभ हुन्छ · आम्दानी वा खर्च होइन';
+
+  @override
+  String get importUndo => 'पूर्ववत्';
+
+  @override
+  String get importAsTransfers => 'ट्रान्सफरको रूपमा';
+
+  @override
+  String get tags => 'ट्याग';
+
+  @override
+  String get tagAdd => 'ट्याग थप्नुहोस्';
+
+  @override
+  String get tagSearchHint => 'ट्याग खोज्नुहोस् वा बनाउनुहोस्';
+
+  @override
+  String tagCreate(String tag) {
+    return '#$tag बनाउनुहोस्';
+  }
+
+  @override
+  String get tagUsedBefore => 'पहिले प्रयोग भएका';
+
+  @override
+  String get tagNoneYet =>
+      'अहिलेसम्म ट्याग छैन। माथि टाइप गर्नुहोस्, जस्तै #wedding वा #japan-trip।';
+
+  @override
+  String tagRemove(String tag) {
+    return '#$tag हटाउनुहोस्';
+  }
+
+  @override
+  String get tagsHint =>
+      'ट्यागले पैसा केका लागि खर्च भयो भन्छ, जुनसुकै खाताबाट भए पनि। नाम बदल्दा सबै कारोबार अपडेट हुन्छन्; मिलाउँदा कारोबार अर्को ट्यागमा सर्छन्।';
+
+  @override
+  String get tagsEmpty =>
+      'अहिलेसम्म ट्याग छैन। यहाँ वा कारोबार फारमबाट थप्नुहोस् — जस्तै #wedding वा #japan-trip।';
+
+  @override
+  String get tagNew => 'नयाँ ट्याग';
+
+  @override
+  String tagOpenSummary(String tag) {
+    return '#$tag खोल्नुहोस्';
+  }
+
+  @override
+  String tagMerge(String tag) {
+    return '#$tag मिलाउनुहोस्';
+  }
+
+  @override
+  String tagDeleteAction(String tag) {
+    return '#$tag मेटाउनुहोस्';
+  }
+
+  @override
+  String tagMergeTitle(String tag) {
+    return '#$tag लाई कुन ट्यागमा मिलाउने?';
+  }
+
+  @override
+  String tagMergeBody(String tag) {
+    return '#$tag भएका कारोबार तपाईंले छानेको ट्यागमा सर्छन्, र #$tag हट्छ।';
+  }
+
+  @override
+  String tagMerged(String from, String to) {
+    return '#$from लाई #$to मा मिलाइयो';
+  }
+
+  @override
+  String tagRenamed(String tag) {
+    return '#$tag मा नाम बदलियो';
+  }
+
+  @override
+  String tagDeleteTitle(String tag) {
+    return '#$tag मेटाउने?';
+  }
+
+  @override
+  String tagDeleteBody(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count कारोबारबाट हट्छ; कारोबार रहन्छन्।',
+      one: '1 कारोबारबाट हट्छ; कारोबार रहन्छ।',
+      zero: 'कुनै कारोबारमा छैन।',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String tagDeleted(String tag) {
+    return '#$tag मेटियो';
+  }
+
+  @override
+  String get tagSpent => 'खर्च';
+
+  @override
+  String get tagReceived => 'प्राप्त';
+
+  @override
+  String get tagEmpty => 'यो ट्याग अहिलेसम्म कुनै कारोबारमा छैन।';
+
+  @override
+  String tagRenameTitle(String tag) {
+    return '#$tag को नाम बदल्नुहोस्';
+  }
+
+  @override
+  String importTagAll(int count) {
+    return 'सबै $count पङ्क्तिमा ट्याग राख्नुहोस्…';
+  }
+
+  @override
+  String importTaggedAll(String tags) {
+    return 'सबै पङ्क्तिमा $tags ट्याग';
+  }
+
+  @override
+  String get insightsTagsTitle => 'ट्याग';
+
+  @override
+  String get insightsTagsEmpty =>
+      'हरेक योजना वा कार्यक्रममा कति लाग्यो हेर्न कारोबारमा ट्याग राख्नुहोस् (#wedding, #japan-trip)।';
+
+  @override
+  String get insightsTransfersNote =>
+      'तपाईंका खाताबीचका ट्रान्सफर यहाँ गनिँदैनन्।';
+
+  @override
+  String get historyTags => 'ट्याग अपडेट भयो';
+
+  @override
+  String get clear => 'हटाउनुहोस्';
+
+  @override
+  String get search => 'खोज्नुहोस्';
+
+  @override
+  String get searchHint => 'शीर्षक, टिप्पणी, रकम, रेफरेन्स';
+
+  @override
+  String get searchRecent => 'हालैका खोजहरू';
+
+  @override
+  String get searchTip =>
+      'सबै खातामा खोज्छ। पसलको नाम, टिप्पणी, 5000 जस्तो रकम, वा NEFT-88213 जस्तो रेफरेन्स खोज्नुहोस्।';
+
+  @override
+  String searchResults(int count) {
+    return '$count नतिजा';
+  }
+
+  @override
+  String searchNoneTitle(String query) {
+    return '“$query” को नतिजा भेटिएन';
+  }
+
+  @override
+  String get searchNoneBody =>
+      'कुनै खातामा मिल्दो कारोबार छैन। हिज्जे जाँच्नुहोस्, वा अल्पविराम बिना रकम खोज्नुहोस्।';
+
+  @override
+  String get searchClear => 'खोज हटाउनुहोस्';
+
+  @override
+  String get searchClearRecent => 'हालैका खोजहरू हटाउनुहोस्';
+
+  @override
+  String get feedFilterAccount => 'खाता';
+
+  @override
+  String get feedFilterAccountType => 'खाताको प्रकार';
+
+  @override
+  String get feedFilterKind => 'आम्दानी / खर्च';
+
+  @override
+  String get feedAllAccounts => 'सबै खाता';
+
+  @override
+  String get feedAllTypes => 'सबै प्रकार';
+
+  @override
+  String get feedAllTags => 'सबै ट्याग';
+
+  @override
+  String get feedEverything => 'आम्दानी, खर्च र ट्रान्सफर';
+
+  @override
+  String get feedNoMatchBody =>
+      'अर्को खाता वा वर्ग छान्नुहोस्, वा फिल्टर हटाउनुहोस्।';
+
+  @override
+  String get entrySaveAnother => 'सेभ गरेर अर्को थप्नुहोस्';
+
+  @override
+  String get entrySavedKeepGoing => 'सेभ भयो · अर्कोका लागि विवरण राखियो';
+
+  @override
+  String get templateStar => 'टेम्प्लेट';
+
+  @override
+  String get templateStarHint => 'टेम्प्लेटको रूपमा सेभ गर्नुहोस्';
+
+  @override
+  String templateSaved(String title, String amount) {
+    return 'टेम्प्लेट सेभ भयो · $title · $amount';
+  }
+
+  @override
+  String get templateNeedsFields => 'पहिले रकम र शीर्षक लेख्नुहोस्';
+
+  @override
+  String get templates => 'टेम्प्लेट';
+
+  @override
+  String get templatesHint =>
+      'दोहोरिने कारोबार सेभ गर्न फारममा ★ थिच्नुहोस्। टेम्प्लेट फारमको माथि देखिन्छन्, एक थिचाइमा भरिन्छ।';
+
+  @override
+  String get templatesManage => 'व्यवस्थापन';
+
+  @override
+  String get templateUse => 'प्रयोग';
+
+  @override
+  String templateDelete(String title) {
+    return '$title टेम्प्लेट मेटाउनुहोस्';
+  }
+
+  @override
+  String get templateDeleted => 'टेम्प्लेट मेटियो';
+
+  @override
+  String get templatesEmptyTitle => 'अहिलेसम्म टेम्प्लेट छैन';
+
+  @override
+  String get templatesEmptyBody =>
+      '“Momo · Rs 450 · Cafe · Cash” जस्तो कारोबार भरेर ★ थिच्नुहोस्।';
+
+  @override
+  String get templatesNewCashOut => 'नयाँ खर्च';
+
+  @override
+  String entrySuggestion(String title) {
+    return '“$title” प्रयोग गर्नुहोस्';
+  }
+
+  @override
+  String get backupTitle => 'ब्याकअप र रिस्टोर';
+
+  @override
+  String get backupLast => 'पछिल्लो ब्याकअप';
+
+  @override
+  String get backupCreate => 'ब्याकअप बनाउनुहोस्';
+
+  @override
+  String get backupRestore => 'ब्याकअपबाट रिस्टोर गर्नुहोस्';
+
+  @override
+  String get backupIncludes =>
+      'ब्याकअपमा खाता, कारोबार, ट्याग, टेम्प्लेट, लक्ष्य र बाँडफाँड समावेश हुन्छन्। एउटा प्रति यो फोनबाहिर राख्नुहोस् — Drive, इमेल वा कम्प्युटरमा।';
+
+  @override
+  String get restoreMerge => 'मिलाउनुहोस् (दोहोरिएका छोड्ने)';
+
+  @override
+  String get restoreMergeBody =>
+      'नभएका मात्र थपिन्छन्। फोनमा भएका कारोबार रहन्छन्, दोहोरिएका छोडिन्छन्।';
+
+  @override
+  String get restoreReplace => 'सबै बदल्नुहोस्';
+
+  @override
+  String get restoreReplaceBody =>
+      'यो फोनको सबै डाटा मेटाएर फाइलबाट रिस्टोर गर्छ।';
+
+  @override
+  String get restoreReplaceWarnTitle => 'यो फिर्ता गर्न सकिँदैन';
+
+  @override
+  String get restoreReplaceWarnBody =>
+      'यो फोनमा भएका सबै डाटा मेटिनेछन् र ब्याकअपले बदलिनेछन्।';
+
+  @override
+  String get restoreUnderstand => 'मैले बुझें। मेरो डाटा मेटाएर बदल्नुहोस्।';
+
+  @override
+  String get restoreRunning => 'रिस्टोर हुँदैछ…';
+
+  @override
+  String get restoreDone => 'रिस्टोर सम्पन्न भयो';
+
+  @override
+  String get restoreContinue => 'अगाडि बढ्नुहोस्';
+
+  @override
+  String get backupNudgeBody =>
+      'तपाईंको डाटा यही फोनमा मात्र छ। ब्याकअप गर्न 5 सेकेन्ड लाग्छ।';
+
+  @override
+  String get backupNow => 'अहिले ब्याकअप गर्नुहोस्';
+
+  @override
+  String get restoreFileHas => 'यो फाइलमा के छ';
+
+  @override
+  String get restoreHow => 'कसरी रिस्टोर गर्ने?';
+
+  @override
+  String get restoreRecommended => 'सिफारिस';
+
+  @override
+  String get restoreGoHome => 'गृहमा जानुहोस्';
+
+  @override
+  String get restoreTryOther => 'अर्को फाइल छान्नुहोस्';
+
+  @override
+  String get restoreRange => 'मिति दायरा';
+
+  @override
+  String get restoreCreated => 'बनाइएको';
+
+  @override
+  String get restoreVersion => 'एप संस्करण';
+
+  @override
+  String get restoreErrWrongTitle => 'यो Paisa Flow ब्याकअप होइन';
+
+  @override
+  String get restoreErrWrongBody =>
+      'सेटिङ → ब्याकअप र रिस्टोरबाट बनाइएको .pfbak फाइल छान्नुहोस्। बैंक स्टेटमेन्ट थप्न आयात प्रयोग गर्नुहोस्।';
+
+  @override
+  String get restoreErrBadTitle => 'यो ब्याकअप बिग्रिएको छ';
+
+  @override
+  String get restoreErrBadBody =>
+      'फाइल अधुरो छ, त्यसैले केही पनि रिस्टोर भएन। ब्याकअपको अर्को प्रति प्रयास गर्नुहोस्।';
+
+  @override
+  String get restoreErrNewTitle => 'नयाँ संस्करणबाट बनाइएको';
+
+  @override
+  String get restoreUnchanged => 'यो फोनको डाटा परिवर्तन भएको छैन।';
+
+  @override
+  String get backupProtect => 'पासवर्डले सुरक्षित गर्नुहोस् (सिफारिस)';
+
+  @override
+  String get backupProtectBody =>
+      'फाइल पाउने जो कोहीलाई रिस्टोर गर्न यो पासवर्ड चाहिन्छ।';
+
+  @override
+  String get backupPassword => 'ब्याकअप पासवर्ड';
+
+  @override
+  String get backupPasswordAgain => 'फेरि टाइप गर्नुहोस्';
+
+  @override
+  String get backupPasswordLost =>
+      'बिर्सिएको पासवर्ड कसैले पनि फिर्ता दिन सक्दैन। सुरक्षित ठाउँमा लेखेर राख्नुहोस्।';
+
+  @override
+  String get backupNoPasswordTitle =>
+      'पासवर्डबिना ब्याकअप लुकेको हुन्छ, तर पूर्ण सुरक्षित हुँदैन';
+
+  @override
+  String get backupNoPasswordBody =>
+      'फाइल इन्क्रिप्ट हुन्छ, अरू एपले पढ्न सक्दैनन्, तर Paisa Flow भएका जो कोहीले रिस्टोर गर्न सक्छन्।';
+
+  @override
+  String get backupEncrypted =>
+      'ब्याकअप सधैं कम्प्रेस र इन्क्रिप्ट हुन्छन्। Paisa Flow मा मात्र खुल्छन्।';
+
+  @override
+  String get backupPasswordsMatch => 'पासवर्ड मिल्यो';
+
+  @override
+  String get restoreLockedTitle => 'यो ब्याकअप पासवर्डले सुरक्षित छ';
+
+  @override
+  String get restoreLockedBody => 'ब्याकअप बनाउँदा राखेको पासवर्ड हाल्नुहोस्।';
+
+  @override
+  String get restoreWrongPassword =>
+      'गलत पासवर्ड। ठूलो/सानो अक्षर जाँचेर फेरि प्रयास गर्नुहोस्।';
+
+  @override
+  String get restoreUnlock => 'ब्याकअप खोल्नुहोस्';
+
+  @override
+  String get restoreForgotPassword =>
+      'बिर्सनुभयो? पासवर्ड फिर्ता हुँदैन — अर्को ब्याकअप फाइल प्रयास गर्नुहोस्।';
+
+  @override
+  String get backupOnPhone => 'अहिले यो फोनमा';
+
+  @override
+  String get restoreKeepOpen =>
+      'Paisa Flow खुला राख्नुहोस्। केही सेकेन्ड लाग्छ।';
+
+  @override
+  String get restoreNotSure =>
+      'पक्का हुनुहुन्न? पछाडि गएर मिलाउनुहोस् छान्नुहोस् — यसले केही मेटाउँदैन।';
+
+  @override
+  String backupNudgeTitle(int days) {
+    return '$days दिनदेखि ब्याकअप छैन';
+  }
+
+  @override
+  String get backupNever => 'कहिल्यै होइन';
+
+  @override
+  String backupDaysAgo(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$days दिनअघि',
+      one: 'हिजो',
+      zero: 'आज',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String tagCount(int count) {
+    return '$count ट्याग';
+  }
+
+  @override
+  String get backupCreateProtected => 'पासवर्डसहित ब्याकअप बनाउनुहोस्';
+
+  @override
+  String backupSaved(String file) {
+    return 'ब्याकअप सेभ भयो · $file';
+  }
+
+  @override
+  String backupSaveFailed(String error) {
+    return 'ब्याकअप सेभ भएन: $error';
+  }
+
+  @override
+  String get backupPasswordTooShort => 'कम्तीमा 6 अक्षर प्रयोग गर्नुहोस्';
+
+  @override
+  String get backupPasswordsDiffer => 'पासवर्ड मिलेन';
+
+  @override
+  String get backupStrengthWeak => 'कमजोर';
+
+  @override
+  String get backupStrengthOkay => 'ठीकै';
+
+  @override
+  String get backupStrengthStrong => 'बलियो';
+
+  @override
+  String get backupShowPassword => 'पासवर्ड देखाउनुहोस्';
+
+  @override
+  String get backupHidePassword => 'पासवर्ड लुकाउनुहोस्';
+
+  @override
+  String restoreErrNewBody(String version) {
+    return 'यो ब्याकअप Paisa Flow $version बाट बनाइएको हो। Play Store बाट एप अपडेट गरेर फेरि रिस्टोर गर्नुहोस्।';
+  }
+
+  @override
+  String restoreMergeStat(String added, String existing) {
+    return '$added थपिन्छ · $existing पहिले नै छ';
+  }
+
+  @override
+  String restoreReplaceStat(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'यो फोनका $count कारोबार मेटिनेछन्',
+      zero: 'यो फोनबाट केही मेटिँदैन',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String restoreDoneMerge(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count कारोबार थपियो। यो फोनबाट केही हटाइएन।',
+      zero: 'ब्याकअपका सबै कुरा पहिले नै थिए। केही हटाइएन।',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String restoreDoneReplace(String date) {
+    return 'तपाईंको डाटा अब $date को ब्याकअपसँग मिल्छ।';
+  }
+
+  @override
+  String get restoreStepCheck => 'फाइल जाँच्दै';
+
+  @override
+  String get restoreStepData => 'खाता र कारोबार रिस्टोर गर्दै';
+
+  @override
+  String get restoreStepBalances => 'मौज्दात फेरि हिसाब गर्दै';
+
+  @override
+  String get restoreReading => 'ब्याकअप पढ्दै…';
+
+  @override
+  String get restoreAccountsLabel => 'खाता';
+
+  @override
+  String get restoreEntriesLabel => 'कारोबार';
+
+  @override
+  String get lockTitle => 'एप लक';
+
+  @override
+  String get lockSetPin => '4 अङ्कको PIN सेट गर्नुहोस्';
+
+  @override
+  String get lockEnterPin => 'आफ्नो PIN हाल्नुहोस्';
+
+  @override
+  String get lockConfirmPin => 'PIN फेरि हाल्नुहोस्';
+
+  @override
+  String get lockBiometrics => 'औंठाछाप वा अनुहारले खोल्नुहोस्';
+
+  @override
+  String get lockAfterLabel => 'एप पृष्ठभूमिमा गएपछि लक हुने समय';
+
+  @override
+  String get lockImmediately => 'तुरुन्तै';
+
+  @override
+  String get lockAfter1 => '1 मिनेटपछि';
+
+  @override
+  String get lockAfter5 => '5 मिनेटपछि';
+
+  @override
+  String get lockChangePin => 'PIN परिवर्तन गर्नुहोस्';
+
+  @override
+  String get lockTurnOff => 'एप लक बन्द गर्नुहोस्';
+
+  @override
+  String get lockNoRecoveryTitle => 'बिर्सिएको PIN फिर्ता पाउने उपाय छैन';
+
+  @override
+  String get lockNoRecoveryBody =>
+      'तपाईंको डाटा यही फोनमा मात्र छ। PIN बिर्सिनुभयो भने एप फेरि इन्स्टल गर्नुपर्छ, र ब्याकअपबाट मात्र डाटा फर्काउन सकिन्छ।';
+
+  @override
+  String get lockIntro =>
+      'PIN, औंठाछाप वा अनुहारले आफ्ना खाता सुरक्षित राख्नुहोस्।';
+
+  @override
+  String get lockOn => 'एप लक सक्रिय छ';
+
+  @override
+  String get lockPinsDiffer => 'PIN मिलेन। फेरि प्रयास गर्नुहोस्।';
+
+  @override
+  String get lockForgot => 'PIN बिर्सनुभयो?';
+
+  @override
+  String get lockGoToBackup => 'ब्याकअप र रिस्टोरमा जानुहोस्';
+
+  @override
+  String get lockFeaturePin => '4 अङ्कको PIN';
+
+  @override
+  String get lockFeatureBiometrics => 'औंठाछाप वा अनुहारले खोल्ने';
+
+  @override
+  String get lockFeatureSwitcher => 'एप स्विचरमा लुकाइन्छ';
+
+  @override
+  String get lockNow => 'अहिले लक गर्नुहोस्';
+
+  @override
+  String get lockOffNeedsPin =>
+      'बिर्सिएको PIN फिर्ता पाउन सकिँदैन। लक बन्द गर्न PIN चाहिन्छ।';
+
+  @override
+  String lockWrongPin(int left) {
+    String _temp0 = intl.Intl.pluralLogic(
+      left,
+      locale: localeName,
+      other: 'गलत PIN · $left पटक बाँकी',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String lockTooMany(int seconds) {
+    return 'धेरै पटक गलत प्रयास · $seconds सेकेन्डमा फेरि प्रयास गर्नुहोस्';
+  }
+
+  @override
+  String lockStep(int step) {
+    return 'चरण $step / 2';
+  }
+
+  @override
+  String get lockNewPin => 'नयाँ PIN हाल्नुहोस्';
+
+  @override
+  String get lockCurrentPin => 'हालको PIN हाल्नुहोस्';
+
+  @override
+  String get lockOnToast => 'एप लक सक्रिय भयो';
+
+  @override
+  String get lockOffToast => 'एप लक बन्द भयो';
+
+  @override
+  String get lockChangedToast => 'PIN परिवर्तन भयो';
+
+  @override
+  String get lockBiometricReason => 'Paisa Flow खोल्नुहोस्';
+
+  @override
+  String get lockUseBiometrics => 'औंठाछाप वा अनुहार प्रयोग गर्नुहोस्';
+
+  @override
+  String get lockDeleteDigit => 'अङ्क मेटाउनुहोस्';
+
+  @override
+  String lockStatus(String method, String after) {
+    return '$method · $after';
+  }
+
+  @override
+  String get lockMethodPin => 'PIN';
+
+  @override
+  String get lockMethodPinBio => 'PIN र औंठाछाप वा अनुहार';
+
+  @override
+  String get lockHidden => 'सामग्री लुकाइएको';
+
+  @override
+  String get settingsOn => 'सक्रिय';
+
+  @override
+  String get settingsOff => 'बन्द';
+
+  @override
+  String get emiTitle => 'EMI क्याल्कुलेटर';
+
+  @override
+  String get emiEntryBody => 'मासिक किस्ता हिसाब गरेर रिमाइन्डर राख्नुहोस्';
+
+  @override
+  String get emiPrincipal => 'ऋण रकम (साँवा)';
+
+  @override
+  String get emiRate => 'ब्याज दर · वार्षिक';
+
+  @override
+  String get emiTenure => 'अवधि';
+
+  @override
+  String get emiTotalInterest => 'कुल ब्याज';
+
+  @override
+  String get emiTotalPayable => 'कुल तिर्नुपर्ने';
+
+  @override
+  String get emiRepeat => 'मासिक ट्रान्सफरको रूपमा दोहोर्याउनुहोस्';
+
+  @override
+  String get emiRepeatBody =>
+      'हरेक EMI पुष्टि गर्न पपअप आउँछ। आफैं केही थपिँदैन।';
+
+  @override
+  String get emiNote =>
+      'घट्दो मौज्दात विधिबाट अनुमान। शुल्क र राउन्डिङले बैंकको रकम अलि फरक पर्न सक्छ।';
+
+  @override
+  String get repeatLabel => 'दोहोर्याउने';
+
+  @override
+  String get repeatConfirmEach => 'हरेक पटक तपाईंलाई सोधिन्छ';
+
+  @override
+  String get repeatNever => 'कहिल्यै होइन';
+
+  @override
+  String get repeatDaily => 'हरेक दिन';
+
+  @override
+  String get repeatWeekly => 'हरेक हप्ता';
+
+  @override
+  String get repeatMonthly => 'हरेक महिना';
+
+  @override
+  String get repeatYearly => 'हरेक वर्ष';
+
+  @override
+  String repeatSaved(String when) {
+    return 'सेभ भयो · $when दोहोरिन्छ';
+  }
+
+  @override
+  String get repeatingTitle => 'दोहोरिने कारोबार';
+
+  @override
+  String get repeatingHint =>
+      'यी आफैं थपिँदैनन्। समय भएपछि Paisa Flow ले पुष्टि गर्न सोध्छ।';
+
+  @override
+  String get repeatingEmpty =>
+      'अहिलेसम्म केही दोहोरिँदैन। कारोबार फारममा “दोहोर्याउने” छान्नुहोस्, वा ऋणको EMI राख्नुहोस्।';
+
+  @override
+  String repeatingNext(String date) {
+    return 'अर्को: $date';
+  }
+
+  @override
+  String repeatingStop(String title) {
+    return '$title दोहोर्याउन रोक्नुहोस्';
+  }
+
+  @override
+  String get repeatingStopped => 'दोहोर्याउन रोकियो';
+
+  @override
+  String dueTitle(int count) {
+    return '$count कारोबार बाँकी';
+  }
+
+  @override
+  String get dueBody => 'चिन्ह लगाइएका थपिन्छन्। नतिरेको भए चिन्ह हटाउनुहोस्।';
+
+  @override
+  String get dueToday => 'आज';
+
+  @override
+  String dueDaysAgo(int days) {
+    return '$days दिनअघि';
+  }
+
+  @override
+  String dueAdd(int count) {
+    return '$count कारोबार थप्नुहोस्';
+  }
+
+  @override
+  String get dueSkip => 'यी छोड्नुहोस्';
+
+  @override
+  String get dueLater => 'पछि सोध्नुहोस्';
+
+  @override
+  String dueAdded(int count) {
+    return '$count कारोबार थपियो';
+  }
+
+  @override
+  String dueEdit(String title) {
+    return 'थप्नुअघि $title सम्पादन गर्नुहोस्';
+  }
+
+  @override
+  String dueTick(String title) {
+    return '$title थप्नुहोस्';
+  }
+
+  @override
+  String emiOutstanding(String loan, String amount) {
+    return '$loan · तिर्न बाँकी $amount';
+  }
+
+  @override
+  String emiUseOutstanding(String amount) {
+    return 'तिर्न बाँकी $amount प्रयोग गर्नुहोस्';
+  }
+
+  @override
+  String emiYears(int months) {
+    return 'वर्ष · $months महिना';
+  }
+
+  @override
+  String emiYearsChip(int years) {
+    return '$years वर्ष';
+  }
+
+  @override
+  String emiMonthly(int months) {
+    return 'मासिक किस्ता · $months महिना';
+  }
+
+  @override
+  String get emiMonth => 'महिना';
+
+  @override
+  String get emiPrincipalCol => 'साँवा';
+
+  @override
+  String get emiInterestCol => 'ब्याज';
+
+  @override
+  String get emiBalanceCol => 'बाँकी';
+
+  @override
+  String emiPayFrom(int day) {
+    return 'हरेक महिनाको $day गते यहाँबाट तिर्ने';
+  }
+
+  @override
+  String emiSetUp(String amount) {
+    return 'मासिक EMI राख्नुहोस् · $amount';
+  }
+
+  @override
+  String get emiDone => 'सकियो';
+
+  @override
+  String get emiSaved => 'EMI राखियो · हरेक पटक पुष्टि गर्नुहुनेछ';
+
+  @override
+  String get emiErrAmount => 'ऋण रकम लेख्नुहोस्';
+
+  @override
+  String get emiErrTenure => 'कम्तीमा 1 महिनाको अवधि लेख्नुहोस्';
+
+  @override
+  String get emiErrRate => '0 देखि 60% बीचको वार्षिक दर लेख्नुहोस्';
+
+  @override
+  String get emiNoFrom => 'EMI तिर्न बैंक, नगद वा वालेट खाता थप्नुहोस्।';
+
+  @override
+  String get historyRepeated => 'दोहोरिने कारोबारबाट थपियो';
+
+  @override
+  String get insightsCustomize => 'मिलाउनुहोस्';
+
+  @override
+  String get chartFlow => 'प्रवाह';
+
+  @override
+  String get chartCalendar => 'पात्रो';
+
+  @override
+  String get chartPace => 'गति';
+
+  @override
+  String get chartShowList => 'सूचीमा देखाउनुहोस्';
+
+  @override
+  String get chartShowChart => 'चार्टमा देखाउनुहोस्';
+
+  @override
+  String get chartsRule =>
+      'हरेक चार्टमा एउटै मुद्रा। ट्रान्सफर र सुरुको मौज्दात गनिँदैनन्।';
+
+  @override
+  String flowTitle(String month) {
+    return '$month को प्रवाह';
+  }
+
+  @override
+  String flowSub(String income, String spent) {
+    return '$income आयो · $spent गयो';
+  }
+
+  @override
+  String flowSaved(String amount, int percent) {
+    return 'तपाईंले $amount बचाउनुभयो · आएको $percent%';
+  }
+
+  @override
+  String flowOver(String amount) {
+    return 'आएभन्दा $amount बढी खर्च भयो, मौज्दातबाट';
+  }
+
+  @override
+  String flowEmpty(String month) {
+    return '$month मा केही आएन, केही गएन।';
+  }
+
+  @override
+  String get flowIncome => 'आम्दानी';
+
+  @override
+  String get flowSpending => 'खर्च';
+
+  @override
+  String get flowSavedNode => 'बचत';
+
+  @override
+  String get flowFromBalance => 'मौज्दातबाट';
+
+  @override
+  String get flowOthers => 'अन्य';
+
+  @override
+  String get paceTitle => 'खर्चको गति';
+
+  @override
+  String paceSpentBy(String date) {
+    return '$date सम्म खर्च';
+  }
+
+  @override
+  String paceProjected(String amount) {
+    return 'यो महिना करिब $amount पुग्ने';
+  }
+
+  @override
+  String get paceThisMonth => 'यो महिना';
+
+  @override
+  String get paceLastMonth => 'गत महिना';
+
+  @override
+  String get paceProjection => 'अनुमान';
+
+  @override
+  String get paceBudget => 'बजेट';
+
+  @override
+  String paceMore(String amount) {
+    return 'गत महिनाको यही दिनभन्दा $amount बढी';
+  }
+
+  @override
+  String paceLess(String amount) {
+    return 'गत महिनाको यही दिनभन्दा $amount कम';
+  }
+
+  @override
+  String get paceSame => 'गत महिनाको यही दिनजत्तिकै';
+
+  @override
+  String get paceNoBudget => 'अहिलेसम्म बजेट छैन। बजेट छिट्टै आउँदैछ।';
+
+  @override
+  String paceEmpty(String month) {
+    return '$month वा अघिल्लो महिनामा खर्च छैन।';
+  }
+
+  @override
+  String get paceDay => 'दिन';
+
+  @override
+  String calListTitle(String month) {
+    return '$month दिनअनुसार';
+  }
+
+  @override
+  String get boxesTap => 'वर्ग हेर्न बाकस थिच्नुहोस्';
+
+  @override
+  String get placesTitle => 'धेरै खर्च भएका ठाउँ';
+
+  @override
+  String placesSub(String month) {
+    return '$month मा सबैभन्दा धेरै खर्च';
+  }
+
+  @override
+  String placesMeta(int count, String category) {
+    return '$count पटक · $category';
+  }
+
+  @override
+  String placesEmpty(String month) {
+    return '$month मा अहिलेसम्म खर्च छैन।';
+  }
+
+  @override
+  String get layoutTitle => 'विश्लेषण मिलाउनुहोस्';
+
+  @override
+  String get layoutIntro =>
+      'तीरले कार्डको क्रम मिलाउनुहोस्, नचाहिनेलाई लुकाउनुहोस्।';
+
+  @override
+  String get layoutPinned => 'खाता र महिना सधैं माथि रहन्छ';
+
+  @override
+  String get layoutReset => 'सुरुकै क्रममा फर्काउनुहोस्';
+
+  @override
+  String layoutHidden(int count) {
+    return '$count कार्ड लुकाइएको · मिलाउनुहोस्';
+  }
+
+  @override
+  String get layoutAllHiddenTitle => 'सबै कार्ड लुकाइएका छन्';
+
+  @override
+  String get layoutAllHiddenBody => 'मिलाउनुहोस्मा केही फेरि देखाउनुहोस्।';
+
+  @override
+  String layoutUp(String card) {
+    return '$card माथि सार्नुहोस्';
+  }
+
+  @override
+  String layoutDown(String card) {
+    return '$card तल सार्नुहोस्';
+  }
+
+  @override
+  String layoutShow(String card) {
+    return '$card देखाउनुहोस्';
+  }
+
+  @override
+  String get cardCharts => 'प्रवाह, पात्रो र गति';
+
+  @override
+  String get cardTrends => 'प्रवृत्ति';
+
+  @override
+  String get cardModes => 'भुक्तानी माध्यमअनुसार';
+
+  @override
+  String get catLast6 => 'पछिल्ला 6 महिना';
+
+  @override
+  String get catAverage => 'औसत';
+
+  @override
+  String catMore(String amount) {
+    return 'सामान्यभन्दा $amount बढी';
+  }
+
+  @override
+  String catLess(String amount) {
+    return 'सामान्यभन्दा $amount कम';
+  }
+
+  @override
+  String get catUsual => 'सामान्यजस्तै';
+
+  @override
+  String catEntries(String month) {
+    return '$month का कारोबार';
+  }
+
+  @override
+  String catNone(String category, String month) {
+    return '$month मा $category मा केही खर्च भएन।';
+  }
+
+  @override
+  String get budgetsTitle => 'बजेट';
+
+  @override
+  String get budgetScope => 'बजेट कसका लागि';
+
+  @override
+  String budgetScopeAll(String currency) {
+    return 'सबै $currency खाता';
+  }
+
+  @override
+  String budgetMonth(String month) {
+    return '$month · 1 गते फेरि सुरु हुन्छ';
+  }
+
+  @override
+  String get budgetEmptyTitle => 'अहिलेसम्म बजेट छैन';
+
+  @override
+  String get budgetEmptyBody =>
+      'कुनै वर्ग वा सबैका लागि मासिक सीमा राख्नुहोस्। खर्च गर्दै जाँदा कति बाँकी छ देखिन्छ।';
+
+  @override
+  String get budgetExample => 'उदाहरणका लागि';
+
+  @override
+  String get budgetFirst => 'वर्गको बजेट राख्नुहोस्';
+
+  @override
+  String get budgetAddOverall => 'कुल बजेट राख्नुहोस्';
+
+  @override
+  String get budgetOverall => 'कुल बजेट';
+
+  @override
+  String get budgetByCategory => 'वर्गअनुसार';
+
+  @override
+  String get budgetAddCategory => 'वर्गको बजेट थप्नुहोस्';
+
+  @override
+  String budgetLeft(String amount) {
+    return '$amount बाँकी';
+  }
+
+  @override
+  String budgetOver(String amount) {
+    return '$amount बढी';
+  }
+
+  @override
+  String budgetOf(String spent, String limit) {
+    return '$limit मध्ये $spent';
+  }
+
+  @override
+  String get budgetAllOk => 'यो महिना सबै बजेटभित्र छ।';
+
+  @override
+  String budgetNear(String category, int percent) {
+    return '$category बजेटको $percent% पुग्यो';
+  }
+
+  @override
+  String budgetOverNote(String category, String amount) {
+    return '$category बजेटभन्दा $amount बढी';
+  }
+
+  @override
+  String get budgetRule =>
+      'हरेक बजेट एउटै मुद्रामा, रूपान्तरण हुँदैन। ट्रान्सफर र सुरुको मौज्दात गनिँदैन। सूचना पठाइँदैन।';
+
+  @override
+  String budgetNoAccountsTitle(String currency) {
+    return '$currency खाता छैन';
+  }
+
+  @override
+  String get budgetNoAccountsBody =>
+      'बजेटले यो मुद्राका खाताको खर्च गन्छ। खाता थप्नुहोस्, वा अर्को छान्नुहोस्।';
+
+  @override
+  String get budgetAddAccount => 'खाता थप्नुहोस्';
+
+  @override
+  String get budgetOtherScope => 'अर्को छान्नुहोस्';
+
+  @override
+  String get budgetNew => 'नयाँ बजेट';
+
+  @override
+  String get budgetEdit => 'बजेट सम्पादन';
+
+  @override
+  String get budgetCategoryLabel => 'केका लागि';
+
+  @override
+  String get budgetHas => 'छ';
+
+  @override
+  String get budgetLimit => 'मासिक सीमा';
+
+  @override
+  String get budgetErrAmount => 'शून्यभन्दा बढी सीमा लेख्नुहोस्';
+
+  @override
+  String budgetHint(String amount) {
+    return 'तपाईं प्रायः करिब $amount खर्च गर्नुहुन्छ';
+  }
+
+  @override
+  String get budgetHintSub => 'पछिल्ला 3 महिनाको औसत';
+
+  @override
+  String get budgetUseIt => 'यही राख्नुहोस्';
+
+  @override
+  String budgetSpentSoFar(String amount) {
+    return 'यो महिना अहिलेसम्म $amount खर्च';
+  }
+
+  @override
+  String get budgetNoCarry => 'नचलेको बजेट सर्दैन; हरेक महिना नयाँ सुरु हुन्छ।';
+
+  @override
+  String get budgetSaved => 'बजेट सेभ भयो';
+
+  @override
+  String get budgetDeleted => 'बजेट मेटियो';
+
+  @override
+  String get budgetDelete => 'बजेट मेटाउनुहोस्';
+
+  @override
+  String get budgetBadgeOver => 'बढी';
+
+  @override
+  String get paceSetBudget => 'बजेट राख्नुहोस्';
+
+  @override
+  String paceWithin(String amount) {
+    return 'बजेटभित्र · $amount बाँकी';
+  }
+
+  @override
+  String paceGoingOver(String amount) {
+    return 'यही गतिमा बजेटभन्दा $amount बढी जान्छ';
+  }
+
+  @override
+  String paceOverBudget(String amount) {
+    return 'बजेटभन्दा $amount बढी';
+  }
+
+  @override
+  String get paceNoBudgetSet => 'यसका लागि बजेट छैन।';
+
+  @override
+  String catBudgetLine(String amount) {
+    return 'बजेट $amount';
+  }
+
+  @override
+  String get catNoBudget => 'यो वर्गको बजेट छैन।';
+
+  @override
+  String subJust(String category) {
+    return '$category मात्र';
+  }
+
+  @override
+  String subNone(String category) {
+    return '$category (उपवर्ग छैन)';
+  }
+
+  @override
+  String get subcategories => 'उपवर्ग';
+
+  @override
+  String get subAdd => 'उपवर्ग थप्नुहोस्';
+
+  @override
+  String get subTitle => 'वर्गहरू';
+
+  @override
+  String get subIntro =>
+      'उपवर्ग मिलाउन वर्ग थिच्नुहोस्। नाम बदल्दा सबै कारोबार अपडेट हुन्छन्।';
+
+  @override
+  String subCount(int count) {
+    return '$count उपवर्ग';
+  }
+
+  @override
+  String get subNoneTitle => 'अहिलेसम्म उपवर्ग छैन';
+
+  @override
+  String get subNoneBody => 'तल थप्नुहोस्, जस्तै Food मुनि Lunch वा Groceries।';
+
+  @override
+  String subNewHint(String category) {
+    return '$category मुनि नयाँ उपवर्ग';
+  }
+
+  @override
+  String subDeleteNote(String category) {
+    return 'उपवर्ग मेटाउँदा यसका कारोबार $category मा सर्छन्।';
+  }
+
+  @override
+  String subDeleteTitle(String name) {
+    return '$name मेटाउने?';
+  }
+
+  @override
+  String subDeleteBody(int count, String category) {
+    return '$count कारोबार $category मा सर्छन्।';
+  }
+
+  @override
+  String subRename(String name) {
+    return '$name को नाम बदल्नुहोस्';
+  }
+
+  @override
+  String subMoveUp(String name) {
+    return '$name माथि सार्नुहोस्';
+  }
+
+  @override
+  String subMoveDown(String name) {
+    return '$name तल सार्नुहोस्';
+  }
+
+  @override
+  String get subAddFor => 'उपवर्ग थप्नुहोस्';
+
+  @override
+  String get subPickOne => 'उपवर्ग छान्नुहोस्';
+
+  @override
+  String subEntryUses(int count) {
+    return '$count कारोबार';
+  }
+
+  @override
+  String get subManageCategories => 'वर्ग मिलाउनुहोस्';
+
+  @override
+  String get amountInvalid =>
+      '1250 वा 1250.50 जस्तो अङ्क लेख्नुहोस् (एउटा दशमलव, बढीमा 2 अङ्क)।';
+
+  @override
+  String amountTooLarge(String max) {
+    return 'रकम बढीमा $max सम्म हुन सक्छ।';
+  }
 }

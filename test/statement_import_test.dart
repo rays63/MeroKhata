@@ -8,12 +8,20 @@ import 'package:syncfusion_flutter_pdf/pdf.dart' as sfpdf;
 
 /// Real bank/wallet statements kept locally (not committed). Tests that need
 /// them are skipped when the folder is absent.
-final _statements = Directory('.claude/test statement');
+final _statements = Directory('test_statements');
+
+/// Statements from sources without a parser yet (Khalti: build 6) are kept
+/// in the folder for later but left out of these checks.
+const _notSupportedYet = {'khalti.xls'};
+
+bool _isSupportedStatement(File file) =>
+    RegExp(r'\.(pdf|xls)$').hasMatch(file.path) &&
+    !_notSupportedYet.contains(file.uri.pathSegments.last);
 
 File _file(String name) => File('${_statements.path}/$name');
 
 /// Passwords for locked statements, keyed by file name, in
-/// `.claude/test statement/passwords.json` (local only, never committed).
+/// `test_statements/passwords.json` (local only, never committed).
 final Map<String, String> _passwords = () {
   final file = _file('passwords.json');
   if (!file.existsSync()) return <String, String>{};
@@ -87,13 +95,13 @@ void main() {
         ? (_statements
               .listSync(recursive: true)
               .whereType<File>()
-              .where((file) => RegExp(r'\.(pdf|xls)$').hasMatch(file.path))
+              .where(_isSupportedStatement)
               .toList()
             ..sort((a, b) => a.path.compareTo(b.path)))
         : <File>[];
 
     for (final file in files) {
-      final name = file.path.split('test statement/').last;
+      final name = file.path.substring(_statements.path.length + 1);
       final locked = file.path.endsWith('.pdf') && _isLocked(file);
       if (locked) {
         test('$name asks for a password, then rejects a wrong one', () {
@@ -206,10 +214,10 @@ void main() {
       final files = _statements
           .listSync(recursive: true)
           .whereType<File>()
-          .where((file) => RegExp(r'\.(pdf|xls)$').hasMatch(file.path))
+          .where(_isSupportedStatement)
           .where((file) => !_isLocked(file) || _hasPassword(file));
       for (final file in files) {
-        final name = file.path.split('test statement/').last;
+        final name = file.path.substring(_statements.path.length + 1);
         final rows = _parse(AppStore(), 'book', file).importable;
         expect(rows.map((row) => row.paymentMode).toSet(), {
           expectedSource(name),
@@ -245,14 +253,14 @@ void main() {
         _statements
             .listSync(recursive: true)
             .whereType<File>()
-            .where((file) => RegExp(r'\.(pdf|xls)$').hasMatch(file.path))
+            .where(_isSupportedStatement)
             .where((file) => !_isLocked(file) || _hasPassword(file))
             .toList()
           ..sort((a, b) => a.path.compareTo(b.path));
 
     test('an empty book ends at the statement closing balance', () async {
       for (final file in readable()) {
-        final name = file.path.split('test statement/').last;
+        final name = file.path.substring(_statements.path.length + 1);
         final store = await _freshStore();
         final bookId = store.books.first.id;
         final preview = _parse(store, bookId, file);

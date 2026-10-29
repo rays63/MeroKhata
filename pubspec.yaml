@@ -1,7 +1,7 @@
 name: paisa_flow
 description: "Paisa Flow personal finance and cashbook app."
 publish_to: 'none'
-version: 1.0.0+3
+version: 1.0.0+4
 
 environment:
   sdk: ^3.11.4
@@ -21,6 +21,8 @@ dependencies:
   syncfusion_flutter_pdf: ^29.2.11
   lucide_icons_flutter: ^3.1.25
   archive: ^3.6.1
+  cryptography: ^2.9.0
+  local_auth: ^3.0.2
 
 dev_dependencies:
   flutter_test:
