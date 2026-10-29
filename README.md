@@ -121,6 +121,35 @@ flutter build appbundle --release
 
 Never commit `key.properties` or the `.jks` keystore.
 
+## Release artifacts (CI)
+
+Pushing a version tag runs [`.github/workflows/release.yml`](.github/workflows/release.yml). It analyzes and tests the code, then builds:
+
+- a **signed APK** (with the upload key, for sideloading), and
+- an **unsigned IPA**, since there's no Apple developer account. Sideloading tools such as AltStore or Sideloadly sign it with the user's own Apple ID.
+
+Both are attached to a GitHub release for that tag, as `PaisaFlow-1.0.0-build4.apk` and `PaisaFlow-1.0.0-build4.ipa`. The Play Store bundle is still built locally (see above).
+
+**Tag after each release.** The tag must match `version:` in `pubspec.yaml`, with a `v` in front, or the run stops:
+
+```bash
+git tag v1.0.0+4          # pubspec version 1.0.0+4
+git push origin v1.0.0+4
+```
+
+A suffix such as `v1.0.0+5-beta` marks a pre-release and names the files; the app keeps the pubspec version.
+
+**Repository secrets** (Settings → Secrets and variables → Actions):
+
+| Secret | Value |
+| --- | --- |
+| `ANDROID_KEYSTORE_BASE64` | the upload keystore, base64-encoded: `base64 -i upload-keystore.jks \| pbcopy` |
+| `ANDROID_KEYSTORE_PASSWORD` | `storePassword` from `key.properties` |
+| `ANDROID_KEY_ALIAS` | `keyAlias` from `key.properties` |
+| `ANDROID_KEY_PASSWORD` | `keyPassword` from `key.properties` |
+
+If any secret is missing, the Android job fails instead of signing with the debug key.
+
 ## Privacy
 
 Paisa Flow stores all data locally on the device. The Android release build does not request internet access. See the [privacy policy](https://sites.google.com/view/paisaflow-privacypolicy/home).
